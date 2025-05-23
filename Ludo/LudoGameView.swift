@@ -62,11 +62,46 @@ struct LudoGameView: View {
             LudoBoardView()
         }
     }
+    
+    private func printPawnPositions(color: PlayerColor) {
+        print("\nDEBUG: All pawn positions for color \(color):")
+        for pawn in game.pawns[color] ?? [] {
+            if let positionIndex = pawn.positionIndex {
+                if positionIndex >= 0 {
+                    let position = game.path(for: color)[positionIndex]
+                    print("Pawn \(pawn.id): on path at position \(positionIndex) (row: \(position.row), col: \(position.col))")
+                } else {
+                    print("Pawn \(pawn.id): finished")
+                }
+            } else {
+                print("Pawn \(pawn.id): at home")
+            }
+        }
+        print("")
+    }
 }
 
 struct LudoBoardView: View {
     let gridSize = 15
     @EnvironmentObject var game: LudoGame
+    private static var pawnViewCount = 0
+    
+    private func printPawnPositions(color: PlayerColor) {
+        print("\nDEBUG: All pawn positions for color \(color):")
+        for pawn in game.pawns[color] ?? [] {
+            if let positionIndex = pawn.positionIndex {
+                if positionIndex >= 0 {
+                    let position = game.path(for: color)[positionIndex]
+                    print("Pawn \(pawn.id): on path at position \(positionIndex) (row: \(position.row), col: \(position.col))")
+                } else {
+                    print("Pawn \(pawn.id): finished")
+                }
+            } else {
+                print("Pawn \(pawn.id): at home")
+            }
+        }
+        print("")
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -84,6 +119,10 @@ struct LudoBoardView: View {
             .frame(width: boardSize, height: boardSize)
             .border(Color.black, width: 2)
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            .onAppear {
+                Self.pawnViewCount = 0
+                print("\nDEBUG: Reset pawn view counter to 0")
+            }
         }
         .padding()
         .aspectRatio(1, contentMode: .fit)
@@ -91,6 +130,15 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     func cellView(row: Int, col: Int, cellSize: CGFloat) -> some View {
+        ZStack {
+            cellBackground(row: row, col: col, cellSize: cellSize)
+            cellPawns(row: row, col: col, cellSize: cellSize)
+        }
+        .frame(width: cellSize, height: cellSize)
+    }
+    
+    @ViewBuilder
+    private func cellBackground(row: Int, col: Int, cellSize: CGFloat) -> some View {
         ZStack {
             // Red Home Area
             if row < 6 && col < 6 {
@@ -144,67 +192,96 @@ struct LudoBoardView: View {
                 Rectangle().fill(Color.white)
             }
             Rectangle().stroke(Color.black, lineWidth: 0.5)
+        }
+    }
+    
+    @ViewBuilder
+    private func cellPawns(row: Int, col: Int, cellSize: CGFloat) -> some View {
+        ForEach(PlayerColor.allCases, id: \.self) { color in
+            pawnsForColor(color: color, row: row, col: col, cellSize: cellSize)
             
-            // Draw pawns
-            ForEach(PlayerColor.allCases, id: \.self) { color in
-                ForEach(game.pawns[color] ?? [], id: \.id) { pawn in
-                    if let positionIndex = pawn.positionIndex {
-                        if positionIndex >= 0 { // On the path
-                            let position = game.path(for: color)[positionIndex]
-                            if position.row == row && position.col == col {
-                                PawnView(color: color, size: cellSize * 0.8)
-                                    .onTapGesture {
-                                        if color == game.currentPlayer {
-                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                                        }
-                                    }
-                            }
-                        }
-                    } else { // At home
-                        // Position pawns in their home area
-                        switch color {
-                        case .red:
-                            if (row == 1 || row == 4) && (col == 1 || col == 4) {
-                                PawnView(color: color, size: cellSize * 0.8)
-                                    .onTapGesture {
-                                        if color == game.currentPlayer && game.diceValue == 6 {
-                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                                        }
-                                    }
-                            }
-                        case .green:
-                            if (row == 1 || row == 4) && (col == 10 || col == 13) {
-                                PawnView(color: color, size: cellSize * 0.8)
-                                    .onTapGesture {
-                                        if color == game.currentPlayer && game.diceValue == 6 {
-                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                                        }
-                                    }
-                            }
-                        case .yellow:
-                            if (row == 10 || row == 13) && (col == 10 || col == 13) {
-                                PawnView(color: color, size: cellSize * 0.8)
-                                    .onTapGesture {
-                                        if color == game.currentPlayer && game.diceValue == 6 {
-                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                                        }
-                                    }
-                            }
-                        case .blue:
-                            if (row == 10 || row == 13) && (col == 1 || col == 4) {
-                                PawnView(color: color, size: cellSize * 0.8)
-                                    .onTapGesture {
-                                        if color == game.currentPlayer && game.diceValue == 6 {
-                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                                        }
-                                    }
-                            }
-                        }
-                    }
-                }
+            // Print all pawn positions for this color
+            if row == 0 && col == 0 {
+                let _ = printPawnPositions(color: color)
             }
         }
-        .frame(width: cellSize, height: cellSize)
+    }
+    
+    @ViewBuilder
+    private func pawnsForColor(color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        ForEach(game.pawns[color] ?? [], id: \.id) { pawn in
+            pawnView(pawn: pawn, color: color, row: row, col: col, cellSize: cellSize)
+        }
+    }
+    
+    @ViewBuilder
+    private func pawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        if let positionIndex = pawn.positionIndex {
+            // Pawn is on the path
+            if positionIndex >= 0 {
+                pathPawnView(pawn: pawn, color: color, positionIndex: positionIndex, row: row, col: col, cellSize: cellSize)
+            }
+        } else {
+            // Pawn is at home
+            homePawnView(pawn: pawn, color: color, row: row, col: col, cellSize: cellSize)
+        }
+    }
+    
+    @ViewBuilder
+    private func pathPawnView(pawn: Pawn, color: PlayerColor, positionIndex: Int, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        let position = game.path(for: color)[positionIndex]
+        if position.row == row && position.col == col {
+            let _ = debugPrintPawnView(pawn: pawn, color: color, row: row, col: col, isPath: true)
+            PawnView(color: color, size: cellSize * 0.8)
+                .onTapGesture {
+                    if color == game.currentPlayer {
+                        game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                    }
+                }
+        }
+    }
+    
+    @ViewBuilder
+    private func homePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        if isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col) {
+            let _ = debugPrintPawnView(pawn: pawn, color: color, row: row, col: col, isPath: false)
+            PawnView(color: color, size: cellSize * 0.8)
+                .onTapGesture {
+                    if color == game.currentPlayer && game.diceValue == 6 {
+                        game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                    }
+                }
+        }
+    }
+    
+    private func debugPrintPawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, isPath: Bool) {
+        Self.pawnViewCount += 1
+        print("DEBUG: Creating \(isPath ? "path" : "home") pawn view #\(Self.pawnViewCount) for pawn \(pawn.id) of color \(color) at (row: \(row), col: \(col))")
+    }
+    
+    private func isCorrectHomePosition(pawn: Pawn, color: PlayerColor, row: Int, col: Int) -> Bool {
+        switch color {
+        case .red:
+            return (pawn.id == 0 && row == 1 && col == 1) ||
+                   (pawn.id == 1 && row == 1 && col == 4) ||
+                   (pawn.id == 2 && row == 4 && col == 1) ||
+                   (pawn.id == 3 && row == 4 && col == 4)
+        case .green:
+            return (pawn.id == 0 && row == 1 && col == 10) ||
+                   (pawn.id == 1 && row == 1 && col == 13) ||
+                   (pawn.id == 2 && row == 4 && col == 10) ||
+                   (pawn.id == 3 && row == 4 && col == 13)
+        case .yellow:
+            return (pawn.id == 0 && row == 10 && col == 10) ||
+                   (pawn.id == 1 && row == 10 && col == 13) ||
+                   (pawn.id == 2 && row == 13 && col == 10) ||
+                   (pawn.id == 3 && row == 13 && col == 13)
+        case .blue:
+            return (pawn.id == 0 && row == 10 && col == 1) ||
+                   (pawn.id == 1 && row == 10 && col == 4) ||
+                   (pawn.id == 2 && row == 13 && col == 1) ||
+                   (pawn.id == 3 && row == 13 && col == 4)
+        }
     }
 }
 
