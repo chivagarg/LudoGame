@@ -209,6 +209,51 @@ class LudoGameTests: XCTestCase {
         XCTAssertEqual(game.path(for: .blue)[game.pawns[.blue]![0].positionIndex!], expectedPosition, "Blue pawn should move forward \(stepsToMove) steps on the path.")
     }
 
+    func testMoveBluePawnToFinish() {
+        game.currentPlayer = .blue
+        game.diceValue = 6 // Move out first
+        game.movePawn(color: .blue, pawnId: 0, steps: game.diceValue)
+
+        let initialPositionIndex = game.pawns[.blue]![0].positionIndex!
+        game.diceValue = 60
+        let stepsToMove = game.diceValue
+        game.movePawn(color: .blue, pawnId: 0, steps: stepsToMove)
+
+        let finalPositionIndex = game.pawns[.blue]?[0].positionIndex
+
+        XCTAssertEqual(finalPositionIndex, -1, "Blue pawn should reach home (positionIndex = -1) when moving exactly onto the last position.")
+    }
+
+    func testMoveYellowPawnToFinish() {
+        game.currentPlayer = .yellow
+        game.diceValue = 6 // Move out first
+        game.movePawn(color: .yellow, pawnId: 0, steps: game.diceValue)
+
+        let initialPositionIndex = game.pawns[.yellow]![0].positionIndex!
+        game.diceValue = 60
+        let stepsToMove = game.diceValue
+        game.movePawn(color: .yellow, pawnId: 0, steps: stepsToMove)
+
+        let finalPositionIndex = game.pawns[.yellow]?[0].positionIndex
+
+        XCTAssertEqual(finalPositionIndex, -1, "Yellow pawn should reach home (positionIndex = -1) when moving exactly onto the last position.")
+    }
+
+    func testMoveGreenPawnToFinish() {
+        game.currentPlayer = .green
+        game.diceValue = 6 // Move out first
+        game.movePawn(color: .green, pawnId: 0, steps: game.diceValue)
+
+        let initialPositionIndex = game.pawns[.green]![0].positionIndex!
+        game.diceValue = 60
+        let stepsToMove = game.diceValue
+        game.movePawn(color: .green, pawnId: 0, steps: stepsToMove)
+
+        let finalPositionIndex = game.pawns[.green]?[0].positionIndex
+
+        XCTAssertEqual(finalPositionIndex, -1, "Green pawn should reach home (positionIndex = -1) when moving exactly onto the last position.")
+    }
+
     // MARK: - Test Reaching Home
 
     func testRedPawnReachesHomeExactly() {
@@ -276,6 +321,7 @@ class LudoGameTests: XCTestCase {
         let finalPositionIndex = game.pawns[.blue]?[pawnId].positionIndex
         XCTAssertEqual(finalPositionIndex, -1, "Blue pawn should reach home (positionIndex = -1) when moving exactly onto the last position.")
     }
+    
 
     // MARK: - Test Overshooting Home
 

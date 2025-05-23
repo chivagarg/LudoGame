@@ -12,6 +12,7 @@ struct LudoGameView: View {
             }
         }
         .padding()
+        .environmentObject(game)
     }
     
     private var startGameView: some View {
@@ -40,15 +41,22 @@ struct LudoGameView: View {
                 .font(.title)
                 .padding()
             
+            if !game.eligiblePawns.isEmpty {
+                Text("Make your move \(game.currentPlayer.rawValue.capitalized)!")
+                    .font(.title2)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+            
             Button("Roll Dice") {
                 game.rollDice()
-                game.nextTurn()
             }
             .font(.title2)
             .padding()
-            .background(Color.blue)
+            .background(game.eligiblePawns.isEmpty ? Color.blue : Color.gray)
             .foregroundColor(.white)
             .cornerRadius(10)
+            .disabled(!game.eligiblePawns.isEmpty)
             
             // Ludo Board
             LudoBoardView()
@@ -136,8 +144,91 @@ struct LudoBoardView: View {
                 Rectangle().fill(Color.white)
             }
             Rectangle().stroke(Color.black, lineWidth: 0.5)
+            
+            // Draw pawns
+            ForEach(PlayerColor.allCases, id: \.self) { color in
+                ForEach(game.pawns[color] ?? [], id: \.id) { pawn in
+                    if let positionIndex = pawn.positionIndex {
+                        if positionIndex >= 0 { // On the path
+                            let position = game.path(for: color)[positionIndex]
+                            if position.row == row && position.col == col {
+                                PawnView(color: color, size: cellSize * 0.8)
+                                    .onTapGesture {
+                                        if color == game.currentPlayer {
+                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                                        }
+                                    }
+                            }
+                        }
+                    } else { // At home
+                        // Position pawns in their home area
+                        switch color {
+                        case .red:
+                            if (row == 1 || row == 4) && (col == 1 || col == 4) {
+                                PawnView(color: color, size: cellSize * 0.8)
+                                    .onTapGesture {
+                                        if color == game.currentPlayer && game.diceValue == 6 {
+                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                                        }
+                                    }
+                            }
+                        case .green:
+                            if (row == 1 || row == 4) && (col == 10 || col == 13) {
+                                PawnView(color: color, size: cellSize * 0.8)
+                                    .onTapGesture {
+                                        if color == game.currentPlayer && game.diceValue == 6 {
+                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                                        }
+                                    }
+                            }
+                        case .yellow:
+                            if (row == 10 || row == 13) && (col == 10 || col == 13) {
+                                PawnView(color: color, size: cellSize * 0.8)
+                                    .onTapGesture {
+                                        if color == game.currentPlayer && game.diceValue == 6 {
+                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                                        }
+                                    }
+                            }
+                        case .blue:
+                            if (row == 10 || row == 13) && (col == 1 || col == 4) {
+                                PawnView(color: color, size: cellSize * 0.8)
+                                    .onTapGesture {
+                                        if color == game.currentPlayer && game.diceValue == 6 {
+                                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                                        }
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
         }
         .frame(width: cellSize, height: cellSize)
+    }
+}
+
+struct PawnView: View {
+    let color: PlayerColor
+    let size: CGFloat
+    
+    var body: some View {
+        Circle()
+            .fill(colorForPlayer(color))
+            .frame(width: size, height: size)
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 2)
+            )
+    }
+    
+    private func colorForPlayer(_ color: PlayerColor) -> Color {
+        switch color {
+        case .red: return .red
+        case .green: return .green
+        case .yellow: return .yellow
+        case .blue: return .blue
+        }
     }
 }
 

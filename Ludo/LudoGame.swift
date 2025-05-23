@@ -20,6 +20,7 @@ class LudoGame: ObservableObject {
     @Published var currentPlayer: PlayerColor = .red
     @Published var diceValue: Int = 1
     @Published var gameStarted: Bool = false
+    @Published var eligiblePawns: Set<Int> = []  // Track which pawns are eligible to move
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
@@ -61,48 +62,88 @@ class LudoGame: ObservableObject {
     ]
 
     static let greenPath: [Position] = [
+        // Start at entry point
         Position(row: 1, col: 8), Position(row: 2, col: 8), Position(row: 3, col: 8), Position(row: 4, col: 8), Position(row: 5, col: 8), Position(row: 6, col: 8),
+        // Right
         Position(row: 6, col: 9), Position(row: 6, col: 10), Position(row: 6, col: 11), Position(row: 6, col: 12), Position(row: 6, col: 13), Position(row: 6, col: 14),
+        // Down
         Position(row: 7, col: 14), Position(row: 8, col: 14),
+        // Left
         Position(row: 8, col: 13), Position(row: 8, col: 12), Position(row: 8, col: 11), Position(row: 8, col: 10), Position(row: 8, col: 9), Position(row: 8, col: 8),
+        // Down
         Position(row: 9, col: 8), Position(row: 10, col: 8), Position(row: 11, col: 8), Position(row: 12, col: 8), Position(row: 13, col: 8), Position(row: 14, col: 8),
+        // Left
         Position(row: 14, col: 7), Position(row: 14, col: 6),
+        // Up
         Position(row: 13, col: 6), Position(row: 12, col: 6), Position(row: 11, col: 6), Position(row: 10, col: 6), Position(row: 9, col: 6), Position(row: 8, col: 6),
+        // Left
         Position(row: 8, col: 5), Position(row: 8, col: 4), Position(row: 8, col: 3), Position(row: 8, col: 2), Position(row: 8, col: 1), Position(row: 8, col: 0),
+        // Up
         Position(row: 7, col: 0), Position(row: 6, col: 0),
-        Position(row: 5, col: 0), Position(row: 4, col: 0), Position(row: 3, col: 0), Position(row: 2, col: 0), Position(row: 1, col: 0), Position(row: 0, col: 0), // Looping back to start
-        Position(row: 0, col: 6), Position(row: 0, col: 7), // End of main path loop for Green
+        // Right
+        Position(row: 6, col: 1), Position(row: 6, col: 2), Position(row: 6, col: 3), Position(row: 6, col: 4), Position(row: 6, col: 5), Position(row: 6, col: 6),
+        // Up
+        Position(row: 5, col: 6), Position(row: 4, col: 6), Position(row: 3, col: 6), Position(row: 2, col: 6), Position(row: 1, col: 6), Position(row: 0, col: 6),
+        // Right
+        Position(row: 0, col: 7), // End of main path loop for Green
         Position(row: 1, col: 7), Position(row: 2, col: 7), Position(row: 3, col: 7), Position(row: 4, col: 7), Position(row: 5, col: 7), // Green Safe Zone
         Position(row: 6, col: 7) // Green Home
     ]
 
     static let yellowPath: [Position] = [
+        // Left
         Position(row: 8, col: 13), Position(row: 8, col: 12), Position(row: 8, col: 11), Position(row: 8, col: 10), Position(row: 8, col: 9), Position(row: 8, col: 8),
+        // Down
         Position(row: 9, col: 8), Position(row: 10, col: 8), Position(row: 11, col: 8), Position(row: 12, col: 8), Position(row: 13, col: 8), Position(row: 14, col: 8),
+        // Left
         Position(row: 14, col: 7), Position(row: 14, col: 6),
+        // Up
         Position(row: 13, col: 6), Position(row: 12, col: 6), Position(row: 11, col: 6), Position(row: 10, col: 6), Position(row: 9, col: 6), Position(row: 8, col: 6),
+        // Left
         Position(row: 8, col: 5), Position(row: 8, col: 4), Position(row: 8, col: 3), Position(row: 8, col: 2), Position(row: 8, col: 1), Position(row: 8, col: 0),
+        // Up
         Position(row: 7, col: 0), Position(row: 6, col: 0),
-        Position(row: 5, col: 0), Position(row: 4, col: 0), Position(row: 3, col: 0), Position(row: 2, col: 0), Position(row: 1, col: 0), Position(row: 0, col: 0),
-        Position(row: 0, col: 6), Position(row: 0, col: 7), Position(row: 0, col: 8),
+        // Right
+        Position(row: 6, col: 1), Position(row: 6, col: 2), Position(row: 6, col: 3), Position(row: 6, col: 4), Position(row: 6, col: 5), Position(row: 6, col: 6),
+        // Up
+        Position(row: 5, col: 6), Position(row: 4, col: 6), Position(row: 3, col: 6), Position(row: 2, col: 6), Position(row: 1, col: 6), Position(row: 0, col: 6),
+        // Right
+        Position(row: 0, col: 7), Position(row: 0, col: 8),
+        // Down
         Position(row: 1, col: 8), Position(row: 2, col: 8), Position(row: 3, col: 8), Position(row: 4, col: 8), Position(row: 5, col: 8), Position(row: 6, col: 8),
-        Position(row: 6, col: 9), Position(row: 6, col: 10), Position(row: 6, col: 11), Position(row: 6, col: 12), Position(row: 6, col: 13), Position(row: 6, col: 14), // Looping back to start
-        Position(row: 7, col: 14), // End of main path loop for Yellow
+        // Right
+        Position(row: 6, col: 9), Position(row: 6, col: 10), Position(row: 6, col: 11), Position(row: 6, col: 12), Position(row: 6, col: 13), Position(row: 6, col: 14),
+        // Down
+        Position(row: 7, col: 14),  // End of main path loop for Yellow
         Position(row: 7, col: 13), Position(row: 7, col: 12), Position(row: 7, col: 11), Position(row: 7, col: 10), Position(row: 7, col: 9), // Yellow Safe Zone
         Position(row: 7, col: 8) // Yellow Home
     ]
 
     static let bluePath: [Position] = [
+        // Up
         Position(row: 13, col: 6), Position(row: 12, col: 6), Position(row: 11, col: 6), Position(row: 10, col: 6), Position(row: 9, col: 6), Position(row: 8, col: 6),
+        // Left
         Position(row: 8, col: 5), Position(row: 8, col: 4), Position(row: 8, col: 3), Position(row: 8, col: 2), Position(row: 8, col: 1), Position(row: 8, col: 0),
+        // Up
         Position(row: 7, col: 0), Position(row: 6, col: 0),
+        // Right
         Position(row: 6, col: 1), Position(row: 6, col: 2), Position(row: 6, col: 3), Position(row: 6, col: 4), Position(row: 6, col: 5), Position(row: 6, col: 6),
-        Position(row: 0, col: 6), Position(row: 0, col: 7), Position(row: 0, col: 8),
+        // Up
+        Position(row: 5, col: 6), Position(row: 4, col: 6), Position(row: 3, col: 6), Position(row: 2, col: 6), Position(row: 1, col: 6), Position(row: 0, col: 6),
+        // right
+        Position(row: 0, col: 7), Position(row: 0, col: 8),
+        // Down
         Position(row: 1, col: 8), Position(row: 2, col: 8), Position(row: 3, col: 8), Position(row: 4, col: 8), Position(row: 5, col: 8), Position(row: 6, col: 8),
+        // Right
         Position(row: 6, col: 9), Position(row: 6, col: 10), Position(row: 6, col: 11), Position(row: 6, col: 12), Position(row: 6, col: 13), Position(row: 6, col: 14),
+        // Down
         Position(row: 7, col: 14), Position(row: 8, col: 14),
-        Position(row: 8, col: 13), Position(row: 8, col: 12), Position(row: 8, col: 11), Position(row: 8, col: 10), Position(row: 8, col: 9), Position(row: 8, col: 8), // Looping back to start
-        Position(row: 14, col: 8), Position(row: 14, col: 7), // End of main path loop for Blue
+        // Left
+        Position(row: 8, col: 13), Position(row: 8, col: 12), Position(row: 8, col: 11), Position(row: 8, col: 10), Position(row: 8, col: 9), Position(row: 8, col: 8),
+        // Down
+        Position(row: 9, col: 8),Position(row: 10, col: 8), Position(row: 11, col: 8),Position(row: 12, col: 8), Position(row: 13, col: 8),Position(row: 14, col: 8),
+        // Left
+        Position(row: 14, col: 7),
         Position(row: 13, col: 7), Position(row: 12, col: 7), Position(row: 11, col: 7), Position(row: 10, col: 7), Position(row: 9, col: 7), // Blue Safe Zone
         Position(row: 8, col: 7) // Blue Home
     ]
@@ -115,7 +156,29 @@ class LudoGame: ObservableObject {
     ]
     
     func rollDice() {
+        // Only allow rolling if there are no eligible pawns
+        guard eligiblePawns.isEmpty else { return }
+        
+        // Roll the dice
         diceValue = Int.random(in: 1...6)
+        
+        // Mark eligible pawns based on the roll
+        if let currentPawns = pawns[currentPlayer] {
+            eligiblePawns = Set(currentPawns.filter { pawn in
+                if let positionIndex = pawn.positionIndex {
+                    // Pawn is on the path
+                    return positionIndex >= 0
+                } else {
+                    // Pawn is at home and dice is 6
+                    return diceValue == 6
+                }
+            }.map { $0.id })
+        }
+        
+        // If no pawns can move, advance to next turn immediately
+        if eligiblePawns.isEmpty {
+            nextTurn()
+        }
     }
     
     func nextTurn() {
@@ -129,6 +192,7 @@ class LudoGame: ObservableObject {
     func startGame() {
         gameStarted = true
         currentPlayer = .red
+        eligiblePawns.removeAll()
         // Reset pawns
         pawns = [
             .red: (0..<4).map { Pawn(id: $0, color: .red, positionIndex: nil) },
@@ -152,54 +216,83 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
+        // Only allow moving eligible pawns
+        guard color == currentPlayer && eligiblePawns.contains(pawnId) else { return }
+        
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
-        var pawn = pawns[color]![pawnIndex] // Get a mutable copy
-        let currentPath = path(for: color)
-
-        // If pawn is at home and dice is not 6, it cannot move
-        if pawn.positionIndex == nil && steps != 6 {
-            print("\(color.rawValue.capitalized) pawn \(pawnId) is at home and rolled a \(steps). Needs a 6 to move out.")
-            return
-        }
-
-        // If pawn is at home and dice is 6, move to the entry position
-        if pawn.positionIndex == nil && steps == 6 {
-            pawn.positionIndex = 0 // Assuming the entry is the first position in the color's path
-            pawns[color]?[pawnIndex] = pawn // Update directly in the dictionary
-            print("\(color.rawValue.capitalized) pawn \(pawnId) moved out of home.")
-            return
-        }
-
-        // If pawn is on the path, calculate the new position
-        if let currentIndex = pawn.positionIndex {
-            let newIndex = currentIndex + steps
-
-            // Check if the new position is within the bounds of the path
+        
+        if let positionIndex = pawns[color]?[pawnIndex].positionIndex {
+            // Pawn is on the path
+            let currentPath = path(for: color)
+            let newIndex = positionIndex + steps
+            
             if newIndex < currentPath.count - 1 {
-                // Moved to a position on the path (not the final spot)
                 pawns[color]?[pawnIndex].positionIndex = newIndex
-                print("\(color.rawValue.capitalized) pawn \(pawnId) moved from index \(currentIndex) to \(newIndex).")
-                // checkPosition(for: &pawns[color]![pawnIndex], at: newIndex)
-            } else if newIndex == currentPath.count - 1 { // This condition is now correctly reached for the final spot
-                 // Pawn reached home exactly
-                pawns[color]?[pawnIndex].positionIndex = -1 // Mark as finished
-                print("DEBUG: Pawn \(pawnId) of color \(color.rawValue) reached home exactly. Setting positionIndex to -1.") // Added debug print\n                print("\(color.rawValue.capitalized) pawn \(pawnId) reached home.")
-                // TODO: Handle winning condition
-            } else {
-                // Overshot, cannot move
-                print("\(color.rawValue.capitalized) pawn \(pawnId) at index \(currentIndex) with dice \(steps) overshot the path.")
-                return
+                checkPosition(color: color, pawnIndex: pawnIndex)
+            } else if newIndex == currentPath.count - 1 {
+                // Pawn reaches home
+                pawns[color]?[pawnIndex].positionIndex = -1
+            }
+        } else {
+            // Pawn is at home
+            if steps == 6 {
+                pawns[color]?[pawnIndex].positionIndex = 0
+            }
+        }
+        
+        // After moving the pawn, check if we should advance the turn
+        // Only keep the same player's turn if they rolled a 6
+        if diceValue != 6 {
+            nextTurn()
+        }
+        
+        // Clear eligible pawns
+        eligiblePawns.removeAll()
+    }
+
+    // Function to check if a pawn can capture another pawn or is in a safe spot
+    private func checkPosition(color: PlayerColor, pawnIndex: Int) {
+        guard let currentPawn = pawns[color]?[pawnIndex],
+              let positionIndex = currentPawn.positionIndex,
+              positionIndex >= 0 else { return }
+        
+        let currentPosition = path(for: color)[positionIndex]
+        
+        // Check if the position is a safe spot
+        let isSafeSpot = isSafePosition(currentPosition)
+        if isSafeSpot { return }
+        
+        // Check for other pawns at the same position
+        for (otherColor, otherPawns) in pawns {
+            if otherColor == color { continue } // Skip same color
+            
+            for (otherIndex, otherPawn) in otherPawns.enumerated() {
+                guard let otherPositionIndex = otherPawn.positionIndex,
+                      otherPositionIndex >= 0 else { continue }
+                
+                let otherPosition = path(for: otherColor)[otherPositionIndex]
+                if otherPosition == currentPosition {
+                    // Capture the other pawn
+                    pawns[otherColor]?[otherIndex].positionIndex = nil
+                }
             }
         }
     }
-
-    // Helper to update a pawn in the published pawns dictionary
-    // (This helper is no longer strictly needed with the direct update approach in movePawn,
-    // but keeping it for now in case it's used elsewhere or for future logic)
-    private func updatePawn(_ pawn: Pawn) {
-        if let index = pawns[pawn.color]?.firstIndex(where: { $0.id == pawn.id }) {
-            pawns[pawn.color]?[index] = pawn
-            // print("Updated \(pawn.color.rawValue.capitalized) pawn \(pawn.id) to positionIndex: \(pawn.positionIndex ?? -2).") // Debug print
+    
+    // Helper to check if a position is a safe spot
+    private func isSafePosition(_ position: Position) -> Bool {
+        // Check if position is in any safe zone
+        if Self.redSafeZone.contains(position) || Self.redHome == position { return true }
+        if Self.greenSafeZone.contains(position) || Self.greenHome == position { return true }
+        if Self.yellowSafeZone.contains(position) || Self.yellowHome == position { return true }
+        if Self.blueSafeZone.contains(position) || Self.blueHome == position { return true }
+        
+        // Check if position is at the start of any path
+        if position == Self.redPath[0] || position == Self.greenPath[0] ||
+           position == Self.yellowPath[0] || position == Self.bluePath[0] {
+            return true
         }
+        
+        return false
     }
 } 
