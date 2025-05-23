@@ -246,22 +246,6 @@ class LudoGame: ObservableObject {
         
         print("After move - positionIndex: \(String(describing: pawns[color]?[pawnIndex].positionIndex))")
         
-        // Print all pawn positions for this color
-        print("\nDEBUG: All pawn positions for color \(color) after move:")
-        for pawn in pawns[color] ?? [] {
-            if let positionIndex = pawn.positionIndex {
-                if positionIndex >= 0 {
-                    let position = path(for: color)[positionIndex]
-                    print("Pawn \(pawn.id): on path at position \(positionIndex) (row: \(position.row), col: \(position.col))")
-                } else {
-                    print("Pawn \(pawn.id): finished")
-                }
-            } else {
-                print("Pawn \(pawn.id): at home")
-            }
-        }
-        print("")
-        
         // After moving the pawn, check if we should advance the turn
         // Only keep the same player's turn if they rolled a 6
         if diceValue != 6 {
