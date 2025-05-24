@@ -172,7 +172,7 @@ struct LudoBoardView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let boardSize = min(geometry.size.width, geometry.size.height) * 0.75
+            let boardSize = min(geometry.size.width, geometry.size.height) * 0.9
             let cellSize = boardSize / CGFloat(gridSize)
             VStack(spacing: 0) {
                 ForEach(0..<gridSize, id: \.self) { row in
@@ -298,7 +298,7 @@ struct LudoBoardView: View {
             let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
             if currentPos.row == row && currentPos.col == col {
                 let key = "\(color.rawValue)-\(pawn.id)"
-                let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 20 : 0
+                let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 40 : 0
                 
                 PawnView(color: color, size: cellSize * 0.8)
                     .offset(y: -hopOffset)
