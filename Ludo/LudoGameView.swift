@@ -37,6 +37,12 @@ struct LudoGameView: View {
             Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
                 .font(.title2)
             
+            if let rollPlayer = game.currentRollPlayer {
+                Text("Roll by: \(rollPlayer.rawValue.capitalized)")
+                    .font(.title2)
+                    .foregroundColor(.blue)
+            }
+            
             Text("Dice: \(game.diceValue)")
                 .font(.title)
                 .padding()
@@ -306,7 +312,8 @@ struct LudoBoardView: View {
                         if color == game.currentPlayer && !isAnimating {
                             let currentPos = pawn.positionIndex ?? -1
                             game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                            if let newPos = game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex {
+                            if let newPos = game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex,
+                               newPos != currentPos {
                                 animatePawnMovement(pawn: pawn, color: color, from: currentPos, to: newPos, steps: game.diceValue)
                             }
                         }

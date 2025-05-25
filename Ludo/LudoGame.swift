@@ -21,6 +21,7 @@ class LudoGame: ObservableObject {
     @Published var diceValue: Int = 1
     @Published var gameStarted: Bool = false
     @Published var eligiblePawns: Set<Int> = []  // Track which pawns are eligible to move
+    @Published var currentRollPlayer: PlayerColor? = nil  // Track whose roll is currently active
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
@@ -156,13 +157,12 @@ class LudoGame: ObservableObject {
     ]
     
     func rollDice() {
-        // Allow rolling if:
-        // 1. No eligible pawns exist, OR
-        // 2. A 6 was rolled
-        guard eligiblePawns.isEmpty || diceValue == 6 else { return }
+        // Only allow rolling if there are no eligible pawns
+        guard eligiblePawns.isEmpty else { return }
         
         // Roll the dice
         diceValue = Int.random(in: 1...6)
+        currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
         if let currentPawns = pawns[currentPlayer] {
@@ -179,16 +179,19 @@ class LudoGame: ObservableObject {
         
         // If no pawns can move, advance to next turn immediately
         if eligiblePawns.isEmpty {
-            nextTurn()
+            nextTurn(clearRoll: false)  // Don't clear the roll when no moves are possible
         }
     }
     
-    func nextTurn() {
+    func nextTurn(clearRoll: Bool = true) {
         let colors = PlayerColor.allCases
         if let currentIndex = colors.firstIndex(of: currentPlayer) {
             let nextIndex = (currentIndex + 1) % colors.count
             currentPlayer = colors[nextIndex]
             eligiblePawns.removeAll()
+            if clearRoll {
+                currentRollPlayer = nil  // Only clear the roll when explicitly requested
+            }
         }
     }
     
@@ -196,6 +199,7 @@ class LudoGame: ObservableObject {
         gameStarted = true
         currentPlayer = .red
         eligiblePawns.removeAll()
+        currentRollPlayer = nil
         // Reset pawns
         pawns = [
             .red: (0..<4).map { Pawn(id: $0, color: .red, positionIndex: nil) },
@@ -219,10 +223,17 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
+        print("DEBUG: movePawn called with:")
+        print("  color: \(color)")
+        print("  currentPlayer: \(currentPlayer)")
+        print("  currentRollPlayer: \(String(describing: currentRollPlayer))")
+        
         // Only allow moving if:
         // 1. It's your turn
-        // 2. The pawn is eligible to move
+        // 2. It's your roll
+        // 3. The pawn is eligible to move
         guard color == currentPlayer && 
+              color == currentRollPlayer &&
               eligiblePawns.contains(pawnId) else { return }
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
@@ -255,7 +266,7 @@ class LudoGame: ObservableObject {
         // After moving the pawn, check if we should advance the turn
         // Only keep the same player's turn if they rolled a 6
         if diceValue != 6 {
-            nextTurn()
+            nextTurn(clearRoll: true)  // Clear the roll when turn changes
         }
         
         // Clear eligible pawns
