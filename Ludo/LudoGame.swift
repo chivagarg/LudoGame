@@ -18,6 +18,7 @@ struct Pawn: Identifiable {
 
 class LudoGame: ObservableObject {
     @Published var currentPlayer: PlayerColor = .red
+    @Published var lastRolledPlayer: PlayerColor? = nil
     @Published var diceValue: Int = 1
     @Published var gameStarted: Bool = false
     @Published var eligiblePawns: Set<Int> = []  // Track which pawns are eligible to move
@@ -161,6 +162,7 @@ class LudoGame: ObservableObject {
         
         // Roll the dice
         diceValue = Int.random(in: 1...6)
+        lastRolledPlayer = currentPlayer
         
         // Mark eligible pawns based on the roll
         if let currentPawns = pawns[currentPlayer] {
@@ -186,12 +188,15 @@ class LudoGame: ObservableObject {
         if let currentIndex = colors.firstIndex(of: currentPlayer) {
             let nextIndex = (currentIndex + 1) % colors.count
             currentPlayer = colors[nextIndex]
+            lastRolledPlayer = nil
+            eligiblePawns.removeAll()
         }
     }
     
     func startGame() {
         gameStarted = true
         currentPlayer = .red
+        lastRolledPlayer = nil
         eligiblePawns.removeAll()
         // Reset pawns
         pawns = [
@@ -216,8 +221,13 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
-        // Only allow moving eligible pawns
-        guard color == currentPlayer && eligiblePawns.contains(pawnId) else { return }
+        // Only allow moving if:
+        // 1. It's your turn
+        // 2. You rolled the dice
+        // 3. The pawn is eligible to move
+        guard color == currentPlayer && 
+              color == lastRolledPlayer && 
+              eligiblePawns.contains(pawnId) else { return }
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
         
