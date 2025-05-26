@@ -37,22 +37,9 @@ struct LudoGameView: View {
             Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
                 .font(.title2)
             
-            if let rollPlayer = game.currentRollPlayer {
-                Text("Roll by: \(rollPlayer.rawValue.capitalized)")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-            }
-            
             Text("Dice: \(game.diceValue)")
                 .font(.title)
                 .padding()
-            
-            if !game.eligiblePawns.isEmpty {
-                Text("Make your move \(game.currentPlayer.rawValue.capitalized)!")
-                    .font(.title2)
-                    .foregroundColor(.red)
-                    .padding()
-            }
             
             HStack {
                 Button("Roll Dice") {
@@ -161,7 +148,32 @@ struct LudoBoardView: View {
             }
         }
         
+        // Start the animation
         animateNextStep()
+        
+        // After all steps are complete, check for captures
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.15) {
+            // Get the final position
+            let finalPosition = game.path(for: color)[to]
+            
+            // Check for captures at the final position
+            for (otherColor, otherPawns) in game.pawns {
+                if otherColor == color { continue } // Skip same color
+                
+                for (otherIndex, otherPawn) in otherPawns.enumerated() {
+                    guard let otherPositionIndex = otherPawn.positionIndex,
+                          otherPositionIndex >= 0 else { continue }
+                    
+                    let otherPosition = game.path(for: otherColor)[otherPositionIndex]
+                    if otherPosition == finalPosition {
+                        // Capture the other pawn after a short delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            game.pawns[otherColor]?[otherIndex].positionIndex = nil
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func getHomePosition(pawn: Pawn, color: PlayerColor) -> (row: Int, col: Int) {
@@ -196,8 +208,9 @@ struct LudoBoardView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let boardSize = min(geometry.size.width, geometry.size.height) * 0.9
+            let boardSize = min(geometry.size.width, geometry.size.height) * 0.95
             let cellSize = boardSize / CGFloat(gridSize)
+            
             VStack(spacing: 0) {
                 ForEach(0..<gridSize, id: \.self) { row in
                     HStack(spacing: 0) {
@@ -215,7 +228,6 @@ struct LudoBoardView: View {
                 print("\nDEBUG: Reset pawn view counter to 0")
             }
         }
-        .padding()
         .aspectRatio(1, contentMode: .fit)
     }
     

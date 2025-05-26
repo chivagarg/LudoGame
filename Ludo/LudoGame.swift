@@ -313,21 +313,8 @@ class LudoGame: ObservableObject {
         let isSafeSpot = isSafePosition(currentPosition)
         if isSafeSpot { return }
         
-        // Check for other pawns at the same position
-        for (otherColor, otherPawns) in pawns {
-            if otherColor == color { continue } // Skip same color
-            
-            for (otherIndex, otherPawn) in otherPawns.enumerated() {
-                guard let otherPositionIndex = otherPawn.positionIndex,
-                      otherPositionIndex >= 0 else { continue }
-                
-                let otherPosition = path(for: otherColor)[otherPositionIndex]
-                if otherPosition == currentPosition {
-                    // Capture the other pawn
-                    pawns[otherColor]?[otherIndex].positionIndex = nil
-                }
-            }
-        }
+        // Note: Capture logic is now handled in the animation sequence
+        // This ensures the capturing pawn reaches the position before the captured pawn is sent home
     }
     
     // Helper to check if a position is a safe spot
