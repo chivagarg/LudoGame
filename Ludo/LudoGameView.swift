@@ -107,9 +107,9 @@ struct LudoBoardView: View {
     private static var pawnViewCount = 0
     @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var currentStep = 0
-    @State private var isAnimating = false
-    @State private var slidingPawn: (color: PlayerColor, id: Int, progress: Double)? = nil
+    @State private var isPathAnimating = false
     @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
+    @State private var homeToStartPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
     
     private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, offsetX: CGFloat, offsetY: CGFloat) {
         let boardSize = min(geometry.size.width, geometry.size.height) * 0.95
@@ -157,12 +157,12 @@ struct LudoBoardView: View {
         print("DEBUG: animatePawnMovement called for pawn \(pawn.id) of color \(color)")
         print("DEBUG: from: \(from), to: \(to), steps: \(steps)")
         
-        isAnimating = true
+        isPathAnimating = true
         currentStep = 0
         
         func animateNextStep() {
             guard currentStep < steps else {
-                isAnimating = false
+                isPathAnimating = false
                 return
             }
             
@@ -270,6 +270,31 @@ struct LudoBoardView: View {
                 }
                 .frame(width: boardSize, height: boardSize)
                 .border(Color.black, width: 2)
+                
+                // Home to start animations
+                ForEach(homeToStartPawns, id: \.id) { animating in
+                    if let pawn = game.pawns[animating.color]?.first(where: { $0.id == animating.id }) {
+                        let homePos = getHomePosition(pawn: pawn, color: animating.color)
+                        let startPos = getPathStartPosition(for: animating.color)
+                        
+                        // Calculate the exact center positions relative to the board
+                        let startX = boardOffsetX + CGFloat(homePos.col) * cellSize
+                        let startY = boardOffsetY + CGFloat(homePos.row) * cellSize
+                        let endX = boardOffsetX + CGFloat(startPos.col) * cellSize
+                        let endY = boardOffsetY + CGFloat(startPos.row) * cellSize
+                        
+                        // Calculate the offset based on animation progress
+                        let xOffset = animating.progress * (endX - startX)
+                        let yOffset = animating.progress * (endY - startY)
+                        
+                        // Position the pawn at the start position and animate to end position
+                        PawnView(color: animating.color, size: cellSize * 0.8)
+                            .position(
+                                x: startX + xOffset + cellSize/2,
+                                y: startY + yOffset + cellSize/2
+                            )
+                    }
+                }
                 
                 // Captured pawns layer
                 ForEach(capturedPawns, id: \.id) { captured in
@@ -426,7 +451,7 @@ struct LudoBoardView: View {
                 PawnView(color: color, size: cellSize * 0.8)
                     .offset(y: -hopOffset)
                     .onTapGesture {
-                        if color == game.currentPlayer && !isAnimating {
+                        if color == game.currentPlayer && !isPathAnimating {
                             let currentPos = pawn.positionIndex ?? -1
                             game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
                             if let newPos = game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex,
@@ -442,36 +467,24 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func homePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         if isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            let isSliding = slidingPawn?.color == color && slidingPawn?.id == pawn.id
-            let slidingProgress = isSliding ? slidingPawn?.progress ?? 0 : 0
-            
-            // Calculate the path from home to start
-            let homePos = getHomePosition(pawn: pawn, color: color)
-            let startPos = getPathStartPosition(for: color)
-            
-            // Calculate the offset based on sliding progress
-            let xOffset = slidingProgress * Double(startPos.col - homePos.col) * cellSize
-            let yOffset = slidingProgress * Double(startPos.row - homePos.row) * cellSize
-            
             PawnView(color: color, size: cellSize * 0.8)
-                .offset(x: xOffset, y: yOffset)
                 .onTapGesture {
-                    let _ = debugPrintTapAndAnimation(pawn: pawn, color: color, isAnimating: isAnimating)
-                    
-                    if color == game.currentPlayer && !isAnimating && game.diceValue == 6 {
-                        // Set initial animation state
-                        slidingPawn = (color: color, id: pawn.id, progress: 0)
+                    if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
+                        // Add to home-to-start animations
+                        homeToStartPawns.append((color: color, id: pawn.id, progress: 0))
                         
                         // Animate to final position
                         withAnimation(.easeInOut(duration: 0.5)) {
-                            slidingPawn?.progress = 1.0
+                            if let index = homeToStartPawns.firstIndex(where: { $0.color == color && $0.id == pawn.id }) {
+                                homeToStartPawns[index].progress = 1.0
+                            }
                         }
                         
                         // Delay the actual move until after animation
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            print("DEBUG: Animation complete, executing move")
                             game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                            slidingPawn = nil
+                            // Remove from animations
+                            homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
                         }
                     }
                 }
