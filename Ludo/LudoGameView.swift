@@ -94,6 +94,7 @@ struct LudoBoardView: View {
     @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var currentStep = 0
     @State private var isAnimating = false
+    @State private var slidingPawn: (color: PlayerColor, id: Int, progress: Double)? = nil
     
     private func printPawnPositions(color: PlayerColor) {
         print("\nDEBUG: All pawn positions for color \(color):")
@@ -325,13 +326,53 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func homePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         if isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col) {
+            let isSliding = slidingPawn?.color == color && slidingPawn?.id == pawn.id
+            let slidingProgress = isSliding ? slidingPawn?.progress ?? 0 : 0
+            
+            // Calculate the path from home to start
+            let homePos = getHomePosition(pawn: pawn, color: color)
+            let startPos = getPathStartPosition(for: color)
+            
+            // Calculate the offset based on sliding progress
+            let xOffset = slidingProgress * Double(startPos.col - homePos.col) * cellSize
+            let yOffset = slidingProgress * Double(startPos.row - homePos.row) * cellSize
+            
             PawnView(color: color, size: cellSize * 0.8)
+                .offset(x: xOffset, y: yOffset)
                 .onTapGesture {
+                    let _ = debugPrintTapAndAnimation(pawn: pawn, color: color, isAnimating: isAnimating)
+                    
                     if color == game.currentPlayer && !isAnimating && game.diceValue == 6 {
-                        print("DEBUG: Moving pawn \(pawn.id) of color \(color) from home to start")
-                        game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                        // Set initial animation state
+                        slidingPawn = (color: color, id: pawn.id, progress: 0)
+                        
+                        // Animate to final position
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            slidingPawn?.progress = 1.0
+                        }
+                        
+                        // Delay the actual move until after animation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            print("DEBUG: Animation complete, executing move")
+                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                            slidingPawn = nil
+                        }
                     }
                 }
+        }
+    }
+    
+    // Helper function to get the start position on the path for each color
+    private func getPathStartPosition(for color: PlayerColor) -> (row: Int, col: Int) {
+        switch color {
+        case .red:
+            return (row: 6, col: 1)
+        case .green:
+            return (row: 1, col: 8)
+        case .yellow:
+            return (row: 8, col: 13)
+        case .blue:
+            return (row: 13, col: 6)
         }
     }
     
@@ -357,6 +398,23 @@ struct LudoBoardView: View {
                    (pawn.id == 1 && row == 10 && col == 4) ||
                    (pawn.id == 2 && row == 13 && col == 1) ||
                    (pawn.id == 3 && row == 13 && col == 4)
+        }
+    }
+    
+    private func debugPrintTapAndAnimation(pawn: Pawn, color: PlayerColor, isAnimating: Bool) {
+        print("\nDEBUG: TAP DETECTED on pawn \(pawn.id) of color \(color)")
+        print("DEBUG: Current state:")
+        print("DEBUG: - Current player: \(game.currentPlayer)")
+        print("DEBUG: - Dice value: \(game.diceValue)")
+        print("DEBUG: - Is animating: \(isAnimating)")
+        
+        if color == game.currentPlayer && !isAnimating && game.diceValue == 6 {
+            print("DEBUG: Starting animation sequence")
+        } else {
+            print("DEBUG: Conditions not met for animation:")
+            print("DEBUG: - color == currentPlayer: \(color == game.currentPlayer)")
+            print("DEBUG: - !isAnimating: \(!isAnimating)")
+            print("DEBUG: - diceValue == 6: \(game.diceValue == 6)")
         }
     }
 }
