@@ -54,15 +54,32 @@ struct LudoGameView: View {
                     .padding()
             }
             
-            Button("Roll Dice") {
-                game.rollDice()
+            HStack {
+                Button("Roll Dice") {
+                    game.rollDice()
+                }
+                .font(.title2)
+                .padding()
+                .background(game.eligiblePawns.isEmpty ? Color.blue : Color.gray)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .disabled(!game.eligiblePawns.isEmpty)
+                
+                // Test dice roll buttons
+                HStack {
+                    ForEach([1, 2, 3, 4, 5, 6], id: \.self) { value in
+                        Button("\(value)") {
+                            game.testRollDice(value: value)
+                        }
+                        .font(.title3)
+                        .padding(8)
+                        .background(game.eligiblePawns.isEmpty ? Color.green : Color.gray)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .disabled(!game.eligiblePawns.isEmpty)
+                    }
+                }
             }
-            .font(.title2)
-            .padding()
-            .background(game.eligiblePawns.isEmpty ? Color.blue : Color.gray)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .disabled(!game.eligiblePawns.isEmpty)
             
             // Ludo Board
             LudoBoardView()

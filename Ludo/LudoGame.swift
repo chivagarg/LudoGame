@@ -183,6 +183,34 @@ class LudoGame: ObservableObject {
         }
     }
     
+    // Function to set a specific dice value for testing
+    func testRollDice(value: Int) {
+        // Only allow rolling if there are no eligible pawns
+        guard eligiblePawns.isEmpty else { return }
+        
+        // Set the specified dice value
+        diceValue = value
+        currentRollPlayer = currentPlayer  // Set the current player as the roll owner
+        
+        // Mark eligible pawns based on the roll
+        if let currentPawns = pawns[currentPlayer] {
+            eligiblePawns = Set(currentPawns.filter { pawn in
+                if let positionIndex = pawn.positionIndex {
+                    // Pawn is on the path
+                    return positionIndex >= 0
+                } else {
+                    // Pawn is at home and dice is 6
+                    return diceValue == 6
+                }
+            }.map { $0.id })
+        }
+        
+        // If no pawns can move, advance to next turn immediately
+        if eligiblePawns.isEmpty {
+            nextTurn(clearRoll: false)  // Don't clear the roll when no moves are possible
+        }
+    }
+    
     func nextTurn(clearRoll: Bool = true) {
         let colors = PlayerColor.allCases
         if let currentIndex = colors.firstIndex(of: currentPlayer) {
@@ -305,17 +333,29 @@ class LudoGame: ObservableObject {
     // Helper to check if a position is a safe spot
     private func isSafePosition(_ position: Position) -> Bool {
         // Check if position is in any safe zone
-        if Self.redSafeZone.contains(position) || Self.redHome == position { return true }
-        if Self.greenSafeZone.contains(position) || Self.greenHome == position { return true }
-        if Self.yellowSafeZone.contains(position) || Self.yellowHome == position { return true }
-        if Self.blueSafeZone.contains(position) || Self.blueHome == position { return true }
-        
-        // Check if position is at the start of any path
-        if position == Self.redPath[0] || position == Self.greenPath[0] ||
-           position == Self.yellowPath[0] || position == Self.bluePath[0] {
+        if Self.redSafeZone.contains(position) || 
+           Self.greenSafeZone.contains(position) ||
+           Self.yellowSafeZone.contains(position) ||
+           Self.blueSafeZone.contains(position) {
             return true
         }
         
-        return false
+        // Check if position is any home spot
+        if position == Self.redHome ||
+           position == Self.greenHome ||
+           position == Self.yellowHome ||
+           position == Self.blueHome {
+            return true
+        }
+        
+        // Check if position is a starting position (where pawns first enter the path)
+        let startingPositions = [
+            Position(row: 6, col: 1),  // Red start
+            Position(row: 1, col: 8),  // Green start
+            Position(row: 8, col: 13), // Yellow start
+            Position(row: 13, col: 6)  // Blue start
+        ]
+        
+        return startingPositions.contains(position)
     }
 } 
