@@ -89,6 +89,16 @@ struct LudoGameView: View {
         }
         print("")
     }
+    
+    private func debugPrintCapturedPawnPositions(capturedPosition: Position, homePos: (row: Int, col: Int), startX: CGFloat, startY: CGFloat, endX: CGFloat, endY: CGFloat, xOffset: CGFloat, yOffset: CGFloat) {
+        print("\nDEBUG: Captured pawn positions:")
+        print("Captured position: row \(capturedPosition.row), col \(capturedPosition.col)")
+        print("Home position: row \(homePos.row), col \(homePos.col)")
+        print("Start coordinates: x \(startX), y \(startY)")
+        print("End coordinates: x \(endX), y \(endY)")
+        print("Current offset: x \(xOffset), y \(yOffset)")
+        print("Final position: x \(startX + xOffset), y \(startY + yOffset)")
+    }
 }
 
 struct LudoBoardView: View {
@@ -99,6 +109,32 @@ struct LudoBoardView: View {
     @State private var currentStep = 0
     @State private var isAnimating = false
     @State private var slidingPawn: (color: PlayerColor, id: Int, progress: Double)? = nil
+    @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
+    
+    private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, offsetX: CGFloat, offsetY: CGFloat) {
+        let boardSize = min(geometry.size.width, geometry.size.height) * 0.95
+        let cellSize = boardSize / CGFloat(gridSize)
+        let boardOffsetX = (geometry.size.width - boardSize) / 2
+        let boardOffsetY = (geometry.size.height - boardSize) / 2
+        
+        print("\nDEBUG: Board dimensions:")
+        print("Board size: \(boardSize)")
+        print("Cell size: \(cellSize)")
+        print("Board offset X: \(boardOffsetX)")
+        print("Board offset Y: \(boardOffsetY)")
+        
+        return (boardSize, cellSize, boardOffsetX, boardOffsetY)
+    }
+    
+    private func debugPrintCapturedPawnPositions(capturedPosition: Position, homePos: (row: Int, col: Int), startX: CGFloat, startY: CGFloat, endX: CGFloat, endY: CGFloat, xOffset: CGFloat, yOffset: CGFloat) {
+        print("\nDEBUG: Captured pawn positions:")
+        print("Captured position: row \(capturedPosition.row), col \(capturedPosition.col)")
+        print("Home position: row \(homePos.row), col \(homePos.col)")
+        print("Start coordinates: x \(startX), y \(startY)")
+        print("End coordinates: x \(endX), y \(endY)")
+        print("Current offset: x \(xOffset), y \(yOffset)")
+        print("Final position: x \(startX + xOffset), y \(startY + yOffset)")
+    }
     
     private func printPawnPositions(color: PlayerColor) {
         print("\nDEBUG: All pawn positions for color \(color):")
@@ -166,9 +202,21 @@ struct LudoBoardView: View {
                     
                     let otherPosition = game.path(for: otherColor)[otherPositionIndex]
                     if otherPosition == finalPosition {
-                        // Capture the other pawn after a short delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        // Add the pawn to captured pawns for animation
+                        capturedPawns.append((color: otherColor, id: otherPawn.id, progress: 0))
+                        
+                        // Animate the capture
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            if let index = capturedPawns.firstIndex(where: { $0.color == otherColor && $0.id == otherPawn.id }) {
+                                capturedPawns[index].progress = 1.0
+                            }
+                        }
+                        
+                        // After animation completes, update the game state
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             game.pawns[otherColor]?[otherIndex].positionIndex = nil
+                            // Remove from captured pawns
+                            capturedPawns.removeAll(where: { $0.color == otherColor && $0.id == otherPawn.id })
                         }
                     }
                 }
@@ -208,20 +256,59 @@ struct LudoBoardView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let boardSize = min(geometry.size.width, geometry.size.height) * 0.95
-            let cellSize = boardSize / CGFloat(gridSize)
+            let (boardSize, cellSize, boardOffsetX, boardOffsetY) = calculateBoardDimensions(geometry: geometry)
             
-            VStack(spacing: 0) {
-                ForEach(0..<gridSize, id: \.self) { row in
-                    HStack(spacing: 0) {
-                        ForEach(0..<gridSize, id: \.self) { col in
-                            cellView(row: row, col: col, cellSize: cellSize)
+            ZStack {
+                VStack(spacing: 0) {
+                    ForEach(0..<gridSize, id: \.self) { row in
+                        HStack(spacing: 0) {
+                            ForEach(0..<gridSize, id: \.self) { col in
+                                cellView(row: row, col: col, cellSize: cellSize)
+                            }
                         }
                     }
                 }
+                .frame(width: boardSize, height: boardSize)
+                .border(Color.black, width: 2)
+                
+                // Captured pawns layer
+                ForEach(capturedPawns, id: \.id) { captured in
+                    if let pawn = game.pawns[captured.color]?.first(where: { $0.id == captured.id }) {
+                        // Get the actual position where the pawn was captured
+                        let capturedPosition = game.path(for: captured.color)[pawn.positionIndex ?? 0]
+                        let homePos = getHomePosition(pawn: pawn, color: captured.color)
+                        
+                        // Calculate the exact center positions relative to the board
+                        let startX = boardOffsetX + CGFloat(capturedPosition.col) * cellSize
+                        let startY = boardOffsetY + CGFloat(capturedPosition.row) * cellSize
+                        let endX = boardOffsetX + CGFloat(homePos.col) * cellSize
+                        let endY = boardOffsetY + CGFloat(homePos.row) * cellSize
+                        
+                        // Calculate the offset based on capture progress
+                        let xOffset = captured.progress * (endX - startX)
+                        let yOffset = captured.progress * (endY - startY)
+                        
+                        // Debug print positions
+                        let _ = debugPrintCapturedPawnPositions(
+                            capturedPosition: capturedPosition,
+                            homePos: homePos,
+                            startX: startX,
+                            startY: startY,
+                            endX: endX,
+                            endY: endY,
+                            xOffset: xOffset,
+                            yOffset: yOffset
+                        )
+                        
+                        // Position the pawn at the start position and animate to end position
+                        PawnView(color: captured.color, size: cellSize * 0.8)
+                            .position(
+                                x: startX + xOffset + cellSize/2,
+                                y: startY + yOffset + cellSize/2
+                            )
+                    }
+                }
             }
-            .frame(width: boardSize, height: boardSize)
-            .border(Color.black, width: 2)
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onAppear {
                 Self.pawnViewCount = 0
