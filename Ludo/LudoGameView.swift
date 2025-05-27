@@ -54,13 +54,13 @@ struct LudoGameView: View {
                 
                 // Test dice roll buttons
                 HStack {
-                    ForEach([1, 2, 3, 4, 5, 6], id: \.self) { value in
+                    ForEach([1, 2, 3, 4, 5, 6, 24], id: \.self) { value in
                         Button("\(value)") {
                             game.testRollDice(value: value)
                         }
                         .font(.title3)
                         .padding(8)
-                        .background(game.eligiblePawns.isEmpty ? Color.green : Color.gray)
+                        .background(game.eligiblePawns.isEmpty ? (value == 24 ? Color.purple : Color.green) : Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                         .disabled(!game.eligiblePawns.isEmpty)
@@ -181,7 +181,7 @@ struct LudoBoardView: View {
         isPathAnimating = true
         currentStep = 0
         
-        // Remove from homeToStartPawns if it's there
+        // Remove from homeToStartPawns if it's there (moving from starting home to path)
         homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
         
         func animateNextStep() {
@@ -193,6 +193,12 @@ struct LudoBoardView: View {
             let key = "\(color.rawValue)-\(pawn.id)"
             let currentFrom = from + currentStep
             let currentTo = currentFrom + 1
+            
+            // Safety check: if we're at the end of the path, don't try to animate further
+            if currentTo >= game.path(for: color).count {
+                isPathAnimating = false
+                return
+            }
             
             animatingPawns[key] = (currentFrom, currentTo, 0)
             
@@ -213,6 +219,9 @@ struct LudoBoardView: View {
         
         // After all steps are complete, check for captures
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25) {
+            // Safety check: if the pawn has reached ending home (to < 0), don't check for captures
+            guard to >= 0 else { return }
+            
             // Get the final position
             let finalPosition = game.path(for: color)[to]
             
@@ -238,6 +247,7 @@ struct LudoBoardView: View {
                         
                         // After animation completes, update the game state
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            // Send captured pawn back to its starting home
                             game.pawns[otherColor]?[otherIndex].positionIndex = nil
                             // Remove from captured pawns
                             capturedPawns.removeAll(where: { $0.color == otherColor && $0.id == otherPawn.id })
@@ -248,7 +258,7 @@ struct LudoBoardView: View {
         }
     }
     
-    private func getHomePosition(pawn: Pawn, color: PlayerColor) -> (row: Int, col: Int) {
+    private func getStartingHomePosition(pawn: Pawn, color: PlayerColor) -> (row: Int, col: Int) {
         switch color {
         case .red:
             return (row: pawn.id < 2 ? 1 : 4, col: pawn.id % 2 == 0 ? 1 : 4)
@@ -268,7 +278,7 @@ struct LudoBoardView: View {
             let startPos: Position
             if animation.start == -1 {
                 // If start is -1, we're moving from home
-                let homePos = getHomePosition(pawn: pawn, color: color)
+                let homePos = getStartingHomePosition(pawn: pawn, color: color)
                 startPos = Position(row: homePos.row, col: homePos.col)
             } else {
                 startPos = game.path(for: color)[animation.start]
@@ -305,7 +315,7 @@ struct LudoBoardView: View {
                 // Home to start animations
                 ForEach(homeToStartPawns, id: \.id) { animating in
                     if let pawn = game.pawns[animating.color]?.first(where: { $0.id == animating.id }) {
-                        let homePos = getHomePosition(pawn: pawn, color: animating.color)
+                        let homePos = getStartingHomePosition(pawn: pawn, color: animating.color)
                         let startPos = getPathStartPosition(for: animating.color)
                         
                         // Calculate the exact center positions relative to the board
@@ -332,7 +342,7 @@ struct LudoBoardView: View {
                     if let pawn = game.pawns[captured.color]?.first(where: { $0.id == captured.id }) {
                         // Get the actual position where the pawn was captured
                         let capturedPosition = game.path(for: captured.color)[pawn.positionIndex ?? 0]
-                        let homePos = getHomePosition(pawn: pawn, color: captured.color)
+                        let homePos = getStartingHomePosition(pawn: pawn, color: captured.color)
                         
                         // Calculate the exact center positions relative to the board
                         let startX = boardOffsetX + CGFloat(capturedPosition.col) * cellSize
@@ -483,7 +493,7 @@ struct LudoBoardView: View {
         } else {
             print("Home position check:")
             print("Cell being checked: row \(row), col \(col)")
-            let isCorrect = isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col)
+            let isCorrect = isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col)
             print("Is correct home position: \(isCorrect)")
         }
     }
@@ -512,8 +522,15 @@ struct LudoBoardView: View {
         
         Group {
             if let positionIndex = pawn.positionIndex {
-                pathPawnView(pawn: pawn, color: color, positionIndex: positionIndex, row: row, col: col, cellSize: cellSize)
+                if positionIndex >= 0 {
+                    // Pawn is on the path
+                    pathPawnView(pawn: pawn, color: color, positionIndex: positionIndex, row: row, col: col, cellSize: cellSize)
+                } else {
+                    // Pawn is in ending home (positionIndex == -1)
+                    endingHomePawnView(pawn: pawn, color: color, row: row, col: col, cellSize: cellSize)
+                }
             } else {
+                // Pawn is in starting home
                 homePawnView(pawn: pawn, color: color, row: row, col: col, cellSize: cellSize)
             }
         }
@@ -521,6 +538,7 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     private func pathPawnView(pawn: Pawn, color: PlayerColor, positionIndex: Int, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        // Only render pawns that are on the path (not in starting home or ending home)
         if positionIndex >= 0 {
             let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
             if currentPos.row == row && currentPos.col == col {
@@ -546,19 +564,41 @@ struct LudoBoardView: View {
     }
     
     @ViewBuilder
+    private func endingHomePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        if isCorrectEndingHomePosition(pawn: pawn, color: color, row: row, col: col) {
+            PawnView(color: color, size: cellSize * 0.8)
+                .shadow(color: .black.opacity(0.2), radius: 2)
+        }
+    }
+    
+    private func isCorrectEndingHomePosition(pawn: Pawn, color: PlayerColor, row: Int, col: Int) -> Bool {
+        // Each color has its own ending home position in the center
+        switch color {
+        case .red:
+            return row == 7 && col == 6
+        case .green:
+            return row == 6 && col == 7
+        case .yellow:
+            return row == 7 && col == 8
+        case .blue:
+            return row == 8 && col == 7
+        }
+    }
+    
+    @ViewBuilder
     private func homePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
-        if isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col) {
+        if isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
             PawnView(color: color, size: cellSize * 0.8)
                 .onTapGesture {
                     let _ = debugPrintHomePawnTap(pawn: pawn, color: color)
                     
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
-                        // Add to home-to-start animations
+                        // Add to home-to-start animations (moving from starting home to path)
                         homeToStartPawns.append((color: color, id: pawn.id, progress: 0))
                         
                         // Add to animatingPawns for position calculation
                         let key = "\(color.rawValue)-\(pawn.id)"
-                        animatingPawns[key] = (-1, 0, 0) // -1 represents home position
+                        animatingPawns[key] = (-1, 0, 0) // -1 represents starting home position
                         
                         // Animate to final position
                         withAnimation(.easeInOut(duration: 0.5)) {
@@ -599,7 +639,7 @@ struct LudoBoardView: View {
         }
     }
     
-    private func isCorrectHomePosition(pawn: Pawn, color: PlayerColor, row: Int, col: Int) -> Bool {
+    private func isCorrectStartingHomePosition(pawn: Pawn, color: PlayerColor, row: Int, col: Int) -> Bool {
         switch color {
         case .red:
             return (pawn.id == 0 && row == 1 && col == 1) ||
