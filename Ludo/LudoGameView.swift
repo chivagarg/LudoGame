@@ -160,6 +160,9 @@ struct LudoBoardView: View {
         isPathAnimating = true
         currentStep = 0
         
+        // Remove from homeToStartPawns if it's there
+        homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
+        
         func animateNextStep() {
             guard currentStep < steps else {
                 isPathAnimating = false
@@ -241,7 +244,14 @@ struct LudoBoardView: View {
         let key = "\(color.rawValue)-\(pawn.id)"
         if let animation = animatingPawns[key] {
             let progress = animation.progress
-            let startPos = game.path(for: color)[animation.start]
+            let startPos: Position
+            if animation.start == -1 {
+                // If start is -1, we're moving from home
+                let homePos = getHomePosition(pawn: pawn, color: color)
+                startPos = Position(row: homePos.row, col: homePos.col)
+            } else {
+                startPos = game.path(for: color)[animation.start]
+            }
             let endPos = game.path(for: color)[animation.end]
             
             // Calculate current position with a hop
@@ -429,8 +439,48 @@ struct LudoBoardView: View {
         }
     }
     
+    private func debugPrintPawnRendering(pawn: Pawn, color: PlayerColor, positionIndex: Int?, row: Int, col: Int) {
+        // Only log for red pawn with ID 1
+        guard color == .red && pawn.id == 1 else { return }
+        
+        print("\nDEBUG: Red pawn 1 rendering:")
+        print("Game state - Current player: \(game.currentPlayer), Dice value: \(game.diceValue)")
+        print("Pawn state - positionIndex: \(String(describing: positionIndex))")
+        
+        if let positionIndex = positionIndex {
+            print("Path position: \(positionIndex)")
+            let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
+            print("Current cell: row \(currentPos.row), col \(currentPos.col)")
+        } else {
+            print("Home position check:")
+            print("Cell being checked: row \(row), col \(col)")
+            let isCorrect = isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col)
+            print("Is correct home position: \(isCorrect)")
+        }
+    }
+
+    private func debugPrintHomePawnTap(pawn: Pawn, color: PlayerColor) {
+        guard color == .red && pawn.id == 1 else { return }
+        print("\nDEBUG: Red pawn 1 tapped in home")
+        print("Current state - positionIndex: \(String(describing: pawn.positionIndex))")
+        print("Game state - Current player: \(game.currentPlayer), Dice value: \(game.diceValue)")
+    }
+
+    private func debugPrintHomePawnMove(pawn: Pawn, color: PlayerColor) {
+        guard color == .red && pawn.id == 1 else { return }
+        print("\nDEBUG: Red pawn 1 moving from home")
+        print("Before move - positionIndex: \(String(describing: pawn.positionIndex))")
+    }
+
+    private func debugPrintHomePawnAfterMove(pawn: Pawn, color: PlayerColor) {
+        guard color == .red && pawn.id == 1 else { return }
+        print("After move - positionIndex: \(String(describing: game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex))")
+    }
+
     @ViewBuilder
     private func pawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
+        let _ = debugPrintPawnRendering(pawn: pawn, color: color, positionIndex: pawn.positionIndex, row: row, col: col)
+        
         Group {
             if let positionIndex = pawn.positionIndex {
                 pathPawnView(pawn: pawn, color: color, positionIndex: positionIndex, row: row, col: col, cellSize: cellSize)
@@ -469,22 +519,35 @@ struct LudoBoardView: View {
         if isCorrectHomePosition(pawn: pawn, color: color, row: row, col: col) {
             PawnView(color: color, size: cellSize * 0.8)
                 .onTapGesture {
+                    let _ = debugPrintHomePawnTap(pawn: pawn, color: color)
+                    
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
                         // Add to home-to-start animations
                         homeToStartPawns.append((color: color, id: pawn.id, progress: 0))
+                        
+                        // Add to animatingPawns for position calculation
+                        let key = "\(color.rawValue)-\(pawn.id)"
+                        animatingPawns[key] = (-1, 0, 0) // -1 represents home position
                         
                         // Animate to final position
                         withAnimation(.easeInOut(duration: 0.5)) {
                             if let index = homeToStartPawns.firstIndex(where: { $0.color == color && $0.id == pawn.id }) {
                                 homeToStartPawns[index].progress = 1.0
                             }
+                            animatingPawns[key]?.progress = 1.0
                         }
                         
                         // Delay the actual move until after animation
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            let _ = debugPrintHomePawnMove(pawn: pawn, color: color)
+                            
                             game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
+                            
+                            let _ = debugPrintHomePawnAfterMove(pawn: pawn, color: color)
+                            
                             // Remove from animations
                             homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
+                            animatingPawns.removeValue(forKey: key)
                         }
                     }
                 }
