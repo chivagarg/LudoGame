@@ -153,6 +153,27 @@ struct LudoBoardView: View {
         print("")
     }
     
+    private func isStarSpace(row: Int, col: Int) -> Bool {
+        // Starting positions for each color
+        let startPositions = [
+            (6, 1),  // Red start
+            (1, 8),  // Green start
+            (8, 13), // Yellow start
+            (13, 6)  // Blue start
+        ]
+        
+        // Additional star spaces
+        let additionalStarSpaces = [
+            (8, 2),
+            (12, 8),
+            (6, 12),
+            (2, 6)
+        ]
+        
+        return startPositions.contains(where: { $0.0 == row && $0.1 == col }) ||
+               additionalStarSpaces.contains(where: { $0.0 == row && $0.1 == col })
+    }
+    
     private func animatePawnMovementForPath(pawn: Pawn, color: PlayerColor, from: Int, to: Int, steps: Int) {
         print("DEBUG: animatePawnMovementForPath called for pawn \(pawn.id) of color \(color)")
         print("DEBUG: from: \(from), to: \(to), steps: \(steps)")
@@ -204,7 +225,7 @@ struct LudoBoardView: View {
                           otherPositionIndex >= 0 else { continue }
                     
                     let otherPosition = game.path(for: otherColor)[otherPositionIndex]
-                    if otherPosition == finalPosition {
+                    if otherPosition == finalPosition && !isStarSpace(row: finalPosition.row, col: finalPosition.col) {
                         // Add the pawn to captured pawns for animation
                         capturedPawns.append((color: otherColor, id: otherPawn.id, progress: 0))
                         
@@ -416,6 +437,14 @@ struct LudoBoardView: View {
             } else {
                 Rectangle().fill(Color.white)
             }
+            
+            // Draw star if this is a star space
+            if isStarSpace(row: row, col: col) {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.yellow)
+                    .font(.system(size: cellSize * 0.4))
+            }
+            
             Rectangle().stroke(Color.black, lineWidth: 0.5)
         }
     }
