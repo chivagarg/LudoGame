@@ -126,6 +126,7 @@ struct LudoBoardView: View {
         
         func animateNextStep() {
             guard currentStep < steps else {
+                print("DEBUG: Animation complete - currentStep (\(currentStep)) >= steps (\(steps))")
                 isPathAnimating = false
                 return
             }
@@ -134,12 +135,16 @@ struct LudoBoardView: View {
             let currentFrom = from + currentStep
             let currentTo = currentFrom + 1
             
+            print("DEBUG: Animation step - currentFrom: \(currentFrom), currentTo: \(currentTo), path count: \(game.path(for: color).count)")
+            
             // Safety check: if we're at the end of the path, don't try to animate further
             if currentTo >= game.path(for: color).count {
+                print("DEBUG: Reached end of path without ending home animation")
                 isPathAnimating = false
                 return
             }
             
+            print("DEBUG: Animating step \(currentStep) from \(currentFrom) to \(currentTo)")
             animatingPawns[key] = (currentFrom, currentTo, 0)
             
             withAnimation(.spring(response: 0.25, dampingFraction: 0.4, blendDuration: 0)) {
@@ -437,6 +442,19 @@ struct LudoBoardView: View {
         }
     }
     
+    private func isValidMove(color: PlayerColor, pawnId: Int) -> Bool {
+        // Check if it's the current player's turn
+        guard color == game.currentPlayer else { return false }
+        
+        // Check if it's the current player's roll
+        guard color == game.currentRollPlayer else { return false }
+        
+        // Check if the pawn is eligible to move
+        guard game.eligiblePawns.contains(pawnId) else { return false }
+        
+        return true
+    }
+
     @ViewBuilder
     private func pathPawnView(pawn: Pawn, color: PlayerColor, positionIndex: Int, row: Int, col: Int, cellSize: CGFloat) -> some View {
         // Only render pawns that are on the path (not in starting home or ending home)
@@ -451,12 +469,24 @@ struct LudoBoardView: View {
                     .offset(y: -hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
-                        if color == game.currentPlayer && !isPathAnimating {
+                        if !isPathAnimating {
                             let currentPos = pawn.positionIndex ?? -1
-                            game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                            if let newPos = game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex,
-                               newPos != currentPos {
-                                animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: newPos, steps: game.diceValue)
+                            let steps = game.diceValue
+                            
+                            // First check if the move is valid
+                            if isValidMove(color: color, pawnId: pawn.id) {
+                                // Calculate where the pawn will end up
+                                let currentPath = game.path(for: color)
+                                let newIndex = currentPos + steps
+                                let destinationIndex = newIndex >= currentPath.count - 1 ? -1 : newIndex
+                                
+                                // Start animation first
+                                animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps)
+                                
+                                // Delay the actual move until after animation
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
+                                    game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                                }
                             }
                         }
                     }
