@@ -72,33 +72,6 @@ struct LudoGameView: View {
             LudoBoardView()
         }
     }
-    
-    private func printPawnPositions(color: PlayerColor) {
-        print("\nDEBUG: All pawn positions for color \(color):")
-        for pawn in game.pawns[color] ?? [] {
-            if let positionIndex = pawn.positionIndex {
-                if positionIndex >= 0 {
-                    let position = game.path(for: color)[positionIndex]
-                    print("Pawn \(pawn.id): on path at position \(positionIndex) (row: \(position.row), col: \(position.col))")
-                } else {
-                    print("Pawn \(pawn.id): finished")
-                }
-            } else {
-                print("Pawn \(pawn.id): at home")
-            }
-        }
-        print("")
-    }
-    
-    private func debugPrintCapturedPawnPositions(capturedPosition: Position, homePos: (row: Int, col: Int), startX: CGFloat, startY: CGFloat, endX: CGFloat, endY: CGFloat, xOffset: CGFloat, yOffset: CGFloat) {
-        print("\nDEBUG: Captured pawn positions:")
-        print("Captured position: row \(capturedPosition.row), col \(capturedPosition.col)")
-        print("Home position: row \(homePos.row), col \(homePos.col)")
-        print("Start coordinates: x \(startX), y \(startY)")
-        print("End coordinates: x \(endX), y \(endY)")
-        print("Current offset: x \(xOffset), y \(yOffset)")
-        print("Final position: x \(startX + xOffset), y \(startY + yOffset)")
-    }
 }
 
 struct LudoBoardView: View {
@@ -117,40 +90,7 @@ struct LudoBoardView: View {
         let boardOffsetX = (geometry.size.width - boardSize) / 2
         let boardOffsetY = (geometry.size.height - boardSize) / 2
         
-        print("\nDEBUG: Board dimensions:")
-        print("Board size: \(boardSize)")
-        print("Cell size: \(cellSize)")
-        print("Board offset X: \(boardOffsetX)")
-        print("Board offset Y: \(boardOffsetY)")
-        
         return (boardSize, cellSize, boardOffsetX, boardOffsetY)
-    }
-    
-    private func debugPrintCapturedPawnPositions(capturedPosition: Position, homePos: (row: Int, col: Int), startX: CGFloat, startY: CGFloat, endX: CGFloat, endY: CGFloat, xOffset: CGFloat, yOffset: CGFloat) {
-        print("\nDEBUG: Captured pawn positions:")
-        print("Captured position: row \(capturedPosition.row), col \(capturedPosition.col)")
-        print("Home position: row \(homePos.row), col \(homePos.col)")
-        print("Start coordinates: x \(startX), y \(startY)")
-        print("End coordinates: x \(endX), y \(endY)")
-        print("Current offset: x \(xOffset), y \(yOffset)")
-        print("Final position: x \(startX + xOffset), y \(startY + yOffset)")
-    }
-    
-    private func printPawnPositions(color: PlayerColor) {
-        print("\nDEBUG: All pawn positions for color \(color):")
-        for pawn in game.pawns[color] ?? [] {
-            if let positionIndex = pawn.positionIndex {
-                if positionIndex >= 0 {
-                    let position = game.path(for: color)[positionIndex]
-                    print("Pawn \(pawn.id): on path at position \(positionIndex) (row: \(position.row), col: \(position.col))")
-                } else {
-                    print("Pawn \(pawn.id): finished")
-                }
-            } else {
-                print("Pawn \(pawn.id): at home")
-            }
-        }
-        print("")
     }
     
     private func isStarSpace(row: Int, col: Int) -> Bool {
@@ -354,18 +294,6 @@ struct LudoBoardView: View {
                         let xOffset = captured.progress * (endX - startX)
                         let yOffset = captured.progress * (endY - startY)
                         
-                        // Debug print positions
-                        let _ = debugPrintCapturedPawnPositions(
-                            capturedPosition: capturedPosition,
-                            homePos: homePos,
-                            startX: startX,
-                            startY: startY,
-                            endX: endX,
-                            endY: endY,
-                            xOffset: xOffset,
-                            yOffset: yOffset
-                        )
-                        
                         // Position the pawn at the start position and animate to end position
                         PawnView(color: captured.color, size: cellSize * 0.8)
                             .position(
@@ -471,31 +399,6 @@ struct LudoBoardView: View {
         ForEach(game.pawns[color] ?? [], id: \.id) { pawn in
             pawnView(pawn: pawn, color: color, row: row, col: col, cellSize: cellSize)
         }
-        
-        // Print all pawn positions for this color
-        if row == 0 && col == 0 {
-            let _ = printPawnPositions(color: color)
-        }
-    }
-    
-    private func debugPrintPawnRendering(pawn: Pawn, color: PlayerColor, positionIndex: Int?, row: Int, col: Int) {
-        // Only log for red pawn with ID 1
-        guard color == .red && pawn.id == 1 else { return }
-        
-        print("\nDEBUG: Red pawn 1 rendering:")
-        print("Game state - Current player: \(game.currentPlayer), Dice value: \(game.diceValue)")
-        print("Pawn state - positionIndex: \(String(describing: positionIndex))")
-        
-        if let positionIndex = positionIndex {
-            print("Path position: \(positionIndex)")
-            let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
-            print("Current cell: row \(currentPos.row), col \(currentPos.col)")
-        } else {
-            print("Home position check:")
-            print("Cell being checked: row \(row), col \(col)")
-            let isCorrect = isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col)
-            print("Is correct home position: \(isCorrect)")
-        }
     }
 
     private func debugPrintHomePawnTap(pawn: Pawn, color: PlayerColor) {
@@ -518,8 +421,6 @@ struct LudoBoardView: View {
 
     @ViewBuilder
     private func pawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
-        let _ = debugPrintPawnRendering(pawn: pawn, color: color, positionIndex: pawn.positionIndex, row: row, col: col)
-        
         Group {
             if let positionIndex = pawn.positionIndex {
                 if positionIndex >= 0 {
