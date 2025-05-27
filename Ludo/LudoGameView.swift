@@ -54,13 +54,13 @@ struct LudoGameView: View {
                 
                 // Test dice roll buttons
                 HStack {
-                    ForEach([1, 2, 3, 4, 5, 6, 24], id: \.self) { value in
+                    ForEach([1, 2, 3, 4, 5, 6, 48], id: \.self) { value in
                         Button("\(value)") {
                             game.testRollDice(value: value)
                         }
                         .font(.title3)
                         .padding(8)
-                        .background(game.eligiblePawns.isEmpty ? (value == 24 ? Color.purple : Color.green) : Color.gray)
+                        .background(game.eligiblePawns.isEmpty ? (value == 48 ? Color.purple : Color.green) : Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                         .disabled(!game.eligiblePawns.isEmpty)
