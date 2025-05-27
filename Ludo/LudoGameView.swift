@@ -153,8 +153,8 @@ struct LudoBoardView: View {
         print("")
     }
     
-    private func animatePawnMovement(pawn: Pawn, color: PlayerColor, from: Int, to: Int, steps: Int) {
-        print("DEBUG: animatePawnMovement called for pawn \(pawn.id) of color \(color)")
+    private func animatePawnMovementForPath(pawn: Pawn, color: PlayerColor, from: Int, to: Int, steps: Int) {
+        print("DEBUG: animatePawnMovementForPath called for pawn \(pawn.id) of color \(color)")
         print("DEBUG: from: \(from), to: \(to), steps: \(steps)")
         
         isPathAnimating = true
@@ -175,14 +175,14 @@ struct LudoBoardView: View {
             
             animatingPawns[key] = (currentFrom, currentTo, 0)
             
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.4, blendDuration: 0)) {
                 animatingPawns[key]?.progress = 1.0
             }
             
             currentStep += 1
             
             // Schedule next step
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 animateNextStep()
             }
         }
@@ -191,7 +191,7 @@ struct LudoBoardView: View {
         animateNextStep()
         
         // After all steps are complete, check for captures
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.15) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25) {
             // Get the final position
             let finalPosition = game.path(for: color)[to]
             
@@ -497,16 +497,18 @@ struct LudoBoardView: View {
             if currentPos.row == row && currentPos.col == col {
                 let key = "\(color.rawValue)-\(pawn.id)"
                 let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 40 : 0
+                let isAnimating = animatingPawns[key] != nil
                 
-                PawnView(color: color, size: cellSize * 0.8)
+                PawnView(color: color, size: cellSize * (isAnimating ? 0.9 : 0.8))
                     .offset(y: -hopOffset)
+                    .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
                         if color == game.currentPlayer && !isPathAnimating {
                             let currentPos = pawn.positionIndex ?? -1
                             game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
                             if let newPos = game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex,
                                newPos != currentPos {
-                                animatePawnMovement(pawn: pawn, color: color, from: currentPos, to: newPos, steps: game.diceValue)
+                                animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: newPos, steps: game.diceValue)
                             }
                         }
                     }
