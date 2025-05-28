@@ -182,9 +182,12 @@ class LudoGame: ObservableObject {
             }.map { $0.id })
         }
         
-        // If no pawns can move, advance to next turn immediately
+        // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
-            nextTurn(clearRoll: false)  // Don't clear the roll when no moves are possible
+            // Keep the current player's roll visible for 1 seconds before moving to next turn
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.nextTurn(clearRoll: true)
+            }
         }
     }
     
@@ -213,9 +216,12 @@ class LudoGame: ObservableObject {
             }.map { $0.id })
         }
         
-        // If no pawns can move, advance to next turn immediately
+        // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
-            nextTurn(clearRoll: false)  // Don't clear the roll when no moves are possible
+            // Keep the current player's roll visible for 1 seconds before moving to next turn
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.nextTurn(clearRoll: true)
+            }
         }
     }
     
@@ -226,7 +232,7 @@ class LudoGame: ObservableObject {
             currentPlayer = colors[nextIndex]
             eligiblePawns.removeAll()
             if clearRoll {
-                currentRollPlayer = nil  // Only clear the roll when explicitly requested
+                currentRollPlayer = nil
             }
         }
     }
@@ -262,30 +268,15 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
-        print("\nDEBUG: movePawn called with:")
-        print("  color: \(color)")
-        print("  currentPlayer: \(currentPlayer)")
-        print("  currentRollPlayer: \(String(describing: currentRollPlayer))")
-        print("  diceValue: \(diceValue)")
-        
         // Only allow moving if:
         // 1. It's your turn
         // 2. It's your roll
         // 3. The pawn is eligible to move
         guard color == currentPlayer && 
               color == currentRollPlayer &&
-              eligiblePawns.contains(pawnId) else { 
-            print("  GUARD FAILED:")
-            print("    color == currentPlayer: \(color == currentPlayer)")
-            print("    color == currentRollPlayer: \(color == currentRollPlayer)")
-            print("    eligiblePawns.contains(pawnId): \(eligiblePawns.contains(pawnId))")
-            return 
-        }
+              eligiblePawns.contains(pawnId) else { return }
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
-        
-        print("Moving pawn \(pawnId) of color \(color)")
-        print("Before move - positionIndex: \(String(describing: pawns[color]?[pawnIndex].positionIndex))")
         
         var shouldGetAnotherRoll = false
         
@@ -297,37 +288,22 @@ class LudoGame: ObservableObject {
             if newIndex < currentPath.count - 1 {
                 // First check if the new position would result in a capture
                 let newPosition = currentPath[newIndex]
-                print("  Checking new position for capture: \(newPosition)")
                 
                 // Check if the position is a safe spot
                 let isSafeSpot = isSafePosition(newPosition)
-                print("  Is safe spot: \(isSafeSpot)")
                 
                 if !isSafeSpot {
-                    print("  Not a safe spot, checking for captures...")
                     // Check for captures at the new position
                     for (otherColor, otherPawns) in pawns {
-                        if otherColor == color { 
-                            print("  Skipping same color: \(otherColor)")
-                            continue 
-                        }
+                        if otherColor == color { continue }
                         
-                        print("  Checking \(otherColor) pawns...")
                         for (otherIndex, otherPawn) in otherPawns.enumerated() {
                             guard let otherPositionIndex = otherPawn.positionIndex,
-                                  otherPositionIndex >= 0 else { 
-                                print("    \(otherColor) pawn \(otherIndex) not on path, skipping")
-                                continue 
-                            }
+                                  otherPositionIndex >= 0 else { continue }
                             
                             let otherPosition = path(for: otherColor)[otherPositionIndex]
-                            print("    Comparing positions:")
-                            print("      New position: \(newPosition)")
-                            print("      Other pawn position: \(otherPosition)")
-                            print("      Match? \(otherPosition == newPosition)")
                             
                             if otherPosition == newPosition {
-                                print("    MATCH! Capturing \(otherColor) pawn at position \(otherPosition)")
                                 // Capture the pawn
                                 pawns[otherColor]?[otherIndex].positionIndex = nil
                                 shouldGetAnotherRoll = true
@@ -336,18 +312,14 @@ class LudoGame: ObservableObject {
                             }
                         }
                     }
-                } else {
-                    print("  Position is safe, no capture check needed")
                 }
                 
                 // Now move the pawn
                 pawns[color]?[pawnIndex].positionIndex = newIndex
-                print("  After move - shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
             } else if newIndex == currentPath.count - 1 {
                 // Pawn reaches home
                 pawns[color]?[pawnIndex].positionIndex = -1
                 shouldGetAnotherRoll = true // Get another roll for reaching home
-                print("  Pawn reached home - shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
                 
                 // Add points for reaching home
                 if !homeCompletionOrder.contains(color) {
@@ -364,20 +336,13 @@ class LudoGame: ObservableObject {
             }
         }
         
-        print("After move - positionIndex: \(String(describing: pawns[color]?[pawnIndex].positionIndex))")
-        print("Turn management:")
-        print("  shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
-        print("  diceValue == 6: \(diceValue == 6)")
-        
         // After moving the pawn, check if we should advance the turn
         // Keep the same player's turn if they rolled a 6, captured a pawn, or reached home
         if shouldGetAnotherRoll || diceValue == 6 {
-            print("  Player gets another roll")
             // Player gets another roll - clear the roll but keep the same player
             currentRollPlayer = nil
             eligiblePawns.removeAll()
         } else {
-            print("  Advancing to next player")
             // No extra roll - advance to next player
             nextTurn(clearRoll: true)
         }

@@ -1,5 +1,93 @@
 import SwiftUI
 
+struct DiceView: View {
+    let value: Int
+    let isRolling: Bool
+    let onTap: () -> Void
+    
+    @State private var rotation: Double = 0
+    @State private var scale: CGFloat = 1.0
+    
+    var body: some View {
+        ZStack {
+            // Dice background
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white)
+                .shadow(radius: 5)
+                .frame(width: 60, height: 60)
+            
+            if isRolling {
+                // Rolling animation
+                Text("🎲")
+                    .font(.system(size: 40))
+                    .rotationEffect(.degrees(rotation))
+                    .scaleEffect(scale)
+                    .onAppear {
+                        print("🎲 Starting dice animation in view")
+                        withAnimation(.easeInOut(duration: 0.2).repeatForever(autoreverses: true)) {
+                            rotation = 360
+                            scale = 1.2
+                        }
+                    }
+                    .onDisappear {
+                        print("🎲 Ending dice animation in view")
+                        rotation = 0
+                        scale = 1.0
+                    }
+            } else {
+                // Dice dots
+                VStack(spacing: 8) {
+                    ForEach(0..<3) { row in
+                        HStack(spacing: 8) {
+                            ForEach(0..<3) { col in
+                                Circle()
+                                    .fill(Color.black)
+                                    .frame(width: 8, height: 8)
+                                    .opacity(shouldShowDot(row: row, col: col) ? 1 : 0)
+                            }
+                        }
+                    }
+                }
+                .frame(width: 40, height: 40)
+            }
+        }
+        .frame(width: 60, height: 60)
+        .onTapGesture {
+            onTap()
+        }
+        .onChange(of: isRolling) { newValue in
+            print("🎲 isRolling changed to: \(newValue)")
+        }
+        .onChange(of: value) { newValue in
+            print("🎲 Dice value changed in view to: \(newValue)")
+        }
+    }
+    
+    private func shouldShowDot(row: Int, col: Int) -> Bool {
+        switch value {
+        case 1:
+            return row == 1 && col == 1
+        case 2:
+            return (row == 0 && col == 0) || (row == 2 && col == 2)
+        case 3:
+            return (row == 0 && col == 0) || (row == 1 && col == 1) || (row == 2 && col == 2)
+        case 4:
+            return (row == 0 && col == 0) || (row == 0 && col == 2) ||
+                   (row == 2 && col == 0) || (row == 2 && col == 2)
+        case 5:
+            return (row == 0 && col == 0) || (row == 0 && col == 2) ||
+                   (row == 1 && col == 1) ||
+                   (row == 2 && col == 0) || (row == 2 && col == 2)
+        case 6:
+            return (row == 0 && col == 0) || (row == 0 && col == 2) ||
+                   (row == 1 && col == 0) || (row == 1 && col == 2) ||
+                   (row == 2 && col == 0) || (row == 2 && col == 2)
+        default:
+            return false
+        }
+    }
+}
+
 struct LudoGameView: View {
     @StateObject private var game = LudoGame()
     
@@ -37,34 +125,18 @@ struct LudoGameView: View {
             Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
                 .font(.title2)
             
-            Text("Dice: \(game.diceValue)")
-                .font(.title)
-                .padding()
-            
             HStack {
-                Button("Roll Dice") {
-                    game.rollDice()
-                }
-                .font(.title2)
-                .padding()
-                .background(game.eligiblePawns.isEmpty ? Color.blue : Color.gray)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .disabled(!game.eligiblePawns.isEmpty)
-                
                 // Test dice roll buttons
-                HStack {
-                    ForEach([1, 2, 3, 4, 5, 6, 48], id: \.self) { value in
-                        Button("\(value)") {
-                            game.testRollDice(value: value)
-                        }
-                        .font(.title3)
-                        .padding(8)
-                        .background(game.eligiblePawns.isEmpty ? (value == 48 ? Color.purple : Color.green) : Color.gray)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        .disabled(!game.eligiblePawns.isEmpty)
+                ForEach([1, 2, 3, 4, 5, 6, 48], id: \.self) { value in
+                    Button("\(value)") {
+                        game.testRollDice(value: value)
                     }
+                    .font(.title3)
+                    .padding(8)
+                    .background(game.eligiblePawns.isEmpty ? (value == 48 ? Color.purple : Color.green) : Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                    .disabled(!game.eligiblePawns.isEmpty)
                 }
             }
             
@@ -77,12 +149,26 @@ struct LudoGameView: View {
 struct LudoBoardView: View {
     let gridSize = 15
     @EnvironmentObject var game: LudoGame
+    @State private var isDiceRolling = false
     private static var pawnViewCount = 0
     @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var currentStep = 0
     @State private var isPathAnimating = false
     @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
     @State private var homeToStartPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
+    
+    private func getDicePosition() -> (row: Int, col: Int) {
+        switch game.currentPlayer {
+        case .red:
+            return (row: 2, col: 2)  // Center of red home area
+        case .green:
+            return (row: 2, col: 11)  // Center of green home area
+        case .yellow:
+            return (row: 11, col: 11)  // Center of yellow home area
+        case .blue:
+            return (row: 11, col: 2)  // Center of blue home area
+        }
+    }
     
     private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, offsetX: CGFloat, offsetY: CGFloat) {
         let boardSize = min(geometry.size.width, geometry.size.height) * 0.95
@@ -245,6 +331,38 @@ struct LudoBoardView: View {
                 }
                 .frame(width: boardSize, height: boardSize)
                 .border(Color.black, width: 2)
+                
+                // Dice View
+                let dicePos = getDicePosition()
+                DiceView(value: game.diceValue, isRolling: isDiceRolling) {
+                    print("🎲 Dice tapped - isDiceRolling: \(isDiceRolling), eligiblePawns: \(game.eligiblePawns.count)")
+                    if !isDiceRolling && game.eligiblePawns.isEmpty {
+                        isDiceRolling = true
+                        print("🎲 Starting dice roll animation from tap")
+                        game.rollDice()
+                        // Simulate rolling animation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            print("🎲 Ending dice roll animation from tap")
+                            isDiceRolling = false
+                        }
+                    }
+                }
+                .position(
+                    x: boardOffsetX + CGFloat(dicePos.col + 1) * cellSize,
+                    y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
+                )
+                .onChange(of: game.diceValue) { newValue in
+                    print("🎲 Dice value changed to: \(newValue), isDiceRolling: \(isDiceRolling)")
+                    // Only trigger animation if we're not already rolling from a tap
+                    if !isDiceRolling {
+                        isDiceRolling = true
+                        print("🎲 Starting dice roll animation from value change")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            print("🎲 Ending dice roll animation from value change")
+                            isDiceRolling = false
+                        }
+                    }
+                }
                 
                 // Home to start animations
                 ForEach(homeToStartPawns, id: \.id) { animating in
