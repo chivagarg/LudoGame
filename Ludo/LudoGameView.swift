@@ -135,7 +135,7 @@ struct LudoBoardView: View {
             let currentFrom = from + currentStep
             let currentTo = currentFrom + 1
             
-            print("DEBUG: Animation step - currentFrom: \(currentFrom), currentTo: \(currentTo), path count: \(game.path(for: color).count)")
+            // print("DEBUG: Animation step - currentFrom: \(currentFrom), currentTo: \(currentTo), path count: \(game.path(for: color).count)")
             
             // Safety check: if we're at the end of the path, don't try to animate further
             if currentTo >= game.path(for: color).count {
@@ -144,7 +144,7 @@ struct LudoBoardView: View {
                 return
             }
             
-            print("DEBUG: Animating step \(currentStep) from \(currentFrom) to \(currentTo)")
+            // print("DEBUG: Animating step \(currentStep) from \(currentFrom) to \(currentTo)")
             animatingPawns[key] = (currentFrom, currentTo, 0)
             
             withAnimation(.spring(response: 0.25, dampingFraction: 0.4, blendDuration: 0)) {
@@ -192,9 +192,6 @@ struct LudoBoardView: View {
                         
                         // After animation completes, update the game state
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            // Send captured pawn back to its starting home
-                            game.pawns[otherColor]?[otherIndex].positionIndex = nil
-                            // Remove from captured pawns
                             capturedPawns.removeAll(where: { $0.color == otherColor && $0.id == otherPawn.id })
                         }
                     }

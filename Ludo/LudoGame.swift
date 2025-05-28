@@ -257,10 +257,11 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
-        print("DEBUG: movePawn called with:")
+        print("\nDEBUG: movePawn called with:")
         print("  color: \(color)")
         print("  currentPlayer: \(currentPlayer)")
         print("  currentRollPlayer: \(String(describing: currentRollPlayer))")
+        print("  diceValue: \(diceValue)")
         
         // Only allow moving if:
         // 1. It's your turn
@@ -268,12 +269,20 @@ class LudoGame: ObservableObject {
         // 3. The pawn is eligible to move
         guard color == currentPlayer && 
               color == currentRollPlayer &&
-              eligiblePawns.contains(pawnId) else { return }
+              eligiblePawns.contains(pawnId) else { 
+            print("  GUARD FAILED:")
+            print("    color == currentPlayer: \(color == currentPlayer)")
+            print("    color == currentRollPlayer: \(color == currentRollPlayer)")
+            print("    eligiblePawns.contains(pawnId): \(eligiblePawns.contains(pawnId))")
+            return 
+        }
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
         
         print("Moving pawn \(pawnId) of color \(color)")
         print("Before move - positionIndex: \(String(describing: pawns[color]?[pawnIndex].positionIndex))")
+        
+        var shouldGetAnotherRoll = false
         
         if let positionIndex = pawns[color]?[pawnIndex].positionIndex {
             // Pawn is on the path
@@ -281,11 +290,57 @@ class LudoGame: ObservableObject {
             let newIndex = positionIndex + steps
             
             if newIndex < currentPath.count - 1 {
+                // First check if the new position would result in a capture
+                let newPosition = currentPath[newIndex]
+                print("  Checking new position for capture: \(newPosition)")
+                
+                // Check if the position is a safe spot
+                let isSafeSpot = isSafePosition(newPosition)
+                print("  Is safe spot: \(isSafeSpot)")
+                
+                if !isSafeSpot {
+                    print("  Not a safe spot, checking for captures...")
+                    // Check for captures at the new position
+                    for (otherColor, otherPawns) in pawns {
+                        if otherColor == color { 
+                            print("  Skipping same color: \(otherColor)")
+                            continue 
+                        }
+                        
+                        print("  Checking \(otherColor) pawns...")
+                        for (otherIndex, otherPawn) in otherPawns.enumerated() {
+                            guard let otherPositionIndex = otherPawn.positionIndex,
+                                  otherPositionIndex >= 0 else { 
+                                print("    \(otherColor) pawn \(otherIndex) not on path, skipping")
+                                continue 
+                            }
+                            
+                            let otherPosition = path(for: otherColor)[otherPositionIndex]
+                            print("    Comparing positions:")
+                            print("      New position: \(newPosition)")
+                            print("      Other pawn position: \(otherPosition)")
+                            print("      Match? \(otherPosition == newPosition)")
+                            
+                            if otherPosition == newPosition {
+                                print("    MATCH! Capturing \(otherColor) pawn at position \(otherPosition)")
+                                // Capture the pawn
+                                pawns[otherColor]?[otherIndex].positionIndex = nil
+                                shouldGetAnotherRoll = true
+                            }
+                        }
+                    }
+                } else {
+                    print("  Position is safe, no capture check needed")
+                }
+                
+                // Now move the pawn
                 pawns[color]?[pawnIndex].positionIndex = newIndex
-                checkPosition(color: color, pawnIndex: pawnIndex)
+                print("  After move - shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
             } else if newIndex == currentPath.count - 1 {
                 // Pawn reaches home
                 pawns[color]?[pawnIndex].positionIndex = -1
+                shouldGetAnotherRoll = true // Get another roll for reaching home
+                print("  Pawn reached home - shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
             }
         } else {
             // Pawn is at home
@@ -296,31 +351,22 @@ class LudoGame: ObservableObject {
         }
         
         print("After move - positionIndex: \(String(describing: pawns[color]?[pawnIndex].positionIndex))")
+        print("Turn management:")
+        print("  shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
+        print("  diceValue == 6: \(diceValue == 6)")
         
         // After moving the pawn, check if we should advance the turn
-        // Only keep the same player's turn if they rolled a 6
-        if diceValue != 6 {
-            nextTurn(clearRoll: true)  // Clear the roll when turn changes
+        // Keep the same player's turn if they rolled a 6, captured a pawn, or reached home
+        if shouldGetAnotherRoll || diceValue == 6 {
+            print("  Player gets another roll")
+            // Player gets another roll - clear the roll but keep the same player
+            currentRollPlayer = nil
+            eligiblePawns.removeAll()
+        } else {
+            print("  Advancing to next player")
+            // No extra roll - advance to next player
+            nextTurn(clearRoll: true)
         }
-        
-        // Clear eligible pawns
-        eligiblePawns.removeAll()
-    }
-
-    // Function to check if a pawn can capture another pawn or is in a safe spot
-    private func checkPosition(color: PlayerColor, pawnIndex: Int) {
-        guard let currentPawn = pawns[color]?[pawnIndex],
-              let positionIndex = currentPawn.positionIndex,
-              positionIndex >= 0 else { return }
-        
-        let currentPosition = path(for: color)[positionIndex]
-        
-        // Check if the position is a safe spot
-        let isSafeSpot = isSafePosition(currentPosition)
-        if isSafeSpot { return }
-        
-        // Note: Capture logic is now handled in the animation sequence
-        // This ensures the capturing pawn reaches the position before the captured pawn is sent home
     }
     
     // Helper to check if a position is a safe spot
