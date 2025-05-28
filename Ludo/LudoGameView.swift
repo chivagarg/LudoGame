@@ -464,9 +464,115 @@ struct LudoBoardView: View {
         return true
     }
 
+    private func countPawnsInCell(row: Int, col: Int) -> Int {
+        var count = 0
+        for (_, pawns) in game.pawns {
+            for pawn in pawns {
+                if let positionIndex = pawn.positionIndex, positionIndex >= 0 {
+                    let currentPos = getCurrentPosition(pawn: pawn, color: pawn.color, positionIndex: positionIndex)
+                    if currentPos.row == row && currentPos.col == col {
+                        count += 1
+                    }
+                }
+            }
+        }
+        return count
+    }
+
+    private func calculatePawnSizeAndOffset(cellSize: CGFloat, totalPawns: Int, index: Int) -> (size: CGFloat, xOffset: CGFloat, yOffset: CGFloat) {
+        // Special case for single pawn
+        if totalPawns == 1 {
+            let size = cellSize * 0.8 // Keep original size for single pawn
+            return (size, 0, 0) // Center in cell with no offset
+        }
+        
+        // Base size for calculations
+        let baseSize = cellSize * 0.8
+        
+        // Define layouts for different numbers of pawns
+        switch totalPawns {
+        case 2:
+            // Two pawns side by side
+            let size = baseSize * 0.5
+            let xOffset = index == 0 ? -size/2 : size/2
+            return (size, xOffset, 0)
+            
+        case 3:
+            // Triangle formation
+            let size = baseSize * 0.4
+            let positions: [(x: CGFloat, y: CGFloat)] = [
+                (0, -size/2),      // Top
+                (-size/2, size/2), // Bottom left
+                (size/2, size/2)   // Bottom right
+            ]
+            return (size, positions[index].x, positions[index].y)
+            
+        case 4:
+            // 2x2 grid
+            let size = baseSize * 0.4
+            let row = index / 2
+            let col = index % 2
+            let xOffset = (CGFloat(col) * size) - (size/2)
+            let yOffset = (CGFloat(row) * size) - (size/2)
+            return (size, xOffset, yOffset)
+            
+        case 5...8:
+            // 3x3 grid with some empty spots
+            let size = baseSize * 0.3
+            let cols = 3
+            let row = index / cols
+            let col = index % cols
+            let xOffset = (CGFloat(col) * size) - size
+            let yOffset = (CGFloat(row) * size) - size
+            return (size, xOffset, yOffset)
+            
+        case 9...12:
+            // 4x3 grid
+            let size = baseSize * 0.25
+            let cols = 4
+            let row = index / cols
+            let col = index % cols
+            let xOffset = (CGFloat(col) * size) - (size * 1.5)
+            let yOffset = (CGFloat(row) * size) - size
+            return (size, xOffset, yOffset)
+            
+        case 13...16:
+            // 4x4 grid
+            let size = baseSize * 0.2
+            let cols = 4
+            let row = index / cols
+            let col = index % cols
+            let xOffset = (CGFloat(col) * size) - (size * 1.5)
+            let yOffset = (CGFloat(row) * size) - (size * 1.5)
+            return (size, xOffset, yOffset)
+            
+        default:
+            // Fallback for any other number (shouldn't happen)
+            let size = baseSize * 0.2
+            return (size, 0, 0)
+        }
+    }
+
+    private func getPawnIndexInCell(pawn: Pawn, color: PlayerColor, row: Int, col: Int) -> Int {
+        var index = 0
+        for (_, pawns) in game.pawns {
+            for p in pawns {
+                if let posIndex = p.positionIndex, posIndex >= 0 {
+                    let pos = getCurrentPosition(pawn: p, color: p.color, positionIndex: posIndex)
+                    if pos.row == row && pos.col == col {
+                        if p.id == pawn.id && p.color == color {
+                            return index
+                        }
+                        index += 1
+                    }
+                }
+            }
+        }
+        return index
+    }
+
     @ViewBuilder
     private func pathPawnView(pawn: Pawn, color: PlayerColor, positionIndex: Int, row: Int, col: Int, cellSize: CGFloat) -> some View {
-        // Only render pawns that are on the path (not in starting home or ending home)
         if positionIndex >= 0 {
             let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
             if currentPos.row == row && currentPos.col == col {
@@ -474,25 +580,30 @@ struct LudoBoardView: View {
                 let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 40 : 0
                 let isAnimating = animatingPawns[key] != nil
                 
-                PawnView(color: color, size: cellSize * (isAnimating ? 0.9 : 0.8))
-                    .offset(y: -hopOffset)
+                // Count total pawns in this cell
+                let totalPawns = countPawnsInCell(row: row, col: col)
+                
+                // Calculate this pawn's index in the cell
+                let pawnIndex = getPawnIndexInCell(pawn: pawn, color: color, row: row, col: col)
+                
+                // Calculate size and position
+                let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
+                
+                PawnView(color: color, size: size)
+                    .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
                         if !isPathAnimating {
                             let currentPos = pawn.positionIndex ?? -1
                             let steps = game.diceValue
                             
-                            // First check if the move is valid
                             if isValidMove(color: color, pawnId: pawn.id) {
-                                // Calculate where the pawn will end up
                                 let currentPath = game.path(for: color)
                                 let newIndex = currentPos + steps
                                 let destinationIndex = newIndex >= currentPath.count - 1 ? -1 : newIndex
                                 
-                                // Start animation first
                                 animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps)
                                 
-                                // Delay the actual move until after animation
                                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
                                     game.movePawn(color: color, pawnId: pawn.id, steps: steps)
                                 }
