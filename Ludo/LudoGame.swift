@@ -169,7 +169,10 @@ class LudoGame: ObservableObject {
             eligiblePawns = Set(currentPawns.filter { pawn in
                 if let positionIndex = pawn.positionIndex {
                     // Pawn is on the path
-                    return positionIndex >= 0
+                    // Check if the move would overshoot home
+                    let currentPath = path(for: currentPlayer)
+                    let newIndex = positionIndex + diceValue
+                    return positionIndex >= 0 && newIndex <= currentPath.count - 1
                 } else {
                     // Pawn is at home and dice is 6
                     return diceValue == 6
@@ -197,7 +200,10 @@ class LudoGame: ObservableObject {
             eligiblePawns = Set(currentPawns.filter { pawn in
                 if let positionIndex = pawn.positionIndex {
                     // Pawn is on the path
-                    return positionIndex >= 0
+                    // Check if the move would overshoot home
+                    let currentPath = path(for: currentPlayer)
+                    let newIndex = positionIndex + diceValue
+                    return positionIndex >= 0 && newIndex <= currentPath.count - 1
                 } else {
                     // Pawn is at home and dice is 6
                     return diceValue == 6

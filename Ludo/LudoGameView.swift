@@ -452,6 +452,15 @@ struct LudoBoardView: View {
         // Check if the pawn is eligible to move
         guard game.eligiblePawns.contains(pawnId) else { return false }
         
+        // Additional check for overshooting home
+        if let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }),
+           let positionIndex = pawn.positionIndex,
+           positionIndex >= 0 {
+            let currentPath = game.path(for: color)
+            let newIndex = positionIndex + game.diceValue
+            return newIndex <= currentPath.count - 1
+        }
+        
         return true
     }
 
