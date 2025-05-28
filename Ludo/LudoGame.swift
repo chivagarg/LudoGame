@@ -22,6 +22,8 @@ class LudoGame: ObservableObject {
     @Published var gameStarted: Bool = false
     @Published var eligiblePawns: Set<Int> = []  // Track which pawns are eligible to move
     @Published var currentRollPlayer: PlayerColor? = nil  // Track whose roll is currently active
+    @Published var scores: [PlayerColor: Int] = [.red: 0, .green: 0, .yellow: 0, .blue: 0]  // Track scores
+    @Published var homeCompletionOrder: [PlayerColor] = []  // Track order of pawns reaching home
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
@@ -234,6 +236,9 @@ class LudoGame: ObservableObject {
         currentPlayer = .red
         eligiblePawns.removeAll()
         currentRollPlayer = nil
+        // Reset scores and home completion order
+        scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
+        homeCompletionOrder = []
         // Reset pawns
         pawns = [
             .red: (0..<4).map { Pawn(id: $0, color: .red, positionIndex: nil) },
@@ -326,6 +331,8 @@ class LudoGame: ObservableObject {
                                 // Capture the pawn
                                 pawns[otherColor]?[otherIndex].positionIndex = nil
                                 shouldGetAnotherRoll = true
+                                // Add 3 points for capture
+                                scores[color] = (scores[color] ?? 0) + 3
                             }
                         }
                     }
@@ -341,6 +348,13 @@ class LudoGame: ObservableObject {
                 pawns[color]?[pawnIndex].positionIndex = -1
                 shouldGetAnotherRoll = true // Get another roll for reaching home
                 print("  Pawn reached home - shouldGetAnotherRoll: \(shouldGetAnotherRoll)")
+                
+                // Add points for reaching home
+                if !homeCompletionOrder.contains(color) {
+                    homeCompletionOrder.append(color)
+                    let points = 16 - (homeCompletionOrder.count - 1)  // First gets 16, then 15, etc.
+                    scores[color] = (scores[color] ?? 0) + points
+                }
             }
         } else {
             // Pawn is at home
