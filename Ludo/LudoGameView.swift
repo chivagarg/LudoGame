@@ -115,9 +115,6 @@ struct LudoBoardView: View {
     }
     
     private func animatePawnMovementForPath(pawn: Pawn, color: PlayerColor, from: Int, to: Int, steps: Int) {
-        print("DEBUG: animatePawnMovementForPath called for pawn \(pawn.id) of color \(color)")
-        print("DEBUG: from: \(from), to: \(to), steps: \(steps)")
-        
         isPathAnimating = true
         currentStep = 0
         
@@ -126,7 +123,6 @@ struct LudoBoardView: View {
         
         func animateNextStep() {
             guard currentStep < steps else {
-                print("DEBUG: Animation complete - currentStep (\(currentStep)) >= steps (\(steps))")
                 isPathAnimating = false
                 return
             }
@@ -135,16 +131,12 @@ struct LudoBoardView: View {
             let currentFrom = from + currentStep
             let currentTo = currentFrom + 1
             
-            // print("DEBUG: Animation step - currentFrom: \(currentFrom), currentTo: \(currentTo), path count: \(game.path(for: color).count)")
-            
             // Safety check: if we're at the end of the path, don't try to animate further
             if currentTo >= game.path(for: color).count {
-                print("DEBUG: Reached end of path without ending home animation")
                 isPathAnimating = false
                 return
             }
             
-            // print("DEBUG: Animating step \(currentStep) from \(currentFrom) to \(currentTo)")
             animatingPawns[key] = (currentFrom, currentTo, 0)
             
             withAnimation(.spring(response: 0.25, dampingFraction: 0.4, blendDuration: 0)) {
@@ -308,7 +300,6 @@ struct LudoBoardView: View {
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onAppear {
                 Self.pawnViewCount = 0
-                print("\nDEBUG: Reset pawn view counter to 0")
             }
         }
         .aspectRatio(1, contentMode: .fit)
@@ -403,24 +394,6 @@ struct LudoBoardView: View {
         }
     }
 
-    private func debugPrintHomePawnTap(pawn: Pawn, color: PlayerColor) {
-        guard color == .red && pawn.id == 1 else { return }
-        print("\nDEBUG: Red pawn 1 tapped in home")
-        print("Current state - positionIndex: \(String(describing: pawn.positionIndex))")
-        print("Game state - Current player: \(game.currentPlayer), Dice value: \(game.diceValue)")
-    }
-
-    private func debugPrintHomePawnMove(pawn: Pawn, color: PlayerColor) {
-        guard color == .red && pawn.id == 1 else { return }
-        print("\nDEBUG: Red pawn 1 moving from home")
-        print("Before move - positionIndex: \(String(describing: pawn.positionIndex))")
-    }
-
-    private func debugPrintHomePawnAfterMove(pawn: Pawn, color: PlayerColor) {
-        guard color == .red && pawn.id == 1 else { return }
-        print("After move - positionIndex: \(String(describing: game.pawns[color]?.first(where: { $0.id == pawn.id })?.positionIndex))")
-    }
-
     @ViewBuilder
     private func pawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         Group {
@@ -439,27 +412,6 @@ struct LudoBoardView: View {
         }
     }
     
-    private func isValidMove(color: PlayerColor, pawnId: Int) -> Bool {
-        // Check if it's the current player's turn
-        guard color == game.currentPlayer else { return false }
-        
-        // Check if it's the current player's roll
-        guard color == game.currentRollPlayer else { return false }
-        
-        // Check if the pawn is eligible to move
-        guard game.eligiblePawns.contains(pawnId) else { return false }
-        
-        // Additional check for overshooting home
-        if let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }),
-           let positionIndex = pawn.positionIndex,
-           positionIndex >= 0 {
-            let currentPath = game.path(for: color)
-            let newIndex = positionIndex + game.diceValue
-            return newIndex <= currentPath.count - 1
-        }
-        
-        return true
-    }
 
     private func countPawnsInCell(row: Int, col: Int) -> Int {
         var count = 0
@@ -591,18 +543,16 @@ struct LudoBoardView: View {
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
                         if !isPathAnimating {
-                            let currentPos = pawn.positionIndex ?? -1
-                            let steps = game.diceValue
-                            
-                            if isValidMove(color: color, pawnId: pawn.id) {
-                                let currentPath = game.path(for: color)
-                                let newIndex = currentPos + steps
-                                let destinationIndex = newIndex >= currentPath.count - 1 ? -1 : newIndex
+                            if game.isValidMove(color: color, pawnId: pawn.id) {
+                                let currentPos = pawn.positionIndex ?? -1
+                                let steps = game.diceValue
                                 
-                                animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps)
-                                
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                    game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                                if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
+                                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps)
+                                    
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
+                                        game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                                    }
                                 }
                             }
                         }
@@ -638,8 +588,6 @@ struct LudoBoardView: View {
         if isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
             PawnView(color: color, size: cellSize * 0.8)
                 .onTapGesture {
-                    let _ = debugPrintHomePawnTap(pawn: pawn, color: color)
-                    
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
                         // Add to home-to-start animations (moving from starting home to path)
                         homeToStartPawns.append((color: color, id: pawn.id, progress: 0))
@@ -658,11 +606,7 @@ struct LudoBoardView: View {
                         
                         // Delay the actual move until after animation
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            let _ = debugPrintHomePawnMove(pawn: pawn, color: color)
-                            
                             game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
-                            
-                            let _ = debugPrintHomePawnAfterMove(pawn: pawn, color: color)
                             
                             // Remove from animations
                             homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
@@ -709,23 +653,6 @@ struct LudoBoardView: View {
                    (pawn.id == 1 && row == 10 && col == 4) ||
                    (pawn.id == 2 && row == 13 && col == 1) ||
                    (pawn.id == 3 && row == 13 && col == 4)
-        }
-    }
-    
-    private func debugPrintTapAndAnimation(pawn: Pawn, color: PlayerColor, isAnimating: Bool) {
-        print("\nDEBUG: TAP DETECTED on pawn \(pawn.id) of color \(color)")
-        print("DEBUG: Current state:")
-        print("DEBUG: - Current player: \(game.currentPlayer)")
-        print("DEBUG: - Dice value: \(game.diceValue)")
-        print("DEBUG: - Is animating: \(isAnimating)")
-        
-        if color == game.currentPlayer && !isAnimating && game.diceValue == 6 {
-            print("DEBUG: Starting animation sequence")
-        } else {
-            print("DEBUG: Conditions not met for animation:")
-            print("DEBUG: - color == currentPlayer: \(color == game.currentPlayer)")
-            print("DEBUG: - !isAnimating: \(!isAnimating)")
-            print("DEBUG: - diceValue == 6: \(game.diceValue == 6)")
         }
     }
 }

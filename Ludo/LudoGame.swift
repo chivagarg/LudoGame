@@ -397,4 +397,37 @@ class LudoGame: ObservableObject {
         
         return startingPositions.contains(position)
     }
+
+    // Function to validate if a move is legal
+    func isValidMove(color: PlayerColor, pawnId: Int) -> Bool {
+        // Check if it's the current player's turn
+        guard color == currentPlayer else { return false }
+        
+        // Check if it's the current player's roll
+        guard color == currentRollPlayer else { return false }
+        
+        // Check if the pawn is eligible to move
+        guard eligiblePawns.contains(pawnId) else { return false }
+        
+        // Additional check for overshooting home
+        if let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
+           let positionIndex = pawn.positionIndex,
+           positionIndex >= 0 {
+            let currentPath = path(for: color)
+            let newIndex = positionIndex + diceValue
+            return newIndex <= currentPath.count - 1
+        }
+        
+        return true
+    }
+    
+    // Function to get the destination index for a move
+    func getDestinationIndex(color: PlayerColor, pawnId: Int) -> Int? {
+        guard let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
+              let positionIndex = pawn.positionIndex else { return nil }
+        
+        let currentPath = path(for: color)
+        let newIndex = positionIndex + diceValue
+        return newIndex >= currentPath.count - 1 ? -1 : newIndex
+    }
 } 
