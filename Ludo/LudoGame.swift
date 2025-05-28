@@ -374,7 +374,19 @@ class LudoGame: ObservableObject {
             Position(row: 13, col: 6)  // Blue start
         ]
         
-        return startingPositions.contains(position)
+        if startingPositions.contains(position) {
+            return true
+        }
+        
+        // Check if position is a star space
+        let additionalStarSpaces = [
+            Position(row: 8, col: 2),
+            Position(row: 12, col: 8),
+            Position(row: 6, col: 12),
+            Position(row: 2, col: 6)
+        ]
+        
+        return additionalStarSpaces.contains(position)
     }
 
     // Function to validate if a move is legal
