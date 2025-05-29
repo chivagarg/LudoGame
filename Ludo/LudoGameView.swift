@@ -418,6 +418,23 @@ struct LudoBoardView: View {
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onAppear {
                 Self.pawnViewCount = 0
+                
+                // Add observer for pawn movement animation
+                NotificationCenter.default.addObserver(
+                    forName: NSNotification.Name("AnimatePawnMovement"),
+                    object: nil,
+                    queue: .main
+                ) { notification in
+                    if let userInfo = notification.userInfo,
+                       let color = userInfo["color"] as? PlayerColor,
+                       let pawnId = userInfo["pawnId"] as? Int,
+                       let from = userInfo["from"] as? Int,
+                       let to = userInfo["to"] as? Int,
+                       let steps = userInfo["steps"] as? Int,
+                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
+                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, to: to, steps: steps)
+                    }
+                }
             }
         }
         .aspectRatio(1, contentMode: .fit)

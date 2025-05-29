@@ -180,6 +180,41 @@ class LudoGame: ObservableObject {
                     return diceValue == 6
                 }
             }.map { $0.id })
+            
+            // If there's exactly one eligible pawn, simulate tapping it
+            if eligiblePawns.count == 1 {
+                if let pawnId = eligiblePawns.first,
+                   let pawn = currentPawns.first(where: { $0.id == pawnId }) {
+                    // Add a small delay to show the dice roll before moving
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        // Only auto-move if the pawn is on the path (not in home)
+                        if pawn.positionIndex != nil {
+                            let currentPos = pawn.positionIndex ?? -1
+                            let steps = self.diceValue
+                            
+                            if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
+                                // Notify the view to animate the movement
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("AnimatePawnMovement"),
+                                    object: nil,
+                                    userInfo: [
+                                        "color": self.currentPlayer,
+                                        "pawnId": pawnId,
+                                        "from": currentPos,
+                                        "to": destinationIndex,
+                                        "steps": steps
+                                    ]
+                                )
+                                
+                                // Move the pawn after animation
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
+                                    self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // If no pawns can move, advance to next turn after a delay
@@ -214,6 +249,41 @@ class LudoGame: ObservableObject {
                     return diceValue == 6
                 }
             }.map { $0.id })
+            
+            // If there's exactly one eligible pawn, simulate tapping it
+            if eligiblePawns.count == 1 {
+                if let pawnId = eligiblePawns.first,
+                   let pawn = currentPawns.first(where: { $0.id == pawnId }) {
+                    // Add a small delay to show the dice roll before moving
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        // Only auto-move if the pawn is on the path (not in home)
+                        if pawn.positionIndex != nil {
+                            let currentPos = pawn.positionIndex ?? -1
+                            let steps = self.diceValue
+                            
+                            if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
+                                // Notify the view to animate the movement
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("AnimatePawnMovement"),
+                                    object: nil,
+                                    userInfo: [
+                                        "color": self.currentPlayer,
+                                        "pawnId": pawnId,
+                                        "from": currentPos,
+                                        "to": destinationIndex,
+                                        "steps": steps
+                                    ]
+                                )
+                                
+                                // Move the pawn after animation
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
+                                    self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // If no pawns can move, advance to next turn after a delay
