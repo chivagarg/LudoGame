@@ -381,7 +381,7 @@ struct LudoBoardView: View {
                         let yOffset = animating.progress * (endY - startY)
                         
                         // Position the pawn at the start position and animate to end position
-                        PawnView(color: animating.color, size: cellSize * 0.8)
+                        PawnView(color: animating.color, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id))
                             .position(
                                 x: startX + xOffset + cellSize/2,
                                 y: startY + yOffset + cellSize/2
@@ -407,7 +407,7 @@ struct LudoBoardView: View {
                         let yOffset = captured.progress * (endY - startY)
                         
                         // Position the pawn at the start position and animate to end position
-                        PawnView(color: captured.color, size: cellSize * 0.8)
+                        PawnView(color: captured.color, size: cellSize * 0.8, isEligible: false)
                             .position(
                                 x: startX + xOffset + cellSize/2,
                                 y: startY + yOffset + cellSize/2
@@ -725,7 +725,7 @@ struct LudoBoardView: View {
                 // Calculate size and position
                 let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
                 
-                PawnView(color: color, size: size)
+                PawnView(color: color, size: size, isEligible: game.eligiblePawns.contains(pawn.id))
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
@@ -751,7 +751,7 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func endingHomePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         if isCorrectEndingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(color: color, size: cellSize * 0.8)
+            PawnView(color: color, size: cellSize * 0.8, isEligible: false)
                 .shadow(color: .black.opacity(0.2), radius: 2)
         }
     }
@@ -773,7 +773,7 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func homePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         if isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(color: color, size: cellSize * 0.8)
+            PawnView(color: color, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id))
                 .onTapGesture {
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
                         // Add to home-to-start animations (moving from starting home to path)
@@ -847,15 +847,35 @@ struct LudoBoardView: View {
 struct PawnView: View {
     let color: PlayerColor
     let size: CGFloat
+    let isEligible: Bool
+    @EnvironmentObject var game: LudoGame
+    
+    @State private var animationPhase: Double = 0
     
     var body: some View {
-        Circle()
-            .fill(colorForPlayer(color))
-            .frame(width: size, height: size)
-            .overlay(
+        ZStack {
+            // Glow effect for eligible pawns
+            if isEligible && color == game.currentPlayer {
                 Circle()
-                    .stroke(Color.white, lineWidth: 2)
-            )
+                    .fill(colorForPlayer(color))
+                    .frame(width: size * 1.3, height: size * 1.3)
+                    .opacity(0.3 + sin(animationPhase) * 0.2)
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                            animationPhase = .pi
+                        }
+                    }
+            }
+            
+            // Main pawn
+            Circle()
+                .fill(colorForPlayer(color))
+                .frame(width: size, height: size)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white, lineWidth: 2)
+                )
+        }
     }
     
     private func colorForPlayer(_ color: PlayerColor) -> Color {
