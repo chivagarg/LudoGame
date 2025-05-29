@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct DiceView: View {
     let value: Int
@@ -24,6 +25,8 @@ struct DiceView: View {
                     .scaleEffect(scale)
                     .onAppear {
                         print("🎲 Starting dice animation in view")
+                        // Play dice roll sound
+                        SoundManager.shared.playSound("dice")
                         withAnimation(.easeInOut(duration: 0.2).repeatForever(autoreverses: true)) {
                             rotation = 360
                             scale = 1.2
@@ -207,6 +210,11 @@ struct LudoBoardView: View {
         // Remove from homeToStartPawns if it's there (moving from starting home to path)
         homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
         
+        // Play swish sound if moving from home
+        if from == -1 {
+            SoundManager.shared.playSound("swish")
+        }
+        
         func animateNextStep() {
             guard currentStep < steps else {
                 isPathAnimating = false
@@ -224,6 +232,9 @@ struct LudoBoardView: View {
             }
             
             animatingPawns[key] = (currentFrom, currentTo, 0)
+            
+            // Play hop sound for each step
+            SoundManager.shared.playSound("hop")
             
             withAnimation(.spring(response: 0.25, dampingFraction: 0.4, blendDuration: 0)) {
                 animatingPawns[key]?.progress = 1.0
@@ -243,7 +254,11 @@ struct LudoBoardView: View {
         // After all steps are complete, check for captures
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25) {
             // Safety check: if the pawn has reached ending home (to < 0), don't check for captures
-            guard to >= 0 else { return }
+            guard to >= 0 else {
+                // Play victory sound if reaching home
+                SoundManager.shared.playSound("victory")
+                return
+            }
             
             // Get the final position
             let finalPosition = game.path(for: color)[to]
@@ -258,6 +273,9 @@ struct LudoBoardView: View {
                     
                     let otherPosition = game.path(for: otherColor)[otherPositionIndex]
                     if otherPosition == finalPosition && !isStarSpace(row: finalPosition.row, col: finalPosition.col) {
+                        // Play capture sound
+                        SoundManager.shared.playSound("capture")
+                        
                         // Add the pawn to captured pawns for animation
                         capturedPawns.append((color: otherColor, id: otherPawn.id, progress: 0))
                         
@@ -776,6 +794,9 @@ struct LudoBoardView: View {
             PawnView(color: color, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id))
                 .onTapGesture {
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
+                        // Play swish sound when moving from home
+                        SoundManager.shared.playSound("swish")
+                        
                         // Add to home-to-start animations (moving from starting home to path)
                         homeToStartPawns.append((color: color, id: pawn.id, progress: 0))
                         
