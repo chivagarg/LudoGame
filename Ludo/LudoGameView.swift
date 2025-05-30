@@ -197,24 +197,27 @@ struct LudoGameView: View {
             
             // Scoring Panel
             HStack(spacing: 20) {
-                ForEach(PlayerColor.allCases, id: \.self) { color in
-                    VStack(spacing: 4) {
-                        Text(color.rawValue.capitalized)
+                ForEach(PlayerColor.allCases) { color in
+                    VStack {
+                        Text("\(color.rawValue.capitalized)")
                             .font(.headline)
-                            .foregroundColor(colorForPlayer(color))
+                            .foregroundColor(.white)
                         Text("\(game.scores[color] ?? 0)")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(colorForPlayer(color))
+                            .font(.title)
+                            .bold()
+                            .foregroundColor(.white)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Color.white)
+                    .frame(width: 80)
+                    .padding()
+                    .background(colorForPlayer(color))
                     .cornerRadius(10)
                     .shadow(radius: 2)
                 }
             }
-            .padding(.horizontal)
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(15)
+            .shadow(radius: 3)
             
             // Ludo Board
             LudoBoardView()
@@ -596,6 +599,17 @@ struct LudoBoardView: View {
                 Rectangle().fill(Color(red: 0, green: 0, blue: 0.5))
             } else {
                 Rectangle().fill(Color.white)
+            }
+            
+            // Color-coded star spaces
+            if (row == 6 && col == 1) || (row == 2 && col == 6) {
+                Rectangle().fill(Color.red.opacity(0.3))
+            } else if (row == 1 && col == 8) || (row == 6 && col == 12) {
+                Rectangle().fill(Color.green.opacity(0.3))
+            } else if (row == 8 && col == 13) || (row == 12 && col == 8) {
+                Rectangle().fill(Color.yellow.opacity(0.3))
+            } else if (row == 13 && col == 6) || (row == 8 && col == 2) {
+                Rectangle().fill(Color.blue.opacity(0.3))
             }
             
             // Draw star if this is a star space
