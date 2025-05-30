@@ -16,6 +16,7 @@
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
 		DAFC6FD52DEA05DC00073666 /* dice.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCC2DEA05DC00073666 /* dice.wav */; };
 		DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFC6FCE2DEA05DC00073666 /* SoundManager.swift */; };
+		DAFC6FD82DEA0FA000073666 /* ScoringPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFC6FD72DEA0FA000073666 /* ScoringPanelView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,7 @@
 		DAFC6FCE2DEA05DC00073666 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		DAFC6FCF2DEA05DC00073666 /* swish.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = swish.wav; sourceTree = "<group>"; };
 		DAFC6FD02DEA05DC00073666 /* victory.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = victory.wav; sourceTree = "<group>"; };
+		DAFC6FD72DEA0FA000073666 /* ScoringPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringPanelView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -67,6 +69,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A22 = {
 			isa = PBXGroup;
 			children = (
+				DAFC6FD72DEA0FA000073666 /* ScoringPanelView.swift */,
 				1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */,
 				DAFC6F772DDA980A00073666 /* LudoTests */,
 				1A1A1A1A1A1A1A1A1A1A1A24 /* Products */,
@@ -207,6 +210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */,
+				DAFC6FD82DEA0FA000073666 /* ScoringPanelView.swift in Sources */,
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */,
