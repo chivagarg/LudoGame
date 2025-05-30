@@ -24,6 +24,7 @@ class LudoGame: ObservableObject {
     @Published var currentRollPlayer: PlayerColor? = nil  // Track whose roll is currently active
     @Published var scores: [PlayerColor: Int] = [.red: 0, .green: 0, .yellow: 0, .blue: 0]  // Track scores
     @Published var homeCompletionOrder: [PlayerColor] = []  // Track order of pawns reaching home
+    @Published var totalPawnsAtFinishingHome: Int = 0  // Track total number of pawns that have reached home
     @Published var isAdminMode: Bool = false  // Whether admin mode is enabled
 
     // Safe zones and home for each color
@@ -316,6 +317,7 @@ class LudoGame: ObservableObject {
         // Reset scores and home completion order
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
+        totalPawnsAtFinishingHome = 0
         // Reset pawns
         pawns = [
             .red: (0..<4).map { Pawn(id: $0, color: .red, positionIndex: nil) },
@@ -392,12 +394,10 @@ class LudoGame: ObservableObject {
                 pawns[color]?[pawnIndex].positionIndex = -1
                 shouldGetAnotherRoll = true // Get another roll for reaching home
                 
-                // Add points for reaching home
-                if !homeCompletionOrder.contains(color) {
-                    homeCompletionOrder.append(color)
-                    let points = 16 - (homeCompletionOrder.count - 1)  // First gets 16, then 15, etc.
-                    scores[color] = (scores[color] ?? 0) + points
-                }
+                // Add points for reaching home based on global order
+                totalPawnsAtFinishingHome += 1
+                let points = 16 - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
+                scores[color] = (scores[color] ?? 0) + points
             }
         } else {
             // Pawn is at home
