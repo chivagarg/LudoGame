@@ -24,6 +24,7 @@ struct DiceView: View {
                     .rotationEffect(.degrees(rotation))
                     .scaleEffect(scale)
                     .onAppear {
+                        print("🎲 Rolling animation started")
                         // Play dice roll sound
                         SoundManager.shared.playSound("dice")
                         withAnimation(.easeInOut(duration: 0.2).repeatForever(autoreverses: true)) {
@@ -32,6 +33,7 @@ struct DiceView: View {
                         }
                     }
                     .onDisappear {
+                        print("🎲 Rolling animation ended")
                         rotation = 0
                         scale = 1.0
                     }
@@ -53,14 +55,18 @@ struct DiceView: View {
             }
         }
         .frame(width: 60, height: 60)
+        .contentShape(Rectangle())  // Make the entire area tappable
         .onTapGesture {
-            onTap()
+            print("🎲 DiceView tapped - isRolling: \(isRolling)")
+            if !isRolling {
+                onTap()
+            }
         }
         .onChange(of: isRolling) { newValue in
-            // No debug print needed
+            print("🎲 isRolling changed to: \(newValue)")
         }
         .onChange(of: value) { newValue in
-            // No debug print needed
+            print("🎲 value changed to: \(newValue)")
         }
     }
     
@@ -332,6 +338,7 @@ struct LudoBoardView: View {
         func animateNextStep() {
             guard currentStep < steps else {
                 isPathAnimating = false
+                isDiceRolling = false  // Reset dice rolling state after pawn movement
                 return
             }
             
@@ -466,14 +473,20 @@ struct LudoBoardView: View {
                 
                 // Dice View
                 if let dicePos = getDicePosition() {
+                    let _ = print("🎲 Dice position: row \(dicePos.row), col \(dicePos.col)")
                     DiceView(value: game.diceValue, isRolling: isDiceRolling) {
+                        print("🎲 Dice tapped - isRolling: \(isDiceRolling), currentPlayer: \(game.currentPlayer), eligiblePawns: \(game.eligiblePawns)")
                         if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            print("🎲 Starting dice roll animation")
                             isDiceRolling = true
                             game.rollDice()
                             // Simulate rolling animation
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                print("🎲 Ending dice roll animation")
                                 isDiceRolling = false
                             }
+                        } else {
+                            print("🎲 Dice roll animation already in progress")
                         }
                     }
                     .position(
@@ -481,14 +494,27 @@ struct LudoBoardView: View {
                         y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
                     )
                     .onChange(of: game.diceValue) { newValue in
+                        print("🎲 Dice value changed to: \(newValue), isRolling: \(isDiceRolling)")
                         // Only trigger animation if we're not already rolling from a tap
                         if !isDiceRolling {
+                            print("🎲 Starting dice value change animation")
                             isDiceRolling = true
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                print("🎲 Ending dice value change animation")
                                 isDiceRolling = false
                             }
+                        } else {
+                            print("🎲 Dice animation already in progress during value change")
                         }
                     }
+                    .onAppear {
+                        print("🎲 DiceView appeared")
+                    }
+                    .onDisappear {
+                        print("🎲 DiceView disappeared")
+                    }
+                } else {
+                    let _ = print("🎲 No dice position available!")
                 }
                 
                 // Home to start animations
