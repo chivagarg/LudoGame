@@ -93,6 +93,8 @@ struct LudoGameView: View {
         VStack {
             if !game.gameStarted {
                 startGameView
+            } else if game.isGameOver {
+                GameOverView()
             } else {
                 gameBoardView
             }

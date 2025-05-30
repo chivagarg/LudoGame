@@ -26,6 +26,8 @@ class LudoGame: ObservableObject {
     @Published var homeCompletionOrder: [PlayerColor] = []  // Track order of pawns reaching home
     @Published var totalPawnsAtFinishingHome: Int = 0  // Track total number of pawns that have reached home
     @Published var isAdminMode: Bool = false  // Whether admin mode is enabled
+    @Published var isGameOver: Bool = false  // Whether the game is over
+    @Published var finalRankings: [PlayerColor] = []  // Track final player rankings
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
@@ -329,6 +331,11 @@ class LudoGame: ObservableObject {
             
             // If the next player has completed their game, recursively call nextTurn
             if hasCompletedGame(color: currentPlayer) {
+                if hasAllPlayersCompleted() {
+                    isGameOver = true
+                    finalRankings = getFinalRankings()
+                    return  // Exit early if game is over
+                }
                 nextTurn(clearRoll: clearRoll)
             }
         }
@@ -345,6 +352,8 @@ class LudoGame: ObservableObject {
         currentPlayer = .red
         eligiblePawns.removeAll()
         currentRollPlayer = nil
+        isGameOver = false
+        finalRankings = []
         // Reset scores and home completion order
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
@@ -430,8 +439,13 @@ class LudoGame: ObservableObject {
                 let points = 16 - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
                 scores[color] = (scores[color] ?? 0) + points
                 
-                // If this was the last pawn for this player, immediately move to next player
+                // If this was the last pawn for this player, check for game over
                 if hasCompletedGame(color: color) {
+                    if hasAllPlayersCompleted() {
+                        isGameOver = true
+                        finalRankings = getFinalRankings()
+                        return  // Exit early if game is over
+                    }
                     nextTurn(clearRoll: true)
                 }
             }
@@ -450,7 +464,6 @@ class LudoGame: ObservableObject {
             currentRollPlayer = nil
             eligiblePawns.removeAll()
         } else {
-            // No extra roll - advance to next player
             nextTurn(clearRoll: true)
         }
     }
@@ -527,5 +540,13 @@ class LudoGame: ObservableObject {
         let currentPath = path(for: color)
         let newIndex = positionIndex + diceValue
         return newIndex >= currentPath.count - 1 ? -1 : newIndex
+    }
+
+    func hasAllPlayersCompleted() -> Bool {
+        return PlayerColor.allCases.allSatisfy { hasCompletedGame(color: $0) }
+    }
+
+    func getFinalRankings() -> [PlayerColor] {
+        return PlayerColor.allCases.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
     }
 } 
