@@ -104,13 +104,11 @@ struct LudoGameView: View {
         .environmentObject(game)
     }
     
-    private var startGameView: some View {
-        VStack(spacing: 20) {
-            Text("Ludo")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            // Settings Table
+    // MARK: - Settings Table View
+    private struct SettingsTableView: View {
+        @Binding var isAdminMode: Bool
+        
+        var body: some View {
             VStack(spacing: 0) {
                 // Header
                 Text("Game Settings")
@@ -138,7 +136,7 @@ struct LudoGameView: View {
                         Text("Admin Mode")
                             .font(.body)
                         Spacer()
-                        Toggle("", isOn: $game.isAdminMode)
+                        Toggle("", isOn: $isAdminMode)
                             .labelsHidden()
                             .tint(.red)
                     }
@@ -157,30 +155,20 @@ struct LudoGameView: View {
             .background(Color.white)
             .cornerRadius(15)
             .shadow(radius: 2)
-            .frame(width: 300)  // Fixed width for the settings table
-            
-            Button("Start Game") {
-                game.startGame()
-            }
-            .font(.title2)
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+            .frame(width: 300)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)  // Center the entire content
-        .background(Color.gray.opacity(0.05))  // Light background for the entire view
     }
     
-    private var gameBoardView: some View {
-        VStack(spacing: 16) {
-            if game.isAdminMode {
+    // MARK: - Admin Controls View
+    private struct AdminControlsView: View {
+        @EnvironmentObject var game: LudoGame
+        
+        var body: some View {
+            VStack {
                 Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
                     .font(.title2)
                 
                 HStack {
-                    // Test dice roll buttons
                     ForEach([1, 2, 3, 4, 5, 6, 48, 60], id: \.self) { value in
                         Button("\(value)") {
                             game.testRollDice(value: value)
@@ -194,57 +182,78 @@ struct LudoGameView: View {
                     }
                 }
             }
-            
-            // Scoring Panel
-            HStack(spacing: 20) {
-                ForEach(PlayerColor.allCases) { color in
-                    VStack {
-                        HStack {
-                            Text("\(color.rawValue.capitalized)")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            if game.hasCompletedGame(color: color) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        Text("\(game.scores[color] ?? 0)")
-                            .font(.title)
-                            .bold()
-                            .foregroundColor(.white)
-                        if game.hasCompletedGame(color: color) {
-                            Text("COMPLETED")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                    }
-                    .frame(width: 80)
-                    .padding()
-                    .background(colorForPlayer(color))
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(game.hasCompletedGame(color: color) ? Color.white : Color.clear, lineWidth: 2)
-                    )
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(15)
-            .shadow(radius: 3)
-            
-            // Ludo Board
-            LudoBoardView()
         }
     }
     
-    private func colorForPlayer(_ color: PlayerColor) -> Color {
-        switch color {
-        case .red: return .red
-        case .green: return .green
-        case .yellow: return .yellow
-        case .blue: return .blue
+    // MARK: - Scoring Panel View
+    private struct ScoringPanelView: View {
+        @EnvironmentObject var game: LudoGame
+        
+        var body: some View {
+            HStack(spacing: 20) {
+                ForEach(PlayerColor.allCases) { color in
+                    VStack(spacing: 4) {
+                        Text(color.rawValue.capitalized)
+                            .font(.headline)
+                            .foregroundColor(colorForPlayer(color))
+                        Text("\(game.scores[color] ?? 0)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(colorForPlayer(color))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .shadow(radius: 2)
+                }
+            }
+            .padding(.horizontal)
+        }
+        
+        private func colorForPlayer(_ color: PlayerColor) -> Color {
+            switch color {
+            case .red: return .red
+            case .green: return .green
+            case .yellow: return .yellow
+            case .blue: return .blue
+            }
+        }
+    }
+    
+    // MARK: - Start Game View
+    private var startGameView: some View {
+        VStack(spacing: 20) {
+            Text("Ludo")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            SettingsTableView(isAdminMode: $game.isAdminMode)
+            
+            Button("Start Game") {
+                game.startGame()
+            }
+            .font(.title2)
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.gray.opacity(0.05))
+    }
+    
+    // MARK: - Game Board View
+    private var gameBoardView: some View {
+        VStack(spacing: 16) {
+            if game.isAdminMode {
+                AdminControlsView()
+            }
+            
+            ScoringPanelView()
+            
+            LudoBoardView()
         }
     }
 }
