@@ -161,6 +161,12 @@ class LudoGame: ObservableObject {
     ]
     
     func rollDice() {
+        // Don't allow rolling if the player has completed their game
+        guard !hasCompletedGame(color: currentPlayer) else {
+            nextTurn(clearRoll: true)
+            return
+        }
+        
         // Only allow rolling if there are no eligible pawns
         guard eligiblePawns.isEmpty else { return }
         
@@ -300,13 +306,38 @@ class LudoGame: ObservableObject {
     func nextTurn(clearRoll: Bool = true) {
         let colors = PlayerColor.allCases
         if let currentIndex = colors.firstIndex(of: currentPlayer) {
-            let nextIndex = (currentIndex + 1) % colors.count
-            currentPlayer = colors[nextIndex]
+            // Find the next player who hasn't completed their game
+            var nextIndex = (currentIndex + 1) % colors.count
+            var nextPlayer = colors[nextIndex]
+            
+            // Keep looking for a player who hasn't completed their game
+            while hasCompletedGame(color: nextPlayer) {
+                nextIndex = (nextIndex + 1) % colors.count
+                nextPlayer = colors[nextIndex]
+                
+                // If we've gone through all players and they're all done, stay on current player
+                if nextPlayer == currentPlayer {
+                    break
+                }
+            }
+            
+            currentPlayer = nextPlayer
             eligiblePawns.removeAll()
             if clearRoll {
                 currentRollPlayer = nil
             }
+            
+            // If the next player has completed their game, recursively call nextTurn
+            if hasCompletedGame(color: currentPlayer) {
+                nextTurn(clearRoll: clearRoll)
+            }
         }
+    }
+    
+    // Check if a player has all their pawns in the finishing home
+    func hasCompletedGame(color: PlayerColor) -> Bool {
+        guard let playerPawns = pawns[color] else { return false }
+        return playerPawns.allSatisfy { $0.positionIndex == -1 }
     }
     
     func startGame() {
@@ -398,6 +429,11 @@ class LudoGame: ObservableObject {
                 totalPawnsAtFinishingHome += 1
                 let points = 16 - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
                 scores[color] = (scores[color] ?? 0) + points
+                
+                // If this was the last pawn for this player, immediately move to next player
+                if hasCompletedGame(color: color) {
+                    nextTurn(clearRoll: true)
+                }
             }
         } else {
             // Pawn is at home

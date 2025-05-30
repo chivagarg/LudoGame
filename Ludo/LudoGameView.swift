@@ -181,13 +181,13 @@ struct LudoGameView: View {
                 
                 HStack {
                     // Test dice roll buttons
-                    ForEach([1, 2, 3, 4, 5, 6, 48], id: \.self) { value in
+                    ForEach([1, 2, 3, 4, 5, 6, 48, 60], id: \.self) { value in
                         Button("\(value)") {
                             game.testRollDice(value: value)
                         }
                         .font(.title3)
                         .padding(8)
-                        .background(game.eligiblePawns.isEmpty ? (value == 48 ? Color.purple : Color.green) : Color.gray)
+                        .background(game.eligiblePawns.isEmpty ? (value == 48 || value == 60 ? Color.purple : Color.green) : Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                         .disabled(!game.eligiblePawns.isEmpty)
@@ -199,19 +199,34 @@ struct LudoGameView: View {
             HStack(spacing: 20) {
                 ForEach(PlayerColor.allCases) { color in
                     VStack {
-                        Text("\(color.rawValue.capitalized)")
-                            .font(.headline)
-                            .foregroundColor(.white)
+                        HStack {
+                            Text("\(color.rawValue.capitalized)")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            if game.hasCompletedGame(color: color) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.white)
+                            }
+                        }
                         Text("\(game.scores[color] ?? 0)")
                             .font(.title)
                             .bold()
                             .foregroundColor(.white)
+                        if game.hasCompletedGame(color: color) {
+                            Text("COMPLETED")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
                     }
                     .frame(width: 80)
                     .padding()
                     .background(colorForPlayer(color))
                     .cornerRadius(10)
                     .shadow(radius: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(game.hasCompletedGame(color: color) ? Color.white : Color.clear, lineWidth: 2)
+                    )
                 }
             }
             .padding()
@@ -245,7 +260,12 @@ struct LudoBoardView: View {
     @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
     @State private var homeToStartPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
     
-    private func getDicePosition() -> (row: Int, col: Int) {
+    private func getDicePosition() -> (row: Int, col: Int)? {
+        // Don't show dice for completed players
+        if game.hasCompletedGame(color: game.currentPlayer) {
+            return nil
+        }
+        
         switch game.currentPlayer {
         case .red:
             return (row: 2, col: 2)  // Center of red home area
@@ -436,27 +456,28 @@ struct LudoBoardView: View {
                 .border(Color.black, width: 2)
                 
                 // Dice View
-                let dicePos = getDicePosition()
-                DiceView(value: game.diceValue, isRolling: isDiceRolling) {
-                    if !isDiceRolling && game.eligiblePawns.isEmpty {
-                        isDiceRolling = true
-                        game.rollDice()
-                        // Simulate rolling animation
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            isDiceRolling = false
+                if let dicePos = getDicePosition() {
+                    DiceView(value: game.diceValue, isRolling: isDiceRolling) {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            // Simulate rolling animation
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isDiceRolling = false
+                            }
                         }
                     }
-                }
-                .position(
-                    x: boardOffsetX + CGFloat(dicePos.col + 1) * cellSize,
-                    y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
-                )
-                .onChange(of: game.diceValue) { newValue in
-                    // Only trigger animation if we're not already rolling from a tap
-                    if !isDiceRolling {
-                        isDiceRolling = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            isDiceRolling = false
+                    .position(
+                        x: boardOffsetX + CGFloat(dicePos.col + 1) * cellSize,
+                        y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
+                    )
+                    .onChange(of: game.diceValue) { newValue in
+                        // Only trigger animation if we're not already rolling from a tap
+                        if !isDiceRolling {
+                            isDiceRolling = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                isDiceRolling = false
+                            }
                         }
                     }
                 }
