@@ -24,7 +24,6 @@ struct DiceView: View {
                     .rotationEffect(.degrees(rotation))
                     .scaleEffect(scale)
                     .onAppear {
-                        print("🎲 Starting dice animation in view")
                         // Play dice roll sound
                         SoundManager.shared.playSound("dice")
                         withAnimation(.easeInOut(duration: 0.2).repeatForever(autoreverses: true)) {
@@ -33,7 +32,6 @@ struct DiceView: View {
                         }
                     }
                     .onDisappear {
-                        print("🎲 Ending dice animation in view")
                         rotation = 0
                         scale = 1.0
                     }
@@ -59,10 +57,10 @@ struct DiceView: View {
             onTap()
         }
         .onChange(of: isRolling) { newValue in
-            print("🎲 isRolling changed to: \(newValue)")
+            // No debug print needed
         }
         .onChange(of: value) { newValue in
-            print("🎲 Dice value changed in view to: \(newValue)")
+            // No debug print needed
         }
     }
     
@@ -353,14 +351,11 @@ struct LudoBoardView: View {
                 // Dice View
                 let dicePos = getDicePosition()
                 DiceView(value: game.diceValue, isRolling: isDiceRolling) {
-                    print("🎲 Dice tapped - isDiceRolling: \(isDiceRolling), eligiblePawns: \(game.eligiblePawns.count)")
                     if !isDiceRolling && game.eligiblePawns.isEmpty {
                         isDiceRolling = true
-                        print("🎲 Starting dice roll animation from tap")
                         game.rollDice()
                         // Simulate rolling animation
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            print("🎲 Ending dice roll animation from tap")
                             isDiceRolling = false
                         }
                     }
@@ -370,13 +365,10 @@ struct LudoBoardView: View {
                     y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
                 )
                 .onChange(of: game.diceValue) { newValue in
-                    print("🎲 Dice value changed to: \(newValue), isDiceRolling: \(isDiceRolling)")
                     // Only trigger animation if we're not already rolling from a tap
                     if !isDiceRolling {
                         isDiceRolling = true
-                        print("🎲 Starting dice roll animation from value change")
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            print("🎲 Ending dice roll animation from value change")
                             isDiceRolling = false
                         }
                     }
