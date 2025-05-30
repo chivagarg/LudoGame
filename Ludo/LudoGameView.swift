@@ -174,7 +174,7 @@ struct LudoGameView: View {
     }
     
     private var gameBoardView: some View {
-        VStack {
+        VStack(spacing: 16) {
             if game.isAdminMode {
                 Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
                     .font(.title2)
@@ -195,8 +195,38 @@ struct LudoGameView: View {
                 }
             }
             
+            // Scoring Panel
+            HStack(spacing: 20) {
+                ForEach(PlayerColor.allCases, id: \.self) { color in
+                    VStack(spacing: 4) {
+                        Text(color.rawValue.capitalized)
+                            .font(.headline)
+                            .foregroundColor(colorForPlayer(color))
+                        Text("\(game.scores[color] ?? 0)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(colorForPlayer(color))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .shadow(radius: 2)
+                }
+            }
+            .padding(.horizontal)
+            
             // Ludo Board
             LudoBoardView()
+        }
+    }
+    
+    private func colorForPlayer(_ color: PlayerColor) -> Color {
+        switch color {
+        case .red: return .red
+        case .green: return .green
+        case .yellow: return .yellow
+        case .blue: return .blue
         }
     }
 }
@@ -522,37 +552,11 @@ struct LudoBoardView: View {
                 if (row == 1 || row == 4) && (col == 1 || col == 4) {
                     Circle().fill(Color.red).padding(cellSize * 0.1)
                 }
-                // Display red score
-                if row == 0 && col == 0 {
-                    Text("\(game.scores[.red] ?? 0)")
-                        .font(.system(size: cellSize * 0.8, weight: .bold))
-                        .foregroundColor(.red)
-                        .overlay(
-                            Text("\(game.scores[.red] ?? 0)")
-                                .font(.system(size: cellSize * 0.8, weight: .bold))
-                                .foregroundColor(.white)
-                                .blur(radius: 1)
-                        )
-                        .position(x: cellSize * 0.5, y: cellSize * 0.5)
-                }
             // Green Home Area
             } else if row < 6 && col > 8 {
                 Rectangle().fill(Color.green.opacity(0.7))
                 if (row == 1 || row == 4) && (col == 10 || col == 13) {
                     Circle().fill(Color.green).padding(cellSize * 0.1)
-                }
-                // Display green score
-                if row == 0 && col == 14 {
-                    Text("\(game.scores[.green] ?? 0)")
-                        .font(.system(size: cellSize * 0.8, weight: .bold))
-                        .foregroundColor(.green)
-                        .overlay(
-                            Text("\(game.scores[.green] ?? 0)")
-                                .font(.system(size: cellSize * 0.8, weight: .bold))
-                                .foregroundColor(.white)
-                                .blur(radius: 1)
-                        )
-                        .position(x: cellSize * 0.5, y: cellSize * 0.5)
                 }
             // Blue Home Area
             } else if row > 8 && col < 6 {
@@ -560,37 +564,11 @@ struct LudoBoardView: View {
                 if (row == 10 || row == 13) && (col == 1 || col == 4) {
                     Circle().fill(Color.blue).padding(cellSize * 0.1)
                 }
-                // Display blue score
-                if row == 14 && col == 0 {
-                    Text("\(game.scores[.blue] ?? 0)")
-                        .font(.system(size: cellSize * 0.8, weight: .bold))
-                        .foregroundColor(.blue)
-                        .overlay(
-                            Text("\(game.scores[.blue] ?? 0)")
-                                .font(.system(size: cellSize * 0.8, weight: .bold))
-                                .foregroundColor(.white)
-                                .blur(radius: 1)
-                        )
-                        .position(x: cellSize * 0.5, y: cellSize * 0.5)
-                }
             // Yellow Home Area
             } else if row > 8 && col > 8 {
                 Rectangle().fill(Color.yellow.opacity(0.7))
                 if (row == 10 || row == 13) && (col == 10 || col == 13) {
                     Circle().fill(Color.yellow).padding(cellSize * 0.1)
-                }
-                // Display yellow score
-                if row == 14 && col == 14 {
-                    Text("\(game.scores[.yellow] ?? 0)")
-                        .font(.system(size: cellSize * 0.8, weight: .bold))
-                        .foregroundColor(.yellow)
-                        .overlay(
-                            Text("\(game.scores[.yellow] ?? 0)")
-                                .font(.system(size: cellSize * 0.8, weight: .bold))
-                                .foregroundColor(.white)
-                                .blur(radius: 1)
-                        )
-                        .position(x: cellSize * 0.5, y: cellSize * 0.5)
                 }
             // Red Safe Zone
             } else if row == 7 && (1...5).contains(col) {
