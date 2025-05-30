@@ -106,12 +106,14 @@ struct LudoGameView: View {
     // MARK: - Settings Table View
     private struct SettingsTableView: View {
         @Binding var isAdminMode: Bool
+        @Environment(\.colorScheme) var colorScheme
         
         var body: some View {
             VStack(spacing: 0) {
                 // Header
                 Text("Game Settings")
                     .font(.headline)
+                    .foregroundColor(.blue)
                     .padding(.bottom, 8)
                 
                 // Settings Table
@@ -120,20 +122,21 @@ struct LudoGameView: View {
                     HStack {
                         Text("Mode")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.green)
                         Spacer()
                         Text("Status")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.yellow)
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
-                    .background(Color.gray.opacity(0.1))
+                    .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.1))
                     
                     // Admin Mode Row
                     HStack {
                         Text("Admin Mode")
                             .font(.body)
+                            .foregroundColor(.red)
                         Spacer()
                         Toggle("", isOn: $isAdminMode)
                             .labelsHidden()
@@ -141,9 +144,9 @@ struct LudoGameView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 12)
-                    .background(Color.white)
+                    .background(colorScheme == .dark ? Color.black : Color.white)
                 }
-                .background(Color.gray.opacity(0.1))
+                .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.1))
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
@@ -151,7 +154,7 @@ struct LudoGameView: View {
                 )
             }
             .padding()
-            .background(Color.white)
+            .background(colorScheme == .dark ? Color.black : Color.white)
             .cornerRadius(15)
             .shadow(radius: 2)
             .frame(width: 300)
