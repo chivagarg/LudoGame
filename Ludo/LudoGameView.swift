@@ -105,10 +105,59 @@ struct LudoGameView: View {
     }
     
     private var startGameView: some View {
-        VStack {
+        VStack(spacing: 20) {
             Text("Ludo")
                 .font(.largeTitle)
                 .fontWeight(.bold)
+            
+            // Settings Table
+            VStack(spacing: 0) {
+                // Header
+                Text("Game Settings")
+                    .font(.headline)
+                    .padding(.bottom, 8)
+                
+                // Settings Table
+                VStack(spacing: 0) {
+                    // Table Header
+                    HStack {
+                        Text("Mode")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text("Status")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.1))
+                    
+                    // Admin Mode Row
+                    HStack {
+                        Text("Admin Mode")
+                            .font(.body)
+                        Spacer()
+                        Toggle("", isOn: $game.isAdminMode)
+                            .labelsHidden()
+                            .tint(.red)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color.white)
+                }
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+            }
+            .padding()
+            .background(Color.white)
+            .cornerRadius(15)
+            .shadow(radius: 2)
+            .frame(width: 300)  // Fixed width for the settings table
             
             Button("Start Game") {
                 game.startGame()
@@ -119,25 +168,30 @@ struct LudoGameView: View {
             .foregroundColor(.white)
             .cornerRadius(10)
         }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)  // Center the entire content
+        .background(Color.gray.opacity(0.05))  // Light background for the entire view
     }
     
     private var gameBoardView: some View {
         VStack {
-            Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
-                .font(.title2)
-            
-            HStack {
-                // Test dice roll buttons
-                ForEach([1, 2, 3, 4, 5, 6, 48], id: \.self) { value in
-                    Button("\(value)") {
-                        game.testRollDice(value: value)
+            if game.isAdminMode {
+                Text("Current Player: \(game.currentPlayer.rawValue.capitalized)")
+                    .font(.title2)
+                
+                HStack {
+                    // Test dice roll buttons
+                    ForEach([1, 2, 3, 4, 5, 6, 48], id: \.self) { value in
+                        Button("\(value)") {
+                            game.testRollDice(value: value)
+                        }
+                        .font(.title3)
+                        .padding(8)
+                        .background(game.eligiblePawns.isEmpty ? (value == 48 ? Color.purple : Color.green) : Color.gray)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .disabled(!game.eligiblePawns.isEmpty)
                     }
-                    .font(.title3)
-                    .padding(8)
-                    .background(game.eligiblePawns.isEmpty ? (value == 48 ? Color.purple : Color.green) : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                    .disabled(!game.eligiblePawns.isEmpty)
                 }
             }
             

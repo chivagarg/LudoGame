@@ -24,6 +24,7 @@ class LudoGame: ObservableObject {
     @Published var currentRollPlayer: PlayerColor? = nil  // Track whose roll is currently active
     @Published var scores: [PlayerColor: Int] = [.red: 0, .green: 0, .yellow: 0, .blue: 0]  // Track scores
     @Published var homeCompletionOrder: [PlayerColor] = []  // Track order of pawns reaching home
+    @Published var isAdminMode: Bool = false  // Whether admin mode is enabled
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
