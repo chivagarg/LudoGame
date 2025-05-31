@@ -830,7 +830,7 @@ struct LudoBoardView: View {
         if isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
             PawnView(color: color, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id))
                 .onTapGesture {
-                    if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 {
+                    if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
                         // Play swish sound when moving from home
                         SoundManager.shared.playSound("swish")
                         
