@@ -295,11 +295,12 @@ class LudoGame: ObservableObject {
                 }
             }
         }
-        
+        print("State of eligiblePawns in testrolldice", eligiblePawns)
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
             // Keep the current player's roll visible for 1 seconds before moving to next turn
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                print("Calling next turn as there are no eligible pawns")
                 self.nextTurn(clearRoll: true)
             }
         }
@@ -385,16 +386,22 @@ class LudoGame: ObservableObject {
         // 1. It's your turn
         // 2. It's your roll
         // 3. The pawn is eligible to move
-        guard color == currentPlayer && 
+        print("In movePawn")
+        guard color == currentPlayer &&
               color == currentRollPlayer &&
               eligiblePawns.contains(pawnId) else { return }
         
+        print("Crossed guard")
+        
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
+        
+        print("pawnIndex is",pawnIndex)
         
         var shouldGetAnotherRoll = false
         
         if let positionIndex = pawns[color]?[pawnIndex].positionIndex {
             // Pawn is on the path
+            print("Pawn is on the path")
             let currentPath = path(for: color)
             let newIndex = positionIndex + steps
             
@@ -451,6 +458,7 @@ class LudoGame: ObservableObject {
             }
         } else {
             // Pawn is at home
+            print("Pawn was at home")
             if steps == 6 {
                 // Move pawn to start position (index 0)
                 pawns[color]?[pawnIndex].positionIndex = 0
