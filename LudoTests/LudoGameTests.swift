@@ -2,8 +2,6 @@
 //  LudoGameTests.swift
 //  LudoTests
 //
-//  Created by Shiva garg on 5/18/25.
-//
 
 import XCTest
 @testable import Ludo  // Replace 'Ludo' with the actual name of your app module
@@ -807,7 +805,6 @@ class LudoGameTests: XCTestCase {
         XCTAssertEqual(game.currentPlayer, .blue, "Yellow -> Blue")
         
         // Move all red pawns to home
-        // At completion of red, the turn would advance to green.
         game.currentPlayer = .red
         
         for pawnId in 0..<4 {
@@ -821,13 +818,70 @@ class LudoGameTests: XCTestCase {
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
         }
+        // At completion of red, the turn would advance to green in movePawn
         XCTAssertEqual(game.currentPlayer, .green, "Red -> Green")
 
         game.nextTurn()
         XCTAssertEqual(game.currentPlayer, .yellow, "Green -> Yellow")
+
         game.nextTurn()
         XCTAssertEqual(game.currentPlayer, .blue, "Yellow -> Blue")
+
+        // Red should get skipped.
         game.nextTurn()
         XCTAssertEqual(game.currentPlayer, .green, "Blue -> Green")
     }
+
+    func testNextTurnClearingRoll() {
+        game.currentPlayer = .red
+        game.currentRollPlayer = .red
+        game.nextTurn(clearRoll: true)
+        XCTAssertEqual(game.currentRollPlayer, nil, "CurrentRollPlayer cleared")
+    }
+ 
+    func testNextTurnWithoutClearingRoll() {
+        game.currentPlayer = .red
+        game.currentRollPlayer = .red
+        game.nextTurn(clearRoll: false)
+        XCTAssertEqual(game.currentRollPlayer, .red, "CurrentRollPlayer cleared")
+    }
+
+    func testTurnChangesOnRollDiceWhenPlayerHasCompleted() {
+        // Setup: Move all red pawns to home
+        game.currentPlayer = .red
+        game.currentRollPlayer = .red
+        
+        for pawnId in 0..<4 {
+            // Move out pawn to starting position
+            game.diceValue = 6
+            game.testRollDice(value: game.diceValue)
+            game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
+
+            // Move pawn to home
+            game.diceValue = 60
+            game.testRollDice(value: game.diceValue)
+            game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
+        }
+
+        game.rollDice()
+        XCTAssertEqual(game.currentPlayer, .green, "No state change expected")
+    }
+    
+//    func testRollDiceAutoMovesPawn() {
+//        // Setup: Move all red pawns to starting position
+//        game.currentPlayer = .red
+//        game.currentRollPlayer = .red
+//        
+//        // Move one pawn to starting position
+//        game.diceValue = 6
+//        game.testRollDice(value: game.diceValue)
+//        game.movePawn(color: .red, pawnId: 0, steps: game.diceValue)
+//
+//        game.rollDice()
+//        XCTAssertNotNil(game.pawns[.red]?[0].positionIndex, "Red pawn should be on the path.")
+//        
+//        // Since there is only one eligible pawn, it should have moved immediately on diceroll
+//        let startingPosition = Position(row: 6, col: 1)
+//        XCTAssertNotEqual(game.path(for: .red)[game.pawns[.red]![0].positionIndex!], startingPosition, "Red pawn should not be at starting position.")
+//    }
 }

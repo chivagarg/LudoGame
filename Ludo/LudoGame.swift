@@ -193,6 +193,7 @@ class LudoGame: ObservableObject {
             
             // If there's exactly one eligible pawn, simulate tapping it
             if eligiblePawns.count == 1 {
+                print("Eligible pawn count was one!")
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
@@ -217,7 +218,9 @@ class LudoGame: ObservableObject {
                                 )
                                 
                                 // Move the pawn after animation
+                                print("move will happennnn")
                                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
+                                    print("calling movepawwwnnz")
                                     self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
                                 }
                             }
