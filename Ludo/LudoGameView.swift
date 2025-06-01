@@ -618,8 +618,16 @@ struct LudoBoardView: View {
             // Draw star if this is a star space
             if isStarSpace(row: row, col: col) {
                 Image(systemName: "star.fill")
-                    .foregroundColor(.yellow)
-                    .font(.system(size: cellSize * 0.4))
+                    .foregroundColor(.black)
+                    .font(.system(size: cellSize * 0.5))
+                    .shadow(color: .black, radius: 1, x: 0, y: 0)
+                    .overlay(
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.black)
+                            .font(.system(size: cellSize * 0.5))
+                            .blur(radius: 1)
+                            .opacity(0.5)
+                    )
             }
             
             Rectangle().stroke(Color.black, lineWidth: 0.5)
