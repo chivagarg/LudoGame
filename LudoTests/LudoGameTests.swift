@@ -4,7 +4,7 @@
 //
 
 import XCTest
-@testable import Ludo  // Replace 'Ludo' with the actual name of your app module
+@testable import Ludo
 
 class LudoGameTests: XCTestCase {
 
@@ -177,7 +177,7 @@ class LudoGameTests: XCTestCase {
        // Move out first to move pawn to starting position
        game.movePawn(color: .blue, pawnId: pawnId, steps: game.diceValue)
         
-        game.diceValue = 14
+        game.diceValue = 13
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .blue, pawnId: pawnId, steps: game.diceValue)
@@ -198,7 +198,7 @@ class LudoGameTests: XCTestCase {
        // Move out first to move pawn to starting position
        game.movePawn(color: .blue, pawnId: pawnId, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .blue, pawnId: pawnId, steps: game.diceValue)
@@ -219,7 +219,7 @@ class LudoGameTests: XCTestCase {
         // Move out first to move pawn to starting position
         game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
@@ -240,7 +240,7 @@ class LudoGameTests: XCTestCase {
        // Move out first to move pawn to starting position
        game.movePawn(color: .yellow, pawnId: pawnId, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .yellow, pawnId: pawnId, steps: game.diceValue)
@@ -261,7 +261,7 @@ class LudoGameTests: XCTestCase {
        // Move out first to move pawn to starting position
        game.movePawn(color: .green, pawnId: pawnId, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .green, pawnId: pawnId, steps: game.diceValue)
@@ -500,7 +500,7 @@ class LudoGameTests: XCTestCase {
         // Move out first to move pawn to starting position
         game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
 
-        game.diceValue = 15
+        game.diceValue = 14
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
@@ -588,7 +588,7 @@ class LudoGameTests: XCTestCase {
         // Move out pawn 0 to starting position
         game.movePawn(color: .red, pawnId: 0, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .red, pawnId: 0, steps: game.diceValue)
@@ -601,7 +601,7 @@ class LudoGameTests: XCTestCase {
         // Move out pawn 1 to starting position
         game.movePawn(color: .red, pawnId: 1, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .red, pawnId: 1, steps: game.diceValue)
@@ -615,7 +615,7 @@ class LudoGameTests: XCTestCase {
         // Move out pawn 2 to starting position
         game.movePawn(color: .red, pawnId: 2, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .red, pawnId: 2, steps: game.diceValue)
@@ -631,7 +631,7 @@ class LudoGameTests: XCTestCase {
         // Move out pawn 0 to starting position
         game.movePawn(color: .blue, pawnId: 0, steps: game.diceValue)
 
-        game.diceValue = 60
+        game.diceValue = 56
         game.testRollDice(value: game.diceValue)
 
         game.movePawn(color: .blue, pawnId: 0, steps: game.diceValue)
@@ -653,7 +653,7 @@ class LudoGameTests: XCTestCase {
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
 
             // Move pawn to home
-            game.diceValue = 60
+            game.diceValue = 56
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
         }
@@ -671,7 +671,7 @@ class LudoGameTests: XCTestCase {
             game.movePawn(color: .green, pawnId: pawnId, steps: game.diceValue)
 
             // Move pawn to home
-            game.diceValue = 60
+            game.diceValue = 56
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .green, pawnId: pawnId, steps: game.diceValue)
         }
@@ -689,7 +689,7 @@ class LudoGameTests: XCTestCase {
             game.movePawn(color: .yellow, pawnId: pawnId, steps: game.diceValue)
 
             // Move pawn to home
-            game.diceValue = 60
+            game.diceValue = 56
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .yellow, pawnId: pawnId, steps: game.diceValue)
         }
@@ -707,7 +707,7 @@ class LudoGameTests: XCTestCase {
             game.movePawn(color: .blue, pawnId: pawnId, steps: game.diceValue)
 
             // Move pawn to home
-            game.diceValue = 60
+            game.diceValue = 56
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .blue, pawnId: pawnId, steps: game.diceValue)
         }
@@ -814,7 +814,7 @@ class LudoGameTests: XCTestCase {
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
 
             // Move pawn to home
-            game.diceValue = 60
+            game.diceValue = 56
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
         }
@@ -858,7 +858,7 @@ class LudoGameTests: XCTestCase {
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
 
             // Move pawn to home
-            game.diceValue = 60
+            game.diceValue = 56
             game.testRollDice(value: game.diceValue)
             game.movePawn(color: .red, pawnId: pawnId, steps: game.diceValue)
         }
