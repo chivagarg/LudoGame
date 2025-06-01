@@ -434,7 +434,11 @@ struct LudoBoardView: View {
                 // Dice View
                 if let dicePos = getDicePosition() {
                     DiceView(value: game.diceValue, isRolling: isDiceRolling) {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                        // Only allow rolling if:
+                        // 1. Not already rolling
+                        // 2. No eligible pawns to move
+                        // 3. No current roll (currentRollPlayer is nil)
+                        if !isDiceRolling && game.eligiblePawns.isEmpty && game.currentRollPlayer == nil {
                             isDiceRolling = true
                             game.rollDice()
                             // Simulate rolling animation

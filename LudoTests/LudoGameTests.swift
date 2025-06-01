@@ -884,4 +884,22 @@ class LudoGameTests: XCTestCase {
 //        let startingPosition = Position(row: 6, col: 1)
 //        XCTAssertNotEqual(game.path(for: .red)[game.pawns[.red]![0].positionIndex!], startingPosition, "Red pawn should not be at starting position.")
 //    }
+
+    // MARK: - Test Dice Roll Prevention
+    
+    func testDiceRollPreventionWithEligiblePawns() {
+        // Set up initial state
+        game.currentPlayer = .red
+        game.rollDice()
+        
+        XCTAssertEqual(game.currentRollPlayer, .red, "First roll should set currentRollPlayer")
+        
+        game.currentRollPlayer = nil
+        game.eligiblePawns = [0]
+        
+        // Try to roll while there are eligible pawns
+        game.rollDice()
+        
+        XCTAssertNotEqual(game.currentRollPlayer, .red, "Second roll should not change currentRollPlayer")
+    }
 }

@@ -169,8 +169,8 @@ class LudoGame: ObservableObject {
             return
         }
         
-        // Only allow rolling if there are no eligible pawns
-        guard eligiblePawns.isEmpty else { return }
+        // Only allow rolling if there are no eligible pawns and no current roll
+        guard eligiblePawns.isEmpty && currentRollPlayer == nil else { return }
         
         // Roll the dice
         diceValue = Int.random(in: 1...6)
