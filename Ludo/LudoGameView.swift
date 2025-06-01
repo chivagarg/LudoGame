@@ -648,7 +648,7 @@ struct LudoBoardView: View {
                     // Pawn is on the path
                     pathPawnView(pawn: pawn, color: color, positionIndex: positionIndex, row: row, col: col, cellSize: cellSize)
                 } else {
-                    // Pawn is in ending home (positionIndex == -1)
+                    // Pawn is in ending home
                     endingHomePawnView(pawn: pawn, color: color, row: row, col: col, cellSize: cellSize)
                 }
             } else {
@@ -810,7 +810,17 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func endingHomePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         if isCorrectEndingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(color: color, size: cellSize * 0.8, isEligible: false)
+            // Count total pawns in this ending home
+            let totalPawns = game.pawns[color]?.filter { $0.positionIndex == -1 }.count ?? 0
+            
+            // Calculate this pawn's index in the ending home
+            let pawnIndex = game.pawns[color]?.filter { $0.positionIndex == -1 }.firstIndex(where: { $0.id == pawn.id }) ?? 0
+            
+            // Calculate size and position
+            let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
+            
+            PawnView(color: color, size: size, isEligible: false)
+                .offset(x: xOffset, y: yOffset)
                 .shadow(color: .black.opacity(0.2), radius: 2)
         }
     }
