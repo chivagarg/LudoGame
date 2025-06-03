@@ -581,9 +581,6 @@ struct LudoBoardView: View {
             // Green Safe Zone
             } else if col == 7 && (1...5).contains(row) {
                 Rectangle().fill(Color.green.opacity(0.7))
-            // Green Home (Dark Green)
-            } else if row == 6 && col == 7 {
-                Rectangle().fill(Color(red: 0, green: 0.4, blue: 0))
             // Yellow Safe Zone
             } else if row == 7 && (9...13).contains(col) {
                 Rectangle().fill(Color.yellow.opacity(0.7))
@@ -596,25 +593,36 @@ struct LudoBoardView: View {
             // Blue Home (Dark Blue)
             } else if row == 8 && col == 7 {
                 Rectangle().fill(Color(red: 0, green: 0, blue: 0.5))
-            // Center Red Triangle
-            } else if (6...8).contains(row) && col == 6 || (row == 7 && col == 7) || (row == 7 && col == 6){
-                 if row == 6 && col == 6 { // Cell (6,6): Triangle connecting (0,0), (0,cellSize), and center of (7,7)
-                     Path { path in
+            // 3 by 3 center
+            } else if row == 6 && col == 6 {
+                Path { path in
                          path.move(to: CGPoint(x: 0, y: 0))
                          path.addLine(to: CGPoint(x: 0, y: cellSize))
                          path.addLine(to: CGPoint(x: cellSize, y: cellSize))
                          path.closeSubpath()
                      }
                      .fill(Color.red.opacity(0.7))
-                 } else if row == 8 && col == 6 { // Cell (8,6): Triangle connecting (0,0), (0,cellSize), and center of (7,7)
-                      Path { path in
-                          path.move(to: CGPoint(x: 0, y: 0))
-                          path.addLine(to: CGPoint(x: 0, y: cellSize))
-                          path.addLine(to: CGPoint(x: cellSize, y: 0))
-                          path.closeSubpath()
-                      }
-                     .fill(Color.red.opacity(0.7))
-                 } else if row == 7 && col == 7 { // Cell (7,7): Left half
+
+                     Path { path in
+                         path.move(to: CGPoint(x: 0, y: 0))
+                         path.addLine(to: CGPoint(x: cellSize, y: 0))
+                         path.addLine(to: CGPoint(x: cellSize, y: cellSize))
+                         path.closeSubpath()
+                     }
+                     .fill(Color.green.opacity(0.7))
+            } else if row == 6 && col == 7 {
+                Rectangle().fill(Color.green.opacity(0.7))
+            } else if row == 6 && col == 8 {
+                Path { path in
+                    path.move(to: CGPoint(x: 0, y: 0))
+                    path.addLine(to: CGPoint(x: cellSize, y: 0))
+                    path.addLine(to: CGPoint(x: 0, y: cellSize))
+                    path.closeSubpath()
+                }
+                .fill(Color.green.opacity(0.7))
+            } else if row == 7 && col == 6 {
+                Rectangle().fill(Color.red.opacity(0.7))
+            } else if row == 7 && col == 7 {
                      Path { path in
                          path.move(to: CGPoint(x: 0, y: 0))
                          path.addLine(to: CGPoint(x: cellSize/2, y: cellSize/2))
@@ -622,9 +630,28 @@ struct LudoBoardView: View {
                          path.closeSubpath()
                      }
                      .fill(Color.red.opacity(0.7))
-                 } else {
-                    Rectangle().fill(Color.red.opacity(0.7))
-                 }
+
+                     Path { path in
+                         path.move(to: CGPoint(x: 0, y: 0))
+                         path.addLine(to: CGPoint(x: cellSize/2, y: cellSize/2))
+                         path.addLine(to: CGPoint(x: cellSize, y: 0))
+                         path.closeSubpath()
+                     }
+                     .fill(Color.green.opacity(0.7))
+            } else if row == 7 && col == 8 {
+                Rectangle().fill(Color.yellow.opacity(0.7))
+            } else if row == 8 && col == 6 {
+                      Path { path in
+                          path.move(to: CGPoint(x: 0, y: 0))
+                          path.addLine(to: CGPoint(x: 0, y: cellSize))
+                          path.addLine(to: CGPoint(x: cellSize, y: 0))
+                          path.closeSubpath()
+                      }
+                     .fill(Color.red.opacity(0.7))
+            } else if row == 8 && col == 7 {
+                Rectangle().fill(Color.blue.opacity(0.7))
+            } else if row == 8 && col == 8 {
+                Rectangle().fill(Color.white)
             } else {
                 Rectangle().fill(Color.white)
             }
