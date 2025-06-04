@@ -723,7 +723,10 @@ struct LudoBoardView: View {
                     )
             }
             
-            Rectangle().stroke(Color.black, lineWidth: 0.5)
+            // Only draw stroke for cells outside the center 3x3 grid
+            if !(6...8).contains(row) || !(6...8).contains(col) {
+                Rectangle().stroke(Color.black, lineWidth: 0.5)
+            }
         }
     }
     
