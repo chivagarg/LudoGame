@@ -429,7 +429,11 @@ struct LudoBoardView: View {
                     }
                 }
                 .frame(width: boardSize, height: boardSize)
-                .border(Color.black, width: 2)
+                .cornerRadius(cellSize / 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: cellSize / 4)
+                        .stroke(Color.black, lineWidth: 2)
+                )
                 
                 // Dice View
                 if let dicePos = getDicePosition() {
