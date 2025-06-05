@@ -88,6 +88,7 @@ struct DiceView: View {
 
 struct LudoGameView: View {
     @StateObject private var game = LudoGame()
+    @State private var selectedPlayers: Set<PlayerColor> = Set(PlayerColor.allCases)
     
     var body: some View {
         VStack {
@@ -195,6 +196,8 @@ struct LudoGameView: View {
                 .fontWeight(.bold)
             
             SettingsTableView(isAdminMode: $game.isAdminMode)
+            
+            PlayerSelectionView(selectedPlayers: $selectedPlayers)
             
             Button("Start Game") {
                 game.startGame()

@@ -10,6 +10,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1B /* LudoApp.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */; };
+		DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD32DEA05DC00073666 /* hop.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCD2DEA05DC00073666 /* hop.wav */; };
@@ -35,6 +36,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGameView.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGame.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A20 /* Ludo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ludo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionView.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */,
 				DAFC6FD92DEA11FA00073666 /* GameOverView.swift */,
 				DAFC6FDA2DEA11FA00073666 /* ScoringPanelView.swift */,
 				DAFC6FCB2DEA05DC00073666 /* capture.wav */,
@@ -215,6 +218,7 @@
 				1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */,
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,
+				DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */,
 				DAFC6FDB2DEA11FA00073666 /* GameOverView.swift in Sources */,
 				DAFC6FDC2DEA11FA00073666 /* ScoringPanelView.swift in Sources */,
