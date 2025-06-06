@@ -207,6 +207,7 @@ struct LudoGameView: View {
             .background(Color.blue)
             .foregroundColor(.white)
             .cornerRadius(10)
+            .disabled(selectedPlayers.count < 2)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
