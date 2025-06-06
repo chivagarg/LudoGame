@@ -952,7 +952,8 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     private func homePawnView(pawn: Pawn, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
-        if isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
+        // Only draw pawn if the player color is selected
+        if game.selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
             PawnView(color: color, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id))
                 .onTapGesture {
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {

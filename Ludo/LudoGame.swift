@@ -28,8 +28,7 @@ class LudoGame: ObservableObject {
     @Published var isAdminMode: Bool = false  // Whether admin mode is enabled
     @Published var isGameOver: Bool = false  // Whether the game is over
     @Published var finalRankings: [PlayerColor] = []  // Track final player rankings
-
-    private var selectedPlayers: Set<PlayerColor> = []
+    @Published var selectedPlayers: Set<PlayerColor> = []
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
