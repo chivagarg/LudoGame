@@ -29,6 +29,8 @@ class LudoGame: ObservableObject {
     @Published var isGameOver: Bool = false  // Whether the game is over
     @Published var finalRankings: [PlayerColor] = []  // Track final player rankings
 
+    private var selectedPlayers: Set<PlayerColor> = []
+
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
         Position(row: 7, col: 1), Position(row: 7, col: 2), Position(row: 7, col: 3), Position(row: 7, col: 4), Position(row: 7, col: 5)
@@ -310,36 +312,49 @@ class LudoGame: ObservableObject {
     }
     
     func nextTurn(clearRoll: Bool = true) {
-        let colors = PlayerColor.allCases
-        if let currentIndex = colors.firstIndex(of: currentPlayer) {
-            // Find the next player who hasn't completed their game
-            var nextIndex = (currentIndex + 1) % colors.count
-            var nextPlayer = colors[nextIndex]
-            
-            // Keep looking for a player who hasn't completed their game
-            while hasCompletedGame(color: nextPlayer) {
-                nextIndex = (nextIndex + 1) % colors.count
-                nextPlayer = colors[nextIndex]
-                
-                // If we've gone through all players and they're all done, stay on current player
-                if nextPlayer == currentPlayer {
-                    break
-                }
-            }
-            
-            currentPlayer = nextPlayer
-            eligiblePawns.removeAll()
-            if clearRoll {
-                currentRollPlayer = nil
-            }
-            
-            // If the next player has completed their game, recursively call nextTurn
-            if hasCompletedGame(color: currentPlayer) {
-                if hasAllPlayersCompleted() {
-                    isGameOver = true
-                    finalRankings = getFinalRankings()
-                    return  // Exit early if game is over
-                }
+        // Get all selected players in the order of PlayerColor.allCases
+        let orderedPlayers = PlayerColor.allCases.filter { selectedPlayers.contains($0) }
+
+        // Find the index of the current player within the ordered selected players
+        guard let currentIndex = orderedPlayers.firstIndex(of: currentPlayer) else {
+             // If the current player is not in the selected players (shouldn't happen in normal flow),
+             // there's nothing to do or it indicates an error state.
+             print("Error: Current player \(currentPlayer) not found in selected players.")
+             return // Early return if currentIndex is nil
+        }
+
+        // Find the next player's index among the ordered selected players, wrapping around
+        var nextIndex = (currentIndex + 1) % orderedPlayers.count
+        var nextPlayer = orderedPlayers[nextIndex]
+
+        // Keep looking for the next player among the ordered selected players who hasn't completed their game.
+        // Stop if we cycle back to the starting player within the *selected* list (implies all remaining selected players have completed).
+        while hasCompletedGame(color: nextPlayer) && nextPlayer != orderedPlayers[currentIndex] {
+            nextIndex = (nextIndex + 1) % orderedPlayers.count
+            nextPlayer = orderedPlayers[nextIndex]
+        }
+
+        // Set the current player to the determined next player.
+        // Note: If the loop completed because all selected players are done, currentPlayer will be the same.
+        currentPlayer = nextPlayer
+
+        // State clearing logic (kept consistent with original placement)
+        if clearRoll {
+            currentRollPlayer = nil
+        }
+        eligiblePawns.removeAll()
+
+        // Recursive call if the newly set currentPlayer has completed their game.
+        // This is to immediately skip over a completed player's turn.
+        if hasCompletedGame(color: currentPlayer) {
+            // Before recursing, check if ALL *selected* players have completed.
+            // If so, the game is over.
+            if hasAllPlayersCompleted() {
+                isGameOver = true
+                finalRankings = getFinalRankings() // Finalize rankings on game over
+                return // Exit if game is truly over
+            } else {
+                // If not all players are done, skip this completed player's turn by calling nextTurn again.
                 nextTurn(clearRoll: clearRoll)
             }
         }
@@ -351,9 +366,10 @@ class LudoGame: ObservableObject {
         return playerPawns.allSatisfy { $0.positionIndex == -1 }
     }
     
-    func startGame() {
+    func startGame(selectedPlayers: Set<PlayerColor>) {
+        self.selectedPlayers = selectedPlayers
         gameStarted = true
-        currentPlayer = .red
+        currentPlayer = selectedPlayers.first! // Set current player to the first selected player (assuming at least one selected)
         eligiblePawns.removeAll()
         currentRollPlayer = nil
         isGameOver = false
@@ -362,17 +378,18 @@ class LudoGame: ObservableObject {
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
-        // Reset pawns
-        pawns = [
-            .red: (0..<4).map { Pawn(id: $0, color: .red, positionIndex: nil) },
-            .green: (0..<4).map { Pawn(id: $0, color: .green, positionIndex: nil) },
-            .yellow: (0..<4).map { Pawn(id: $0, color: .yellow, positionIndex: nil) },
-            .blue: (0..<4).map { Pawn(id: $0, color: .blue, positionIndex: nil) }
-        ]
+        
+        // Initialize pawns only for selected players
+        self.pawns = [:] // Clear existing pawns
+        for color in selectedPlayers {
+            self.pawns[color] = (0..<4).map { Pawn(id: $0, color: color, positionIndex: nil) }
+        }
     }
     
     // Helper to get the path for a color
     func path(for color: PlayerColor) -> [Position] {
+        guard selectedPlayers.contains(color) else { return [] }
+        
         switch color {
         case .red: return Self.redPath
         case .green: return Self.greenPath
@@ -387,11 +404,12 @@ class LudoGame: ObservableObject {
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
         // Only allow moving if:
         // 1. It's your turn
-        // 2. It's your roll
+        // 2. It's your roll (and currentRollPlayer is not nil)
         // 3. The pawn is eligible to move
         print("In movePawn")
-        guard color == currentPlayer &&
-              color == currentRollPlayer &&
+        guard color == currentPlayer,
+              let rollPlayer = currentRollPlayer, // Safely unwrap currentRollPlayer
+              color == rollPlayer, // Compare with the unwrapped value
               eligiblePawns.contains(pawnId) else { return }
         
         print("Crossed guard")

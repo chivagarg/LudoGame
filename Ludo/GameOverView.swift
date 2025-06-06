@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GameOverView: View {
     @EnvironmentObject var game: LudoGame
+    @Binding var selectedPlayers: Set<PlayerColor>
     
     var body: some View {
         VStack(spacing: 20) {
@@ -36,8 +37,8 @@ struct GameOverView: View {
             }
             .padding()
             
-            Button("New Game") {
-                game.startGame()
+            Button("Play Again") {
+                game.startGame(selectedPlayers: selectedPlayers)
             }
             .font(.title2)
             .padding()

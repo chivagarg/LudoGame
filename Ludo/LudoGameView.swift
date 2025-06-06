@@ -95,7 +95,7 @@ struct LudoGameView: View {
             if !game.gameStarted {
                 startGameView
             } else if game.isGameOver {
-                GameOverView()
+                GameOverView(selectedPlayers: $selectedPlayers)
             } else {
                 gameBoardView
             }
@@ -200,7 +200,7 @@ struct LudoGameView: View {
             PlayerSelectionView(selectedPlayers: $selectedPlayers)
             
             Button("Start Game") {
-                game.startGame()
+                game.startGame(selectedPlayers: selectedPlayers)
             }
             .font(.title2)
             .padding()
