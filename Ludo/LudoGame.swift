@@ -10,11 +10,11 @@ struct Position: Equatable {
     var col: Int
 }
 
-struct Pawn: Identifiable {
-    let id: Int // 0-3 for each player
-    let color: PlayerColor
-    var positionIndex: Int? // nil = at home, 0...N = on path, -1 = finished
-}
+// struct PawnState: Identifiable {
+//     let id: Int // 0-3 for each player
+//     let color: PlayerColor
+//     var positionIndex: Int? // nil = at home, 0...N = on path, -1 = finished
+// }
 
 class LudoGame: ObservableObject {
     @Published var currentPlayer: PlayerColor = .red
@@ -156,12 +156,7 @@ class LudoGame: ObservableObject {
         Position(row: 8, col: 7) // Blue Home
     ]
 
-    @Published var pawns: [PlayerColor: [Pawn]] = [
-        .red: (0..<4).map { Pawn(id: $0, color: .red, positionIndex: nil) },
-        .green: (0..<4).map { Pawn(id: $0, color: .green, positionIndex: nil) },
-        .yellow: (0..<4).map { Pawn(id: $0, color: .yellow, positionIndex: nil) },
-        .blue: (0..<4).map { Pawn(id: $0, color: .blue, positionIndex: nil) }
-    ]
+    @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
     func rollDice() {
         // Don't allow rolling if the player has completed their game
@@ -377,11 +372,10 @@ class LudoGame: ObservableObject {
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
-        
         // Initialize pawns only for selected players
         self.pawns = [:] // Clear existing pawns
         for color in selectedPlayers {
-            self.pawns[color] = (0..<4).map { Pawn(id: $0, color: color, positionIndex: nil) }
+            self.pawns[color] = (0..<4).map { PawnState(id: $0, color: color, positionIndex: nil) }
         }
     }
     
