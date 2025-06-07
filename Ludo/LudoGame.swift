@@ -189,7 +189,6 @@ class LudoGame: ObservableObject {
             
             // If there's exactly one eligible pawn, simulate tapping it
             if eligiblePawns.count == 1 {
-                print("Eligible pawn count was one!")
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
@@ -214,9 +213,7 @@ class LudoGame: ObservableObject {
                                 )
                                 
                                 // Move the pawn after animation
-                                print("move will happennnn")
                                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                    print("calling movepawwwnnz")
                                     self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
                                 }
                             }
@@ -294,12 +291,10 @@ class LudoGame: ObservableObject {
                 }
             }
         }
-        print("State of eligiblePawns in testrolldice", eligiblePawns)
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
             // Keep the current player's roll visible for 1 seconds before moving to next turn
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                print("Calling next turn as there are no eligible pawns")
                 self.nextTurn(clearRoll: true)
             }
         }
@@ -399,23 +394,17 @@ class LudoGame: ObservableObject {
         // 1. It's your turn
         // 2. It's your roll (and currentRollPlayer is not nil)
         // 3. The pawn is eligible to move
-        print("In movePawn")
         guard color == currentPlayer,
               let rollPlayer = currentRollPlayer, // Safely unwrap currentRollPlayer
               color == rollPlayer, // Compare with the unwrapped value
               eligiblePawns.contains(pawnId) else { return }
         
-        print("Crossed guard")
-        
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
-        
-        print("pawnIndex is",pawnIndex)
         
         var shouldGetAnotherRoll = false
         
         if let positionIndex = pawns[color]?[pawnIndex].positionIndex {
             // Pawn is on the path
-            print("Pawn is on the path")
             let currentPath = path(for: color)
             let newIndex = positionIndex + steps
             
@@ -472,7 +461,6 @@ class LudoGame: ObservableObject {
             }
         } else {
             // Pawn is at home
-            print("Pawn was at home")
             if steps == 6 {
                 // Move pawn to start position (index 0)
                 pawns[color]?[pawnIndex].positionIndex = 0

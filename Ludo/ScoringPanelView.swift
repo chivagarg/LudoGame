@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct ScoringPanelView: View {
-    @EnvironmentObject var game: LudoGame
+    let scores: [PlayerColor: Int]
+    let hasCompletedGame: (PlayerColor) -> Bool
     
     var body: some View {
         HStack(spacing: 20) {
@@ -11,7 +12,7 @@ struct ScoringPanelView: View {
                         Text(color.rawValue.capitalized)
                             .font(.headline)
                             .foregroundColor(colorForPlayer(color))
-                        if game.hasCompletedGame(color: color) {
+                        if hasCompletedGame(color) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
                             Text("COMPLETED")
@@ -19,7 +20,7 @@ struct ScoringPanelView: View {
                                 .foregroundColor(.green)
                         }
                     }
-                    Text("\(game.scores[color] ?? 0)")
+                    Text("\(scores[color] ?? 0)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(colorForPlayer(color))
