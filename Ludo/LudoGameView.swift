@@ -434,10 +434,6 @@ struct LudoBoardView: View {
             Self.renderCount += 1
             print("LudoBoardView rendered \(Self.renderCount) times")
         }()
-        
-        if let pawnToCheck = game.pawns[game.currentPlayer]?.first(where: { game.eligiblePawns.contains($0.id) }) {
-             print("LudoBoardView body rendering. Pawn \(pawnToCheck.id) for \(pawnToCheck.color) has positionIndex: \(String(describing: pawnToCheck.positionIndex))")
-        }
 
         return GeometryReader { geometry in
             let (boardSize, cellSize, boardOffsetX, boardOffsetY) = calculateBoardDimensions(geometry: geometry)
@@ -497,11 +493,7 @@ struct LudoBoardView: View {
                             }
                         }
                     }
-                } else {
-                   // let _ = print("🎲 No dice position available!")
                 }
-                
-                // Home to start animations layer removed
 
                 // Captured pawns layer
                 ForEach(capturedPawns, id: \.id) { captured in
