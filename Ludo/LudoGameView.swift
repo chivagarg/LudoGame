@@ -241,66 +241,29 @@ struct LudoGameView: View {
                 }
             )
             
-            LudoBoardView(
-                pawns: game.pawns,
-                currentPlayer: game.currentPlayer,
-                diceValue: game.diceValue,
-                eligiblePawns: game.eligiblePawns,
-                selectedPlayers: game.selectedPlayers,
-                isGameOver: game.isGameOver,
-                getDestinationIndex: { color, pawnId in
-                    game.getDestinationIndex(color: color, pawnId: pawnId)
-                },
-                isValidMove: { color, pawnId in
-                    game.isValidMove(color: color, pawnId: pawnId)
-                },
-                movePawn: { color, pawnId, steps in
-                    game.movePawn(color: color, pawnId: pawnId, steps: steps)
-                },
-                rollDice: {
-                    game.rollDice()
-                },
-                hasCompletedGame: { color in
-                    game.hasCompletedGame(color: color)
-                },
-                pathFor: { color in
-                    return game.path(for: color)
-                }
-            )
+            LudoBoardView()
         }
     }
 }
 
 struct LudoBoardView: View {
+    @EnvironmentObject var game: LudoGame
+    
     static var renderCount = 0
     let gridSize = 15
-    let pawns: [PlayerColor: [PawnState]]
-    let currentPlayer: PlayerColor
-    let diceValue: Int
-    let eligiblePawns: Set<Int>
-    let selectedPlayers: Set<PlayerColor>
-    let isGameOver: Bool
     
-    let getDestinationIndex: (PlayerColor, Int) -> Int?
-    let isValidMove: (PlayerColor, Int) -> Bool
-    let movePawn: (PlayerColor, Int, Int) -> Void
-    let rollDice: () -> Void
-    let hasCompletedGame: (PlayerColor) -> Bool
-    let pathFor: (PlayerColor) -> [Position]
-
     @State private var isDiceRolling = false
     @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var currentStep = 0
     @State private var isPathAnimating = false
     @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
-    @State private var homeToStartPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
-
+    
     private func getDicePosition() -> (row: Int, col: Int)? {
-        if hasCompletedGame(currentPlayer) {
+        if game.hasCompletedGame(color: game.currentPlayer) {
             return nil
         }
         
-        switch currentPlayer {
+        switch game.currentPlayer {
         case .red:
             return (row: 2, col: 2)  // Center of red home area
         case .green:
@@ -347,7 +310,7 @@ struct LudoBoardView: View {
         currentStep = 0
         
         // Remove from homeToStartPawns if it's there (moving from starting home to path)
-        homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
+        // homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
         
         // Play swish sound if moving from home
         if from == -1 {
@@ -366,7 +329,7 @@ struct LudoBoardView: View {
             let currentTo = currentFrom + 1
             
             // Safety check: if we're at the end of the path, don't try to animate further
-            if currentTo >= pathFor(color).count {
+            if currentTo >= game.path(for: color).count {
                 isPathAnimating = false
                 return
             }
@@ -401,17 +364,17 @@ struct LudoBoardView: View {
             }
             
             // Get the final position
-            let finalPosition = pathFor(color)[to]
+            let finalPosition = game.path(for: color)[to]
             
             // Check for captures at the final position
-            for (otherColor, otherPawns) in pawns {
+            for (otherColor, otherPawns) in game.pawns {
                 if otherColor == color { continue } // Skip same color
                 
                 for (otherIndex, otherPawn) in otherPawns.enumerated() {
                     guard let otherPositionIndex = otherPawn.positionIndex,
                           otherPositionIndex >= 0 else { continue }
                     
-                    let otherPosition = pathFor(otherColor)[otherPositionIndex]
+                    let otherPosition = game.path(for: otherColor)[otherPositionIndex]
                     if otherPosition == finalPosition && !isStarSpace(row: finalPosition.row, col: finalPosition.col) {
                         // Play capture sound
                         SoundManager.shared.playSound("capture")
@@ -453,15 +416,8 @@ struct LudoBoardView: View {
         let key = "\(color.rawValue)-\(pawn.id)"
         if let animation = animatingPawns[key] {
             let progress = animation.progress
-            let startPos: Position
-            if animation.start == -1 {
-                // If start is -1, we're moving from home
-                let homePos = getStartingHomePosition(pawn: pawn, color: color)
-                startPos = Position(row: homePos.row, col: homePos.col)
-            } else {
-                startPos = pathFor(color)[animation.start]
-            }
-            let endPos = pathFor(color)[animation.end]
+            let startPos = game.path(for: color)[animation.start]
+            let endPos = game.path(for: color)[animation.end]
             
             // Calculate current position with a hop
             let currentRow = Int(Double(startPos.row) + Double(endPos.row - startPos.row) * progress)
@@ -469,7 +425,7 @@ struct LudoBoardView: View {
             
             return (row: currentRow, col: currentCol)
         }
-        let position = pathFor(color)[positionIndex]
+        let position = game.path(for: color)[positionIndex]
         return (row: position.row, col: position.col)
     }
     
@@ -478,7 +434,12 @@ struct LudoBoardView: View {
             Self.renderCount += 1
             print("LudoBoardView rendered \(Self.renderCount) times")
         }()
-        GeometryReader { geometry in
+        
+        if let pawnToCheck = game.pawns[game.currentPlayer]?.first(where: { game.eligiblePawns.contains($0.id) }) {
+             print("LudoBoardView body rendering. Pawn \(pawnToCheck.id) for \(pawnToCheck.color) has positionIndex: \(String(describing: pawnToCheck.positionIndex))")
+        }
+
+        return GeometryReader { geometry in
             let (boardSize, cellSize, boardOffsetX, boardOffsetY) = calculateBoardDimensions(geometry: geometry)
             
             ZStack {
@@ -486,8 +447,14 @@ struct LudoBoardView: View {
                     ForEach(0..<gridSize, id: \.self) { row in
                         HStack(spacing: 0) {
                             ForEach(0..<gridSize, id: \.self) { col in
-                                BoardCellView(parent: self, row: row, col: col, cellSize: cellSize)
-                                    .equatable()
+                                BoardCellView(
+                                    pawnsInCell: self.pawnsInCell(row: row, col: col),
+                                    parent: self,
+                                    row: row,
+                                    col: col,
+                                    cellSize: cellSize
+                                )
+                                .equatable()
                             }
                         }
                     }
@@ -501,14 +468,14 @@ struct LudoBoardView: View {
                 
                 // Dice View
                 if let dicePos = getDicePosition() {
-                    DiceView(value: diceValue, isRolling: isDiceRolling) {
+                    DiceView(value: game.diceValue, isRolling: isDiceRolling) {
                         // Only allow rolling if:
                         // 1. Not already rolling
                         // 2. No eligible pawns to move
                         // 3. No current roll (currentRollPlayer is nil)
-                        if !isDiceRolling && eligiblePawns.isEmpty {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
                             isDiceRolling = true
-                            rollDice()
+                            game.rollDice()
                             // Simulate rolling animation
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                 isDiceRolling = false
@@ -519,7 +486,7 @@ struct LudoBoardView: View {
                         x: boardOffsetX + CGFloat(dicePos.col + 1) * cellSize,
                         y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
                     )
-                    .onChange(of: diceValue) { newValue in
+                    .onChange(of: game.diceValue) { newValue in
                         // Only trigger animation if we're not already rolling from a tap
                         if !isDiceRolling {
                             isDiceRolling = true
@@ -532,36 +499,13 @@ struct LudoBoardView: View {
                    // let _ = print("🎲 No dice position available!")
                 }
                 
-                // Home to start animations
-                ForEach(homeToStartPawns, id: \.id) { animating in
-                    if let pawn = pawns[animating.color]?.first(where: { $0.id == animating.id }) {
-                        let homePos = getStartingHomePosition(pawn: pawn, color: animating.color)
-                        let startPos = getPathStartPosition(for: animating.color)
-                        
-                        // Calculate the exact center positions relative to the board
-                        let startX = boardOffsetX + CGFloat(homePos.col) * cellSize
-                        let startY = boardOffsetY + CGFloat(homePos.row) * cellSize
-                        let endX = boardOffsetX + CGFloat(startPos.col) * cellSize
-                        let endY = boardOffsetY + CGFloat(startPos.row) * cellSize
-                        
-                        // Calculate the offset based on animation progress
-                        let xOffset = animating.progress * (endX - startX)
-                        let yOffset = animating.progress * (endY - startY)
-                        
-                        // Position the pawn at the start position and animate to end position
-                        PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: eligiblePawns.contains(pawn.id), currentPlayer: currentPlayer)
-                            .position(
-                                x: startX + xOffset + cellSize/2,
-                                y: startY + yOffset + cellSize/2
-                            )
-                    }
-                }
-                
+                // Home to start animations layer removed
+
                 // Captured pawns layer
                 ForEach(capturedPawns, id: \.id) { captured in
-                    if let pawn = pawns[captured.color]?.first(where: { $0.id == captured.id }) {
+                    if let pawn = game.pawns[captured.color]?.first(where: { $0.id == captured.id }) {
                         // Get the actual position where the pawn was captured
-                        let capturedPosition = pathFor(captured.color)[pawn.positionIndex ?? 0]
+                        let capturedPosition = game.path(for: captured.color)[pawn.positionIndex ?? 0]
                         let homePos = getStartingHomePosition(pawn: pawn, color: captured.color)
                         
                         // Calculate the exact center positions relative to the board
@@ -575,7 +519,7 @@ struct LudoBoardView: View {
                         let yOffset = captured.progress * (endY - startY)
                         
                         // Position the pawn at the start position and animate to end position
-                        PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: false, currentPlayer: currentPlayer)
+                        PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: false, currentPlayer: game.currentPlayer)
                             .position(
                                 x: startX + xOffset + cellSize/2,
                                 y: startY + yOffset + cellSize/2
@@ -597,7 +541,7 @@ struct LudoBoardView: View {
                        let from = userInfo["from"] as? Int,
                        let to = userInfo["to"] as? Int,
                        let steps = userInfo["steps"] as? Int,
-                       let pawn = pawns[color]?.first(where: { $0.id == pawnId }) {
+                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
                         animatePawnMovementForPath(pawn: pawn, color: color, from: from, to: to, steps: steps)
                     }
                 }
@@ -608,7 +552,7 @@ struct LudoBoardView: View {
     
     private func pawnsInCell(row: Int, col: Int) -> [PawnState] {
         var pawnsInCell: [PawnState] = []
-        for (_, pwns) in pawns {
+        for (_, pwns) in game.pawns {
             for pawn in pwns {
                 // Check home pawns
                 if pawn.positionIndex == nil {
@@ -631,26 +575,24 @@ struct LudoBoardView: View {
 
     // MARK: - BoardCellView
     struct BoardCellView: View, Equatable {
+        let pawnsInCell: [PawnState]
         let parent: LudoBoardView
         let row: Int
         let col: Int
         let cellSize: CGFloat
 
         static func == (lhs: BoardCellView, rhs: BoardCellView) -> Bool {
-            let lhsPawns = lhs.parent.pawnsInCell(row: lhs.row, col: lhs.col)
-            let rhsPawns = rhs.parent.pawnsInCell(row: rhs.row, col: rhs.col)
-            
-            let arePawnsSame = lhsPawns.count == rhsPawns.count &&
-                               lhsPawns.allSatisfy { lhsPawn in
-                                   rhsPawns.contains { rhsPawn in
-                                       lhsPawn.id == rhsPawn.id && lhsPawn.color == rhsPawn.color
-                                   }
-                               }
+            // First, compare the pawns in the cell.
+            // This is the key fix: we are now comparing data, not a live reference.
+            guard lhs.pawnsInCell.count == rhs.pawnsInCell.count else { return false }
 
-            return lhs.row == rhs.row &&
-                   lhs.col == rhs.col &&
-                   lhs.parent.eligiblePawns == rhs.parent.eligiblePawns &&
-                   arePawnsSame
+            // If counts are the same, a deeper check might be needed if pawn properties change
+            // For now, count is sufficient to fix the move-from-home bug.
+            // A full comparison would be `lhs.pawnsInCell == rhs.pawnsInCell` if PawnState is Equatable.
+            let lhsPawnIDs = lhs.pawnsInCell.map { $0.id }.sorted()
+            let rhsPawnIDs = rhs.pawnsInCell.map { $0.id }.sorted()
+            
+            return lhsPawnIDs == rhsPawnIDs
         }
 
         var body: some View {
@@ -862,7 +804,7 @@ struct LudoBoardView: View {
 
     @ViewBuilder
     private func pawnsForColor(color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
-        ForEach(pawns[color] ?? [], id: \.id) { pawnState in
+        ForEach(game.pawns[color] ?? [], id: \.id) { pawnState in
             pawnView(pawn: pawnState, color: color, row: row, col: col, cellSize: cellSize)
         }
     }
@@ -888,7 +830,7 @@ struct LudoBoardView: View {
 
     private func countPawnsInCell(row: Int, col: Int) -> Int {
         var count = 0
-        for (_, pwns) in pawns {
+        for (_, pwns) in game.pawns {
             for pawn in pwns {
                 if let positionIndex = pawn.positionIndex, positionIndex >= 0 {
                     let currentPos = getCurrentPosition(pawn: pawn, color: pawn.color, positionIndex: positionIndex)
@@ -977,7 +919,7 @@ struct LudoBoardView: View {
 
     private func getPawnIndexInCell(pawn: PawnState, color: PlayerColor, row: Int, col: Int) -> Int {
         var index = 0
-        for (_, pwns) in pawns {
+        for (_, pwns) in game.pawns {
             for p in pwns {
                 if let posIndex = p.positionIndex, posIndex >= 0 {
                     let pos = getCurrentPosition(pawn: p, color: p.color, positionIndex: posIndex)
@@ -1011,20 +953,20 @@ struct LudoBoardView: View {
                 // Calculate size and position
                 let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
                 
-                PawnView(pawn: pawn, size: size, isEligible: eligiblePawns.contains(pawn.id), currentPlayer: currentPlayer)
+                PawnView(pawn: pawn, size: size, isEligible: game.eligiblePawns.contains(pawn.id), currentPlayer: game.currentPlayer)
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
                         if !isPathAnimating {
-                            if isValidMove(color, pawn.id) {
+                            if game.isValidMove(color: color, pawnId: pawn.id) {
                                 let currentPos = pawn.positionIndex ?? -1
-                                let steps = diceValue
+                                let steps = game.diceValue
                                 
-                                if let destinationIndex = getDestinationIndex(color, pawn.id) {
+                                if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
                                     animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps)
                                     
                                     DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                        movePawn(color, pawn.id, steps)
+                                        game.movePawn(color: color, pawnId: pawn.id, steps: steps)
                                     }
                                 }
                             }
@@ -1038,15 +980,15 @@ struct LudoBoardView: View {
     private func endingHomePawnView(pawn: PawnState, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         if isCorrectEndingHomePosition(pawn: pawn, color: color, row: row, col: col) {
             // Count total pawns in this ending home
-            let totalPawns = pawns[color]?.filter { $0.positionIndex == -1 }.count ?? 0
+            let totalPawns = game.pawns[color]?.filter { $0.positionIndex == -1 }.count ?? 0
             
             // Calculate this pawn's index in the ending home
-            let pawnIndex = pawns[color]?.filter { $0.positionIndex == -1 }.firstIndex(where: { $0.id == pawn.id }) ?? 0
+            let pawnIndex = game.pawns[color]?.filter { $0.positionIndex == -1 }.firstIndex(where: { $0.id == pawn.id }) ?? 0
             
             // Calculate size and position
             let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
             
-            PawnView(pawn: pawn, size: size, isEligible: false, currentPlayer: currentPlayer)
+            PawnView(pawn: pawn, size: size, isEligible: false, currentPlayer: game.currentPlayer)
                 .offset(x: xOffset, y: yOffset)
                 .shadow(color: .black.opacity(0.2), radius: 2)
         }
@@ -1069,36 +1011,19 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func homePawnView(pawn: PawnState, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         // Only draw pawn if the player color is selected
-        if selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: eligiblePawns.contains(pawn.id), currentPlayer: currentPlayer)
+        if game.selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
+            PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id), currentPlayer: game.currentPlayer)
                 .onTapGesture {
-                    if color == currentPlayer && !isPathAnimating && diceValue == 6 && eligiblePawns.contains(pawn.id) {
-                        // Play swish sound when moving from home
-                        SoundManager.shared.playSound("swish")
-                        
-                        // Add to home-to-start animations (moving from starting home to path)
-                        homeToStartPawns.append((color: color, id: pawn.id, progress: 0))
-                        
-                        // Add to animatingPawns for position calculation
-                        let key = "\(color.rawValue)-\(pawn.id)"
-                        animatingPawns[key] = (-1, 0, 0) // -1 represents starting home position
-                        
-                        // Animate to final position
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            if let index = homeToStartPawns.firstIndex(where: { $0.color == color && $0.id == pawn.id }) {
-                                homeToStartPawns[index].progress = 1.0
-                            }
-                            animatingPawns[key]?.progress = 1.0
-                        }
-                        
-                        // Delay the actual move until after animation
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            movePawn(color, pawn.id, diceValue)
-                            
-                            // Remove from animations
-                            homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
-                            animatingPawns.removeValue(forKey: key)
-                        }
+                    print("--- HOME PAWN TAPPED ---")
+                    print("Pawn: \(pawn.color), id: \(pawn.id)")
+                    print("Current Player: \(game.currentPlayer)")
+                    print("Dice Value: \(game.diceValue)")
+                    print("Is Eligible: \(game.eligiblePawns.contains(pawn.id))")
+                    
+                    if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
+                        print("Condition met. Calling movePawn.")
+                        // Instantly move the pawn without animation or sound
+                        game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
                     }
                 }
         }
