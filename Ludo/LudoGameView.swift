@@ -448,14 +448,9 @@ struct LudoBoardView: View {
                         HStack(spacing: 0) {
                             ForEach(0..<gridSize, id: \.self) { col in
                                 let pawns = self.pawnsInCell(row: row, col: col)
-                                // A cell should only glow if it contains an eligible pawn of the current player.
-                                let cellShouldGlow = pawns.contains { pawn in
-                                    pawn.color == self.game.currentPlayer && self.game.eligiblePawns.contains(pawn.id)
-                                }
                                 
                                 BoardCellView(
                                     pawnsInCell: pawns,
-                                    shouldGlow: cellShouldGlow,
                                     parent: self,
                                     row: row,
                                     col: col,
@@ -526,7 +521,7 @@ struct LudoBoardView: View {
                         let yOffset = captured.progress * (endY - startY)
                         
                         // Position the pawn at the start position and animate to end position
-                        PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: false, currentPlayer: game.currentPlayer)
+                        PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
                             .position(
                                 x: startX + xOffset + cellSize/2,
                                 y: startY + yOffset + cellSize/2
@@ -583,7 +578,6 @@ struct LudoBoardView: View {
     // MARK: - BoardCellView
     struct BoardCellView: View, Equatable {
         let pawnsInCell: [PawnState]
-        let shouldGlow: Bool
         let parent: LudoBoardView
         let row: Int
         let col: Int
@@ -594,9 +588,8 @@ struct LudoBoardView: View {
             let rhsPawnIDs = rhs.pawnsInCell.map { $0.id }.sorted()
             
             // For the view to be considered "equal" (and thus skip a re-render),
-            // the pawns in the cell must be identical AND their glow status
-            // must not have changed.
-            return lhsPawnIDs == rhsPawnIDs && lhs.shouldGlow == rhs.shouldGlow
+            // the pawns in the cell must be identical.
+            return lhsPawnIDs == rhsPawnIDs
         }
 
         var body: some View {
@@ -957,7 +950,7 @@ struct LudoBoardView: View {
                 // Calculate size and position
                 let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
                 
-                PawnView(pawn: pawn, size: size, isEligible: game.eligiblePawns.contains(pawn.id), currentPlayer: game.currentPlayer)
+                PawnView(pawn: pawn, size: size, currentPlayer: game.currentPlayer)
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
@@ -992,7 +985,7 @@ struct LudoBoardView: View {
             // Calculate size and position
             let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
             
-            PawnView(pawn: pawn, size: size, isEligible: false, currentPlayer: game.currentPlayer)
+            PawnView(pawn: pawn, size: size, currentPlayer: game.currentPlayer)
                 .offset(x: xOffset, y: yOffset)
                 .shadow(color: .black.opacity(0.2), radius: 2)
         }
@@ -1016,7 +1009,7 @@ struct LudoBoardView: View {
     private func homePawnView(pawn: PawnState, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         // Only draw pawn if the player color is selected
         if game.selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(pawn: pawn, size: cellSize * 0.8, isEligible: game.eligiblePawns.contains(pawn.id), currentPlayer: game.currentPlayer)
+            PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
                 .onTapGesture {
                     print("--- HOME PAWN TAPPED ---")
                     print("Pawn: \(pawn.color), id: \(pawn.id)")
@@ -1074,45 +1067,33 @@ struct LudoBoardView: View {
 }
 
 struct PawnView: View {
-    @ObservedObject var pawn: PawnState
+    let pawn: PawnState
     let size: CGFloat
-    let isEligible: Bool
     let currentPlayer: PlayerColor
-    
-    @State private var animationPhase: Double = 0
-    
-    var body: some View {
-        ZStack {
-            // Glow effect for eligible pawns
-            if isEligible && pawn.color == currentPlayer {
-                Circle()
-                    .fill(colorForPlayer(pawn.color))
-                    .frame(width: size * 1.3, height: size * 1.3)
-                    .opacity(0.3 + sin(animationPhase) * 0.2)
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                            animationPhase = .pi
-                        }
-                    }
-            }
-            
-            // Main pawn
-            Circle()
-                .fill(colorForPlayer(pawn.color))
-                .frame(width: size, height: size)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white, lineWidth: 2)
-                )
-        }
-    }
-    
-    private func colorForPlayer(_ color: PlayerColor) -> Color {
-        switch color {
+
+    private var pawnColor: Color {
+        switch pawn.color {
         case .red: return .red
         case .green: return .green
         case .yellow: return .yellow
         case .blue: return .blue
+        }
+    }
+
+    private var isCurrentPlayer: Bool {
+        pawn.color == currentPlayer
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(pawnColor)
+                .frame(width: size, height: size)
+                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+
+            Circle()
+                .stroke(Color.white.opacity(0.8), lineWidth: size * 0.05)
+                .frame(width: size * 0.6, height: size * 0.6)
         }
     }
 }
