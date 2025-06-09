@@ -447,8 +447,15 @@ struct LudoBoardView: View {
                     ForEach(0..<gridSize, id: \.self) { row in
                         HStack(spacing: 0) {
                             ForEach(0..<gridSize, id: \.self) { col in
+                                let pawns = self.pawnsInCell(row: row, col: col)
+                                // A cell should only glow if it contains an eligible pawn of the current player.
+                                let cellShouldGlow = pawns.contains { pawn in
+                                    pawn.color == self.game.currentPlayer && self.game.eligiblePawns.contains(pawn.id)
+                                }
+                                
                                 BoardCellView(
-                                    pawnsInCell: self.pawnsInCell(row: row, col: col),
+                                    pawnsInCell: pawns,
+                                    shouldGlow: cellShouldGlow,
                                     parent: self,
                                     row: row,
                                     col: col,
@@ -576,23 +583,20 @@ struct LudoBoardView: View {
     // MARK: - BoardCellView
     struct BoardCellView: View, Equatable {
         let pawnsInCell: [PawnState]
+        let shouldGlow: Bool
         let parent: LudoBoardView
         let row: Int
         let col: Int
         let cellSize: CGFloat
 
         static func == (lhs: BoardCellView, rhs: BoardCellView) -> Bool {
-            // First, compare the pawns in the cell.
-            // This is the key fix: we are now comparing data, not a live reference.
-            guard lhs.pawnsInCell.count == rhs.pawnsInCell.count else { return false }
-
-            // If counts are the same, a deeper check might be needed if pawn properties change
-            // For now, count is sufficient to fix the move-from-home bug.
-            // A full comparison would be `lhs.pawnsInCell == rhs.pawnsInCell` if PawnState is Equatable.
             let lhsPawnIDs = lhs.pawnsInCell.map { $0.id }.sorted()
             let rhsPawnIDs = rhs.pawnsInCell.map { $0.id }.sorted()
             
-            return lhsPawnIDs == rhsPawnIDs
+            // For the view to be considered "equal" (and thus skip a re-render),
+            // the pawns in the cell must be identical AND their glow status
+            // must not have changed.
+            return lhsPawnIDs == rhsPawnIDs && lhs.shouldGlow == rhs.shouldGlow
         }
 
         var body: some View {
