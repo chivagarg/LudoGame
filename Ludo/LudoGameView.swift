@@ -23,35 +23,11 @@ struct LudoGameView: View {
             } else if game.isGameOver {
                 GameOverView(selectedPlayers: $selectedPlayers)
             } else {
-                gameBoardView
+                GameBoardView()
             }
         }
         .padding()
         .environmentObject(game)
-    }
-    
-    // MARK: - Game Board View
-    private var gameBoardView: some View {
-        VStack(spacing: 16) {
-            if game.isAdminMode {
-                AdminControlsView(
-                    currentPlayer: game.currentPlayer,
-                    eligiblePawns: game.eligiblePawns,
-                    onTestRoll: { value in
-                        game.testRollDice(value: value)
-                    }
-                )
-            }
-            
-            ScoringPanelView(
-                scores: game.scores,
-                hasCompletedGame: { color in
-                    game.hasCompletedGame(color: color)
-                }
-            )
-            
-            LudoBoardView()
-        }
     }
 }
 
