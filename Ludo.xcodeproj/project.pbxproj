@@ -17,6 +17,7 @@
 		DA7944102DFA879D00EE49FC /* AdminControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79440F2DFA879D00EE49FC /* AdminControlsView.swift */; };
 		DA7944122DFA8AB700EE49FC /* PawnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944112DFA8AB700EE49FC /* PawnView.swift */; };
 		DA7944142DFA8C7B00EE49FC /* LudoBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944132DFA8C7B00EE49FC /* LudoBoardView.swift */; };
+		DA7944162DFA8E3100EE49FC /* StartGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944152DFA8E3100EE49FC /* StartGameView.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD32DEA05DC00073666 /* hop.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCD2DEA05DC00073666 /* hop.wav */; };
@@ -49,6 +50,7 @@
 		DA79440F2DFA879D00EE49FC /* AdminControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminControlsView.swift; sourceTree = "<group>"; };
 		DA7944112DFA8AB700EE49FC /* PawnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PawnView.swift; sourceTree = "<group>"; };
 		DA7944132DFA8C7B00EE49FC /* LudoBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoBoardView.swift; sourceTree = "<group>"; };
+		DA7944152DFA8E3100EE49FC /* StartGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartGameView.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA7944152DFA8E3100EE49FC /* StartGameView.swift */,
 				DA7944132DFA8C7B00EE49FC /* LudoBoardView.swift */,
 				DA7944112DFA8AB700EE49FC /* PawnView.swift */,
 				DA79440F2DFA879D00EE49FC /* AdminControlsView.swift */,
@@ -236,6 +239,7 @@
 				1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */,
 				DA79440C2DFA861D00EE49FC /* DiceView.swift in Sources */,
 				DA7944122DFA8AB700EE49FC /* PawnView.swift in Sources */,
+				DA7944162DFA8E3100EE49FC /* StartGameView.swift in Sources */,
 				DA471F622DF407C300955EC1 /* PawnState.swift in Sources */,
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,

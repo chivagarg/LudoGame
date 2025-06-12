@@ -13,7 +13,13 @@ struct LudoGameView: View {
     var body: some View {
         VStack {
             if !game.gameStarted {
-                startGameView
+                StartGameView(
+                    isAdminMode: $game.isAdminMode,
+                    selectedPlayers: $selectedPlayers,
+                    onStartGame: {
+                        game.startGame(selectedPlayers: selectedPlayers)
+                    }
+                )
             } else if game.isGameOver {
                 GameOverView(selectedPlayers: $selectedPlayers)
             } else {
@@ -22,32 +28,6 @@ struct LudoGameView: View {
         }
         .padding()
         .environmentObject(game)
-    }
-    
-    // MARK: - Start Game View
-    private var startGameView: some View {
-        VStack(spacing: 20) {
-            Text("Ludo")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            SettingsTableView(isAdminMode: $game.isAdminMode)
-            
-            PlayerSelectionView(selectedPlayers: $selectedPlayers)
-            
-            Button("Start Game") {
-                game.startGame(selectedPlayers: selectedPlayers)
-            }
-            .font(.title2)
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .disabled(selectedPlayers.count < 2)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.gray.opacity(0.05))
     }
     
     // MARK: - Game Board View
