@@ -9,6 +9,7 @@ struct LudoGameView: View {
     }
     @StateObject private var game = LudoGame()
     @State private var selectedPlayers: Set<PlayerColor> = Set(PlayerColor.allCases)
+    @State private var aiPlayers: Set<PlayerColor> = []
     
     var body: some View {
         VStack {
@@ -16,8 +17,9 @@ struct LudoGameView: View {
                 StartGameView(
                     isAdminMode: $game.isAdminMode,
                     selectedPlayers: $selectedPlayers,
+                    aiPlayers: $aiPlayers,
                     onStartGame: {
-                        game.startGame(selectedPlayers: selectedPlayers)
+                        game.startGame(selectedPlayers: selectedPlayers, aiPlayers: aiPlayers)
                     }
                 )
             } else if game.isGameOver {

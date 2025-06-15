@@ -3,6 +3,7 @@ import SwiftUI
 struct StartGameView: View {
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
+    @Binding var aiPlayers: Set<PlayerColor>
     let onStartGame: () -> Void
     
     var body: some View {
@@ -13,7 +14,7 @@ struct StartGameView: View {
             
             SettingsTableView(isAdminMode: $isAdminMode)
             
-            PlayerSelectionView(selectedPlayers: $selectedPlayers)
+            PlayerSelectionView(selectedPlayers: $selectedPlayers, aiPlayers: $aiPlayers)
             
             Button("Start Game") {
                 onStartGame()

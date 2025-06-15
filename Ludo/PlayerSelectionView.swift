@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PlayerSelectionView: View {
     @Binding var selectedPlayers: Set<PlayerColor>
-    @Environment(\.colorScheme) var colorScheme
+    @Binding var aiPlayers: Set<PlayerColor>
     
     var body: some View {
         VStack(spacing: 0) {
@@ -10,7 +10,7 @@ struct PlayerSelectionView: View {
             playerSelectionTable
         }
         .padding()
-        .background(colorScheme == .dark ? Color.black : Color.white)
+        .background(Color.white)
         .cornerRadius(15)
         .shadow(radius: 2)
         .frame(width: 300)
@@ -28,7 +28,7 @@ struct PlayerSelectionView: View {
             tableHeader
             playerRows
         }
-        .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.1))
+        .background(Color.gray.opacity(0.1))
         .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
@@ -39,16 +39,15 @@ struct PlayerSelectionView: View {
     private var tableHeader: some View {
         HStack {
             Text("Player")
-                .font(.subheadline)
-                .foregroundColor(.green)
-            Spacer()
-            Text("Status")
-                .font(.subheadline)
-                .foregroundColor(.yellow)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("Include")
+                .fontWeight(.bold)
+            Text("AI")
+                .fontWeight(.bold)
+                .frame(width: 50)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.1))
     }
     
     private var playerRows: some View {
@@ -81,15 +80,30 @@ struct PlayerSelectionView: View {
                         selectedPlayers.insert(color)
                     } else {
                         selectedPlayers.remove(color)
+                        aiPlayers.remove(color)
                     }
                 }
             ))
             .labelsHidden()
             .tint(colorForPlayer(color))
+            
+            Toggle("", isOn: Binding(
+                get: { aiPlayers.contains(color) },
+                set: { isAI in
+                    if isAI {
+                        aiPlayers.insert(color)
+                    } else {
+                        aiPlayers.remove(color)
+                    }
+                }
+            ))
+            .labelsHidden()
+            .frame(width: 50)
+            .disabled(!selectedPlayers.contains(color))
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(colorScheme == .dark ? Color.black : Color.white)
+        .background(Color.white)
     }
     
     private func colorForPlayer(_ color: PlayerColor) -> Color {
@@ -103,5 +117,5 @@ struct PlayerSelectionView: View {
 }
 
 #Preview {
-    PlayerSelectionView(selectedPlayers: .constant(Set(PlayerColor.allCases)))
+    PlayerSelectionView(selectedPlayers: .constant(Set(PlayerColor.allCases)), aiPlayers: .constant([]))
 } 
