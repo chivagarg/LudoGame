@@ -211,11 +211,6 @@ class LudoGame: ObservableObject {
                                         "steps": steps
                                     ]
                                 )
-                                
-                                // Move the pawn after animation
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                    self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
-                                }
                             }
                         }
                     }
@@ -280,11 +275,6 @@ class LudoGame: ObservableObject {
                                         "steps": steps
                                     ]
                                 )
-                                
-                                // Move the pawn after animation
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                    self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
-                                }
                             }
                         }
                     }
