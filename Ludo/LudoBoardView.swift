@@ -417,21 +417,6 @@ struct LudoBoardView: View {
                     Rectangle().fill(Color.blue.opacity(0.3))
                 }
                 
-                // Draw star if this is a star space
-                if isStarSpace(row: row, col: col) {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.black)
-                        .font(.system(size: cellSize * 0.5))
-                        .shadow(color: .black, radius: 1, x: 0, y: 0)
-                        .overlay(
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.black)
-                                .font(.system(size: cellSize * 0.5))
-                                .blur(radius: 1)
-                                .opacity(0.5)
-                        )
-                }
-                
                 // Only draw stroke for cells outside the center 3x3 grid
                 if !(6...8).contains(row) || !(6...8).contains(col) {
                     Rectangle().stroke(Color.black, lineWidth: 0.5)
