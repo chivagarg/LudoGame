@@ -75,7 +75,7 @@ struct LudoBoardView: View {
         func animateNextStep() {
             guard currentStep < steps else {
                 isPathAnimating = false
-                isDiceRolling = false  // Reset dice rolling state after pawn movement
+                isDiceRolling = false
                 return
             }
             
@@ -94,14 +94,14 @@ struct LudoBoardView: View {
             // Play hop sound for each step
             SoundManager.shared.playSound("hop")
             
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.4, blendDuration: 0)) {
+            withAnimation(.spring(response: 0.15, dampingFraction: 0.3, blendDuration: 0)) {
                 animatingPawns[key]?.progress = 1.0
             }
             
             currentStep += 1
             
-            // Schedule next step
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            // Schedule next step with shorter delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 animateNextStep()
             }
         }
@@ -174,7 +174,7 @@ struct LudoBoardView: View {
             let startPos = game.path(for: color)[animation.start]
             let endPos = game.path(for: color)[animation.end]
             
-            // Calculate current position with a hop
+            // Calculate current position with a higher hop
             let currentRow = Int(Double(startPos.row) + Double(endPos.row - startPos.row) * progress)
             let currentCol = Int(Double(startPos.col) + Double(endPos.col - startPos.col) * progress)
             
@@ -626,7 +626,7 @@ struct LudoBoardView: View {
             let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
             if currentPos.row == row && currentPos.col == col {
                 let key = "\(color.rawValue)-\(pawn.id)"
-                let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 40 : 0
+                let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 60 : 0
                 let isAnimating = animatingPawns[key] != nil
                 
                 // Count total pawns in this cell
