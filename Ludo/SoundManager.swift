@@ -6,36 +6,44 @@ public class SoundManager {
     
     // Define constants for sound file names to avoid magic strings
     private struct SoundFiles {
-        static let swish = "swish"
-        static let hop = "hop2"
-        static let capture = "capture"
-        static let victory = "victory"
-        static let dice = "dice"
+        static let leaveHome = "boing.mp3"
+        static let hop = "hop2.wav"
+        static let capture = "capture.wav"
+        static let victory = "victory.wav"
+        static let dice = "dice.wav"
     }
     
     private var audioPlayers: [String: AVAudioPlayer] = [:]
     
     private init() {
         // Preload all sound effects using the constants
-        preloadSound(SoundFiles.swish)
-        preloadSound(SoundFiles.hop)
-        preloadSound(SoundFiles.capture)
-        preloadSound(SoundFiles.victory)
-        preloadSound(SoundFiles.dice)
+        preloadSound(named: SoundFiles.leaveHome)
+        preloadSound(named: SoundFiles.hop)
+        preloadSound(named: SoundFiles.capture)
+        preloadSound(named: SoundFiles.victory)
+        preloadSound(named: SoundFiles.dice)
     }
     
-    private func preloadSound(_ name: String) {
-        guard let url = Bundle.main.url(forResource: name, withExtension: "wav") else {
-            print("Could not find sound file: \(name).wav")
+    private func preloadSound(named filename: String) {
+        let fileComponents = filename.components(separatedBy: ".")
+        guard fileComponents.count == 2,
+              let name = fileComponents.first,
+              let ext = fileComponents.last else {
+            print("Invalid sound filename format: \(filename)")
+            return
+        }
+        
+        guard let url = Bundle.main.url(forResource: name, withExtension: ext) else {
+            print("Could not find sound file: \(filename)")
             return
         }
         
         do {
             let player = try AVAudioPlayer(contentsOf: url)
             player.prepareToPlay()
-            audioPlayers[name] = player
+            audioPlayers[filename] = player
         } catch {
-            print("Could not create audio player for \(name).wav: \(error)")
+            print("Could not create audio player for \(filename): \(error)")
         }
     }
     
@@ -72,6 +80,6 @@ public class SoundManager {
     }
     
     public func playPawnLeaveHomeSound() {
-        playSound(SoundFiles.swish)
+        playSound(SoundFiles.leaveHome)
     }
 } 
