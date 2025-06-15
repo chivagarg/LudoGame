@@ -60,7 +60,7 @@ struct LudoBoardView: View {
                additionalStarSpaces.contains(where: { $0.0 == row && $0.1 == col })
     }
     
-    private func animatePawnMovementForPath(pawn: PawnState, color: PlayerColor, from: Int, to: Int, steps: Int) {
+    private func animatePawnMovementForPath(pawn: PawnState, color: PlayerColor, from: Int, to: Int, steps: Int, completion: @escaping () -> Void) {
         isPathAnimating = true
         currentStep = 0
         
@@ -74,8 +74,7 @@ struct LudoBoardView: View {
         
         func animateNextStep() {
             guard currentStep < steps else {
-                isPathAnimating = false
-                isDiceRolling = false
+                completion()
                 return
             }
             
@@ -291,7 +290,11 @@ struct LudoBoardView: View {
                        let to = userInfo["to"] as? Int,
                        let steps = userInfo["steps"] as? Int,
                        let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
-                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, to: to, steps: steps)
+                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, to: to, steps: steps) {
+                            game.movePawn(color: color, pawnId: pawnId, steps: steps)
+                            isPathAnimating = false
+                            isDiceRolling = false
+                        }
                     }
                 }
             }
@@ -648,10 +651,10 @@ struct LudoBoardView: View {
                                 let steps = game.diceValue
                                 
                                 if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
-                                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps)
-                                    
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
+                                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps) {
                                         game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                                        isPathAnimating = false
+                                        isDiceRolling = false
                                     }
                                 }
                             }

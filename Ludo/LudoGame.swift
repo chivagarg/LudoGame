@@ -395,8 +395,8 @@ class LudoGame: ObservableObject {
         // 2. It's your roll (and currentRollPlayer is not nil)
         // 3. The pawn is eligible to move
         guard color == currentPlayer,
-              let rollPlayer = currentRollPlayer, // Safely unwrap currentRollPlayer
-              color == rollPlayer, // Compare with the unwrapped value
+              let rollPlayer = currentRollPlayer,
+              color == rollPlayer,
               eligiblePawns.contains(pawnId) else { return }
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
