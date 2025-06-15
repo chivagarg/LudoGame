@@ -419,6 +419,7 @@ class LudoGame: ObservableObject {
                             if otherPosition == newPosition {
                                 // Capture the pawn
                                 pawns[otherColor]?[otherIndex].positionIndex = nil
+                                SoundManager.shared.playPawnCaptureSound()
                                 shouldGetAnotherRoll = true
                                 // Add 3 points for capture
                                 scores[color] = (scores[color] ?? 0) + 3
@@ -454,6 +455,7 @@ class LudoGame: ObservableObject {
             if steps == 6 {
                 // Move pawn to start position (index 0)
                 pawns[color]?[pawnIndex].positionIndex = 0
+                SoundManager.shared.playPawnLeaveHomeSound()
             }
         }
         

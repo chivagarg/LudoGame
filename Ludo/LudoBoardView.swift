@@ -12,6 +12,9 @@ struct LudoBoardView: View {
     @State private var currentStep = 0
     @State private var isPathAnimating = false
     @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
+    // this is used to play the victory sound only once when a pawn reaches the home
+    // ideally we should replace this with a published property in the game model that the sound manager listens to
+    @State private var previousPawnsAtHome = 0
     
     private func getDicePosition() -> (row: Int, col: Int)? {
         if game.hasCompletedGame(color: game.currentPlayer) {
@@ -91,7 +94,7 @@ struct LudoBoardView: View {
             animatingPawns[key] = (currentFrom, currentTo, 0)
             
             // Play hop sound for each step
-            SoundManager.shared.playSound("hop")
+            SoundManager.shared.playPawnHopSound()
             
             withAnimation(.spring(response: 0.15, dampingFraction: 0.3, blendDuration: 0)) {
                 animatingPawns[key]?.progress = 1.0
@@ -113,7 +116,6 @@ struct LudoBoardView: View {
             // Safety check: if the pawn has reached ending home (to < 0), don't check for captures
             guard to >= 0 else {
                 // Play victory sound if reaching home
-                SoundManager.shared.playSound("victory")
                 return
             }
             
@@ -276,6 +278,12 @@ struct LudoBoardView: View {
                 }
             }
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            .onChange(of: game.totalPawnsAtFinishingHome) { newCount in
+                if newCount > previousPawnsAtHome {
+                    SoundManager.shared.playPawnReachedHomeSound()
+                }
+                previousPawnsAtHome = newCount
+            }
             .onAppear {
                 // Add observer for pawn movement animation
                 NotificationCenter.default.addObserver(
@@ -297,6 +305,8 @@ struct LudoBoardView: View {
                         }
                     }
                 }
+                // Sync initial pawn count
+                previousPawnsAtHome = game.totalPawnsAtFinishingHome
             }
         }
         .aspectRatio(1, contentMode: .fit)

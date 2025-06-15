@@ -4,15 +4,24 @@ import AVFoundation
 public class SoundManager {
     public static let shared = SoundManager()
     
+    // Define constants for sound file names to avoid magic strings
+    private struct SoundFiles {
+        static let swish = "swish"
+        static let hop = "hop2"
+        static let capture = "capture"
+        static let victory = "victory"
+        static let dice = "dice"
+    }
+    
     private var audioPlayers: [String: AVAudioPlayer] = [:]
     
     private init() {
-        // Preload all sound effects
-        preloadSound("swish")
-        preloadSound("hop")
-        preloadSound("capture")
-        preloadSound("victory")
-        preloadSound("dice")
+        // Preload all sound effects using the constants
+        preloadSound(SoundFiles.swish)
+        preloadSound(SoundFiles.hop)
+        preloadSound(SoundFiles.capture)
+        preloadSound(SoundFiles.victory)
+        preloadSound(SoundFiles.dice)
     }
     
     private func preloadSound(_ name: String) {
@@ -42,5 +51,27 @@ public class SoundManager {
         }
         
         player.play()
+    }
+    
+    // MARK: - Specific Sound Functions
+    
+    public func playDiceRollSound() {
+        playSound(SoundFiles.dice)
+    }
+    
+    public func playPawnHopSound() {
+        playSound(SoundFiles.hop)
+    }
+    
+    public func playPawnCaptureSound() {
+        playSound(SoundFiles.capture)
+    }
+    
+    public func playPawnReachedHomeSound() {
+        playSound(SoundFiles.victory)
+    }
+    
+    public func playPawnLeaveHomeSound() {
+        playSound(SoundFiles.swish)
     }
 } 

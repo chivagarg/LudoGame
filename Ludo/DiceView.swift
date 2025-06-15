@@ -25,7 +25,7 @@ struct DiceView: View {
                     .scaleEffect(scale)
                     .onAppear {
                         // Play dice roll sound
-                        SoundManager.shared.playSound("dice")
+                        SoundManager.shared.playDiceRollSound()
                         withAnimation(.easeInOut(duration: 0.2).repeatForever(autoreverses: true)) {
                             rotation = 360
                             scale = 1.2
