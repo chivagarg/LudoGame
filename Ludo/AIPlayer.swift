@@ -44,6 +44,7 @@ struct RationalMoveStrategy: AILogicStrategy {
                             for opponentPawn in opponentPawns {
                                 let opponentPath = game.path(for: opponentColor)
                                 if let opponentIndex = opponentPawn.positionIndex,
+                                   opponentIndex >= 0,
                                    opponentIndex < opponentPath.count {
                                     
                                     if opponentPath[opponentIndex] == destination {
@@ -146,6 +147,7 @@ struct AggressiveMoveStrategy: AILogicStrategy {
                             for opponentPawn in opponentPawns {
                                 let opponentPath = game.path(for: opponentColor)
                                 if let opponentIndex = opponentPawn.positionIndex,
+                                   opponentIndex >= 0,
                                    !opponentPath.isEmpty,
                                    opponentIndex < opponentPath.count {
                                     
@@ -193,7 +195,10 @@ struct AggressiveMoveStrategy: AILogicStrategy {
                     for (opponentColor, opponentPawns) in game.pawns where opponentColor != player {
                         for opponentPawn in opponentPawns {
                             let opponentPath = game.path(for: opponentColor)
-                            if let opponentIndex = opponentPawn.positionIndex, !opponentPath.isEmpty, opponentIndex < opponentPath.count {
+                            if let opponentIndex = opponentPawn.positionIndex,
+                               opponentIndex >= 0,
+                               !opponentPath.isEmpty,
+                               opponentIndex < opponentPath.count {
                                 let opponentPosition = opponentPath[opponentIndex]
                                 let distance = manhattanDistance(from: destination, to: opponentPosition)
                                 closestOpponentDistance = min(closestOpponentDistance, distance)
