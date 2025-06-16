@@ -142,7 +142,7 @@ struct LudoBoardView: View {
     var body: some View {
         let _ = {
             Self.renderCount += 1
-            print("LudoBoardView rendered \(Self.renderCount) times")
+            // print("LudoBoardView rendered \(Self.renderCount) times")
         }()
 
         return GeometryReader { geometry in

@@ -164,24 +164,24 @@ class LudoGame: ObservableObject {
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
     func rollDice() {
-        print("🎲 [ACTION] Attempting to roll dice for \(self.currentPlayer.rawValue)...")
+        GameLogger.shared.log("🎲 [ACTION] Attempting to roll dice for \(self.currentPlayer.rawValue)...")
         // Don't allow rolling if the player has completed their game
         guard !hasCompletedGame(color: currentPlayer) else {
-            print("🎲 [GUARD FAILED] Player \(currentPlayer.rawValue) has already completed the game.")
+            GameLogger.shared.log("🎲 [GUARD FAILED] Player \(currentPlayer.rawValue) has already completed the game.")
             nextTurn(clearRoll: true)
             return
         }
         
         // Only allow rolling if there are no eligible pawns and no current roll
         guard eligiblePawns.isEmpty && currentRollPlayer == nil else {
-            print("🎲 [GUARD FAILED] Roll prevented. Pawns: \(eligiblePawns.count), Roll Player: \(currentRollPlayer?.rawValue ?? "nil")")
+            GameLogger.shared.log("🎲 [GUARD FAILED] Roll prevented. Pawns: \(eligiblePawns.count), Roll Player: \(currentRollPlayer?.rawValue ?? "nil")")
             return
         }
         
         // Roll the dice
         diceValue = Int.random(in: 1...6)
         rollID += 1 // Increment the roll ID to ensure UI updates
-        print("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
+        GameLogger.shared.log("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
@@ -283,7 +283,7 @@ class LudoGame: ObservableObject {
         // Set the specified dice value
         diceValue = value
         rollID += 1 // Increment the roll ID to ensure UI updates
-        print("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID))")
+        GameLogger.shared.log("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
@@ -341,7 +341,7 @@ class LudoGame: ObservableObject {
     }
     
     func nextTurn(clearRoll: Bool = true) {
-        print("🔄 [TURN] Advancing turn from \(currentPlayer.rawValue)...")
+        GameLogger.shared.log("🔄 [TURN] Advancing turn from \(currentPlayer.rawValue)...")
         // Get all selected players in the order of PlayerColor.allCases
         let orderedPlayers = PlayerColor.allCases.filter { selectedPlayers.contains($0) }
 
@@ -349,7 +349,7 @@ class LudoGame: ObservableObject {
         guard let currentIndex = orderedPlayers.firstIndex(of: currentPlayer) else {
              // If the current player is not in the selected players (shouldn't happen in normal flow),
              // there's nothing to do or it indicates an error state.
-             print("Error: Current player \(currentPlayer) not found in selected players.")
+             GameLogger.shared.log("Error: Current player \(currentPlayer) not found in selected players.", level: .error)
              return // Early return if currentIndex is nil
         }
 
@@ -367,7 +367,7 @@ class LudoGame: ObservableObject {
         // Set the current player to the determined next player.
         // Note: If the loop completed because all selected players are done, currentPlayer will be the same.
         currentPlayer = nextPlayer
-        print("🔄 [TURN] New current player is \(currentPlayer.rawValue)")
+        GameLogger.shared.log("🔄 [TURN] New current player is \(currentPlayer.rawValue)")
 
         // State clearing logic (kept consistent with original placement)
         if clearRoll {
@@ -411,7 +411,7 @@ class LudoGame: ObservableObject {
                 aiStrategies[aiPlayer] = chosenStrategy
                 
                 let strategyName = (chosenStrategy is RationalMoveStrategy) ? "Rational" : "Aggressive"
-                print("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is \(strategyName).")
+                GameLogger.shared.log("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is \(strategyName).")
             }
         }
         
@@ -450,7 +450,12 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
-        print("♟️ [ACTION] Attempting to move pawn \(pawnId) for \(color.rawValue) with dice \(steps)")
+        GameLogger.shared.log("[PAWN POSITIONS BEFORE MOVE] \(generatePawnPositionLogString())", level: .debug)
+        defer {
+            GameLogger.shared.log("[PAWN POSITIONS AFTER MOVE] \(generatePawnPositionLogString())", level: .debug)
+        }
+        
+        GameLogger.shared.log("♟️ [ACTION] Attempting to move pawn \(pawnId) for \(color.rawValue) with dice \(steps)")
         // Only allow moving if:
         // 1. It's your turn
         // 2. It's your roll (and currentRollPlayer is not nil)
@@ -534,7 +539,7 @@ class LudoGame: ObservableObject {
         // Keep the same player's turn if they rolled a 6, captured a pawn, or reached home
         if shouldGetAnotherRoll || diceValue == 6 {
             // Player gets another roll - clear the roll but keep the same player
-            print("🔄 [TURN] Player \(currentPlayer.rawValue) gets another turn.")
+            GameLogger.shared.log("🔄 [TURN] Player \(currentPlayer.rawValue) gets another turn.")
             currentRollPlayer = nil
             eligiblePawns.removeAll()
             // If the current player is an AI, trigger its next turn.
@@ -627,16 +632,55 @@ class LudoGame: ObservableObject {
     }
 
     private func handleAITurn() {
-        print("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
         if aiControlledPlayers.contains(currentPlayer) {
+            GameLogger.shared.log("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
             // Add a delay to simulate the AI "thinking" before rolling
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                print("🤖 [AI] AI \(self.currentPlayer.rawValue) is now attempting to roll the dice.")
+                GameLogger.shared.log("🤖 [AI] AI \(self.currentPlayer.rawValue) is now attempting to roll the dice.")
                 // Ensure it's still the AI's turn before rolling.
                 if self.aiControlledPlayers.contains(self.currentPlayer) {
                     self.rollDice()
                 }
             }
+        } else {
+            GameLogger.shared.log("👤 [HUMAN] Waiting for human player \(currentPlayer.rawValue) to roll the dice.")
         }
+    }
+
+    private func generatePawnPositionLogString() -> String {
+        var logParts: [String] = []
+
+        // Iterate through all colors in a consistent order to make logs comparable
+        for color in PlayerColor.allCases {
+            // Only log players who are in the game
+            guard let playerPawns = pawns[color], selectedPlayers.contains(color) else { continue }
+            
+            var pawnStrings: [String] = []
+            // Sort pawns by ID for consistent ordering
+            for pawn in playerPawns.sorted(by: { $0.id < $1.id }) {
+                var positionDescription: String
+                if let positionIndex = pawn.positionIndex {
+                    if positionIndex == -1 {
+                        positionDescription = "Finished"
+                    } else {
+                        let path = self.path(for: pawn.color)
+                        if positionIndex < path.count {
+                            let pos = path[positionIndex]
+                            positionDescription = "row:\(pos.row), col:\(pos.col)"
+                        } else {
+                            // This indicates a bug state, which is important to log
+                            positionDescription = "InvalidIndex(\(positionIndex))"
+                        }
+                    }
+                } else {
+                    positionDescription = "Home"
+                }
+                pawnStrings.append("(id:\(pawn.id), \(positionDescription))")
+            }
+            
+            logParts.append("\(color.rawValue.capitalized) pawns: \(pawnStrings.joined(separator: ", "))")
+        }
+        
+        return logParts.joined(separator: " | ")
     }
 } 

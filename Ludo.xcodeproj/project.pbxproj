@@ -22,6 +22,7 @@
 		DA79441A2DFF7A9700EE49FC /* hop2.wav in Resources */ = {isa = PBXBuildFile; fileRef = DA7944192DFF7A9700EE49FC /* hop2.wav */; };
 		DA79441C2DFF7CBD00EE49FC /* boing.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = DA79441B2DFF7CBD00EE49FC /* boing.mp3 */; };
 		DA79441E2DFF817E00EE49FC /* AIPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79441D2DFF817E00EE49FC /* AIPlayer.swift */; };
+		DA7944242DFFB24000EE49FC /* GameLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944232DFFB24000EE49FC /* GameLogger.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD32DEA05DC00073666 /* hop.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCD2DEA05DC00073666 /* hop.wav */; };
@@ -59,6 +60,7 @@
 		DA7944192DFF7A9700EE49FC /* hop2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hop2.wav; sourceTree = "<group>"; };
 		DA79441B2DFF7CBD00EE49FC /* boing.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = boing.mp3; sourceTree = "<group>"; };
 		DA79441D2DFF817E00EE49FC /* AIPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlayer.swift; sourceTree = "<group>"; };
+		DA7944232DFFB24000EE49FC /* GameLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLogger.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA7944232DFFB24000EE49FC /* GameLogger.swift */,
 				DA79441D2DFF817E00EE49FC /* AIPlayer.swift */,
 				DA79441B2DFF7CBD00EE49FC /* boing.mp3 */,
 				DA7944192DFF7A9700EE49FC /* hop2.wav */,
@@ -258,6 +261,7 @@
 				DA471F622DF407C300955EC1 /* PawnState.swift in Sources */,
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,
+				DA7944242DFFB24000EE49FC /* GameLogger.swift in Sources */,
 				DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */,
 				DAFC6FDB2DEA11FA00073666 /* GameOverView.swift in Sources */,

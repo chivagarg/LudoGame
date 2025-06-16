@@ -23,6 +23,22 @@ struct AdminControlsView: View {
                     .disabled(!eligiblePawns.isEmpty)
                 }
             }
+            
+            if let logFileURL = GameLogger.shared.logFileURL {
+                if #available(iOS 16.0, *) {
+                    ShareLink(
+                        item: logFileURL,
+                        subject: Text("Ludo Game Log"),
+                        message: Text("Here is the log from the last Ludo game session."),
+                        label: {
+                            Label("Share Game Log", systemImage: "square.and.arrow.up")
+                        }
+                    )
+                    .padding()
+                } else {
+                    // Fallback on earlier versions
+                }
+            }
         }
     }
 } 
