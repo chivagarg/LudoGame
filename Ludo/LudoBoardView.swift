@@ -240,7 +240,7 @@ struct LudoBoardView: View {
                         x: boardOffsetX + CGFloat(dicePos.col + 1) * cellSize,
                         y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
                     )
-                    .onChange(of: game.diceValue) { newValue in
+                    .onChange(of: game.rollID) { _ in
                         // Only trigger animation if we're not already rolling from a tap
                         if !isDiceRolling {
                             isDiceRolling = true

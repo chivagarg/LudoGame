@@ -19,6 +19,7 @@ struct Position: Equatable {
 class LudoGame: ObservableObject {
     @Published var currentPlayer: PlayerColor = .red
     @Published var diceValue: Int = 1
+    @Published var rollID: Int = 0 // A counter that increments on each roll to trigger animations
     @Published var gameStarted: Bool = false
     @Published var eligiblePawns: Set<Int> = []  // Track which pawns are eligible to move
     @Published var currentRollPlayer: PlayerColor? = nil  // Track whose roll is currently active
@@ -178,7 +179,8 @@ class LudoGame: ObservableObject {
         
         // Roll the dice
         diceValue = Int.random(in: 1...6)
-        print("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue)")
+        rollID += 1 // Increment the roll ID to ensure UI updates
+        print("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
@@ -278,6 +280,8 @@ class LudoGame: ObservableObject {
         
         // Set the specified dice value
         diceValue = value
+        rollID += 1 // Increment the roll ID to ensure UI updates
+        print("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
