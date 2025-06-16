@@ -19,6 +19,7 @@ struct Position: Equatable {
 class LudoGame: ObservableObject {
     @Published var currentPlayer: PlayerColor = .red
     @Published var diceValue: Int = 1
+    @Published var rollID: Int = 0 // A counter that increments on each roll to trigger animations
     @Published var gameStarted: Bool = false
     @Published var eligiblePawns: Set<Int> = []  // Track which pawns are eligible to move
     @Published var currentRollPlayer: PlayerColor? = nil  // Track whose roll is currently active
@@ -29,7 +30,11 @@ class LudoGame: ObservableObject {
     @Published var isGameOver: Bool = false  // Whether the game is over
     @Published var finalRankings: [PlayerColor] = []  // Track final player rankings
     @Published var selectedPlayers: Set<PlayerColor> = []
+    @Published var aiControlledPlayers: Set<PlayerColor> = []
 
+    // AI Player Configuration
+    private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
+    
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
         Position(row: 7, col: 1), Position(row: 7, col: 2), Position(row: 7, col: 3), Position(row: 7, col: 4), Position(row: 7, col: 5)
@@ -159,17 +164,24 @@ class LudoGame: ObservableObject {
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
     func rollDice() {
+        print("🎲 [ACTION] Attempting to roll dice for \(self.currentPlayer.rawValue)...")
         // Don't allow rolling if the player has completed their game
         guard !hasCompletedGame(color: currentPlayer) else {
+            print("🎲 [GUARD FAILED] Player \(currentPlayer.rawValue) has already completed the game.")
             nextTurn(clearRoll: true)
             return
         }
         
         // Only allow rolling if there are no eligible pawns and no current roll
-        guard eligiblePawns.isEmpty && currentRollPlayer == nil else { return }
+        guard eligiblePawns.isEmpty && currentRollPlayer == nil else {
+            print("🎲 [GUARD FAILED] Roll prevented. Pawns: \(eligiblePawns.count), Roll Player: \(currentRollPlayer?.rawValue ?? "nil")")
+            return
+        }
         
         // Roll the dice
         diceValue = Int.random(in: 1...6)
+        rollID += 1 // Increment the roll ID to ensure UI updates
+        print("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
@@ -187,8 +199,44 @@ class LudoGame: ObservableObject {
                 }
             }.map { $0.id })
             
-            // If there's exactly one eligible pawn, simulate tapping it
-            if eligiblePawns.count == 1 {
+            // If it's an AI's turn, let it make a move
+            if aiControlledPlayers.contains(currentPlayer) {
+                if let strategy = aiStrategies[currentPlayer],
+                   let pawnId = strategy.selectPawnToMove(from: eligiblePawns, for: currentPlayer, in: self) {
+                    
+                    // Add a delay to make the AI's move feel more natural
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        // Find the selected pawn to check its state
+                        if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
+                            
+                            // CASE 1: Pawn is at home and needs to move out (requires a 6)
+                            if pawn.positionIndex == nil {
+                                self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: self.diceValue)
+                            }
+                            // CASE 2: Pawn is already on the path
+                            else {
+                                let currentPos = pawn.positionIndex ?? -1
+                                let steps = self.diceValue
+                                if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
+                                    NotificationCenter.default.post(
+                                        name: NSNotification.Name("AnimatePawnMovement"),
+                                        object: nil,
+                                        userInfo: [
+                                            "color": self.currentPlayer,
+                                            "pawnId": pawnId,
+                                            "from": currentPos,
+                                            "to": destinationIndex,
+                                            "steps": steps
+                                        ]
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // If there's exactly one eligible pawn (for a human player), simulate tapping it
+            else if eligiblePawns.count == 1 {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
@@ -211,11 +259,6 @@ class LudoGame: ObservableObject {
                                         "steps": steps
                                     ]
                                 )
-                                
-                                // Move the pawn after animation
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                    self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
-                                }
                             }
                         }
                     }
@@ -239,6 +282,8 @@ class LudoGame: ObservableObject {
         
         // Set the specified dice value
         diceValue = value
+        rollID += 1 // Increment the roll ID to ensure UI updates
+        print("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
@@ -280,11 +325,6 @@ class LudoGame: ObservableObject {
                                         "steps": steps
                                     ]
                                 )
-                                
-                                // Move the pawn after animation
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25 + 1.0) {
-                                    self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: steps)
-                                }
                             }
                         }
                     }
@@ -301,6 +341,7 @@ class LudoGame: ObservableObject {
     }
     
     func nextTurn(clearRoll: Bool = true) {
+        print("🔄 [TURN] Advancing turn from \(currentPlayer.rawValue)...")
         // Get all selected players in the order of PlayerColor.allCases
         let orderedPlayers = PlayerColor.allCases.filter { selectedPlayers.contains($0) }
 
@@ -326,6 +367,7 @@ class LudoGame: ObservableObject {
         // Set the current player to the determined next player.
         // Note: If the loop completed because all selected players are done, currentPlayer will be the same.
         currentPlayer = nextPlayer
+        print("🔄 [TURN] New current player is \(currentPlayer.rawValue)")
 
         // State clearing logic (kept consistent with original placement)
         if clearRoll {
@@ -346,6 +388,8 @@ class LudoGame: ObservableObject {
                 // If not all players are done, skip this completed player's turn by calling nextTurn again.
                 nextTurn(clearRoll: clearRoll)
             }
+        } else {
+            handleAITurn()
         }
     }
     
@@ -355,8 +399,22 @@ class LudoGame: ObservableObject {
         return playerPawns.allSatisfy { $0.positionIndex == -1 }
     }
     
-    func startGame(selectedPlayers: Set<PlayerColor>) {
+    func startGame(selectedPlayers: Set<PlayerColor>, aiPlayers: Set<PlayerColor> = []) {
         self.selectedPlayers = selectedPlayers
+        self.aiControlledPlayers = aiPlayers
+        
+        // Randomly assign a strategy to each AI player
+        self.aiStrategies = [:]
+        for aiPlayer in aiPlayers {
+            let possibleStrategies: [AILogicStrategy] = [RationalMoveStrategy(), AggressiveMoveStrategy()]
+            if let chosenStrategy = possibleStrategies.randomElement() {
+                aiStrategies[aiPlayer] = chosenStrategy
+                
+                let strategyName = (chosenStrategy is RationalMoveStrategy) ? "Rational" : "Aggressive"
+                print("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is \(strategyName).")
+            }
+        }
+        
         gameStarted = true
         currentPlayer = selectedPlayers.first! // Set current player to the first selected player (assuming at least one selected)
         eligiblePawns.removeAll()
@@ -372,6 +430,8 @@ class LudoGame: ObservableObject {
         for color in selectedPlayers {
             self.pawns[color] = (0..<4).map { PawnState(id: $0, color: color, positionIndex: nil) }
         }
+        
+        handleAITurn()
     }
     
     // Helper to get the path for a color
@@ -390,13 +450,14 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
+        print("♟️ [ACTION] Attempting to move pawn \(pawnId) for \(color.rawValue) with dice \(steps)")
         // Only allow moving if:
         // 1. It's your turn
         // 2. It's your roll (and currentRollPlayer is not nil)
         // 3. The pawn is eligible to move
         guard color == currentPlayer,
-              let rollPlayer = currentRollPlayer, // Safely unwrap currentRollPlayer
-              color == rollPlayer, // Compare with the unwrapped value
+              let rollPlayer = currentRollPlayer,
+              color == rollPlayer,
               eligiblePawns.contains(pawnId) else { return }
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
@@ -429,6 +490,7 @@ class LudoGame: ObservableObject {
                             if otherPosition == newPosition {
                                 // Capture the pawn
                                 pawns[otherColor]?[otherIndex].positionIndex = nil
+                                SoundManager.shared.playPawnCaptureSound()
                                 shouldGetAnotherRoll = true
                                 // Add 3 points for capture
                                 scores[color] = (scores[color] ?? 0) + 3
@@ -464,6 +526,7 @@ class LudoGame: ObservableObject {
             if steps == 6 {
                 // Move pawn to start position (index 0)
                 pawns[color]?[pawnIndex].positionIndex = 0
+                SoundManager.shared.playPawnLeaveHomeSound()
             }
         }
         
@@ -471,15 +534,18 @@ class LudoGame: ObservableObject {
         // Keep the same player's turn if they rolled a 6, captured a pawn, or reached home
         if shouldGetAnotherRoll || diceValue == 6 {
             // Player gets another roll - clear the roll but keep the same player
+            print("🔄 [TURN] Player \(currentPlayer.rawValue) gets another turn.")
             currentRollPlayer = nil
             eligiblePawns.removeAll()
+            // If the current player is an AI, trigger its next turn.
+            handleAITurn()
         } else {
             nextTurn(clearRoll: true)
         }
     }
     
     // Helper to check if a position is a safe spot
-    private func isSafePosition(_ position: Position) -> Bool {
+    func isSafePosition(_ position: Position) -> Bool {
         // Check if position is in any safe zone
         if Self.redSafeZone.contains(position) || 
            Self.greenSafeZone.contains(position) ||
@@ -558,5 +624,19 @@ class LudoGame: ObservableObject {
 
     func getFinalRankings() -> [PlayerColor] {
         return PlayerColor.allCases.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
+    }
+
+    private func handleAITurn() {
+        print("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
+        if aiControlledPlayers.contains(currentPlayer) {
+            // Add a delay to simulate the AI "thinking" before rolling
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                print("🤖 [AI] AI \(self.currentPlayer.rawValue) is now attempting to roll the dice.")
+                // Ensure it's still the AI's turn before rolling.
+                if self.aiControlledPlayers.contains(self.currentPlayer) {
+                    self.rollDice()
+                }
+            }
+        }
     }
 } 
