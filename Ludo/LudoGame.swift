@@ -32,8 +32,9 @@ class LudoGame: ObservableObject {
     @Published var selectedPlayers: Set<PlayerColor> = []
     @Published var aiControlledPlayers: Set<PlayerColor> = []
 
-    private var aiStrategy: AILogicStrategy = RandomMoveStrategy()
-
+    // AI Player Configuration
+    private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
+    
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
         Position(row: 7, col: 1), Position(row: 7, col: 2), Position(row: 7, col: 3), Position(row: 7, col: 4), Position(row: 7, col: 5)
@@ -200,7 +201,8 @@ class LudoGame: ObservableObject {
             
             // If it's an AI's turn, let it make a move
             if aiControlledPlayers.contains(currentPlayer) {
-                if let pawnId = aiStrategy.selectPawnToMove(from: eligiblePawns, for: currentPlayer, in: self) {
+                if let strategy = aiStrategies[currentPlayer],
+                   let pawnId = strategy.selectPawnToMove(from: eligiblePawns, for: currentPlayer, in: self) {
                     
                     // Add a delay to make the AI's move feel more natural
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -400,6 +402,19 @@ class LudoGame: ObservableObject {
     func startGame(selectedPlayers: Set<PlayerColor>, aiPlayers: Set<PlayerColor> = []) {
         self.selectedPlayers = selectedPlayers
         self.aiControlledPlayers = aiPlayers
+        
+        // Randomly assign a strategy to each AI player
+        self.aiStrategies = [:]
+        for aiPlayer in aiPlayers {
+            let possibleStrategies: [AILogicStrategy] = [RationalMoveStrategy(), AggressiveMoveStrategy()]
+            if let chosenStrategy = possibleStrategies.randomElement() {
+                aiStrategies[aiPlayer] = chosenStrategy
+                
+                let strategyName = (chosenStrategy is RationalMoveStrategy) ? "Rational" : "Aggressive"
+                print("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is \(strategyName).")
+            }
+        }
+        
         gameStarted = true
         currentPlayer = selectedPlayers.first! // Set current player to the first selected player (assuming at least one selected)
         eligiblePawns.removeAll()
@@ -530,7 +545,7 @@ class LudoGame: ObservableObject {
     }
     
     // Helper to check if a position is a safe spot
-    private func isSafePosition(_ position: Position) -> Bool {
+    func isSafePosition(_ position: Position) -> Bool {
         // Check if position is in any safe zone
         if Self.redSafeZone.contains(position) || 
            Self.greenSafeZone.contains(position) ||
