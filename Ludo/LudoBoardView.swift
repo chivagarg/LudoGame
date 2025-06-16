@@ -11,9 +11,6 @@ struct LudoBoardView: View {
     @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var currentStep = 0
     @State private var isPathAnimating = false
-    @State private var capturedPawns: [(color: PlayerColor, id: Int, progress: Double)] = []
-    // this is used to play the victory sound only once when a pawn reaches the home
-    // ideally we should replace this with a published property in the game model that the sound manager listens to
     @State private var previousPawnsAtHome = 0
     
     private func getDicePosition() -> (row: Int, col: Int)? {
@@ -110,49 +107,6 @@ struct LudoBoardView: View {
         
         // Start the animation
         animateNextStep()
-        
-        // After all steps are complete, check for captures
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(steps) * 0.25) {
-            // Safety check: if the pawn has reached ending home (to < 0), don't check for captures
-            guard to >= 0 else {
-                // Play victory sound if reaching home
-                return
-            }
-            
-            // Get the final position
-            let finalPosition = game.path(for: color)[to]
-            
-            // Check for captures at the final position
-            for (otherColor, otherPawns) in game.pawns {
-                if otherColor == color { continue } // Skip same color
-                
-                for (otherIndex, otherPawn) in otherPawns.enumerated() {
-                    guard let otherPositionIndex = otherPawn.positionIndex,
-                          otherPositionIndex >= 0 else { continue }
-                    
-                    let otherPosition = game.path(for: otherColor)[otherPositionIndex]
-                    if otherPosition == finalPosition && !isStarSpace(row: finalPosition.row, col: finalPosition.col) {
-                        // Play capture sound
-                        SoundManager.shared.playSound("capture")
-                        
-                        // Add the pawn to captured pawns for animation
-                        capturedPawns.append((color: otherColor, id: otherPawn.id, progress: 0))
-                        
-                        // Animate the capture
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            if let index = capturedPawns.firstIndex(where: { $0.color == otherColor && $0.id == otherPawn.id }) {
-                                capturedPawns[index].progress = 1.0
-                            }
-                        }
-                        
-                        // After animation completes, update the game state
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            capturedPawns.removeAll(where: { $0.color == otherColor && $0.id == otherPawn.id })
-                        }
-                    }
-                }
-            }
-        }
     }
     
     private func getStartingHomePosition(pawn: PawnState, color: PlayerColor) -> (row: Int, col: Int) {
@@ -248,32 +202,6 @@ struct LudoBoardView: View {
                                 isDiceRolling = false
                             }
                         }
-                    }
-                }
-
-                // Captured pawns layer
-                ForEach(capturedPawns, id: \.id) { captured in
-                    if let pawn = game.pawns[captured.color]?.first(where: { $0.id == captured.id }) {
-                        // Get the actual position where the pawn was captured
-                        let capturedPosition = game.path(for: captured.color)[pawn.positionIndex ?? 0]
-                        let homePos = getStartingHomePosition(pawn: pawn, color: captured.color)
-                        
-                        // Calculate the exact center positions relative to the board
-                        let startX = boardOffsetX + CGFloat(capturedPosition.col) * cellSize
-                        let startY = boardOffsetY + CGFloat(capturedPosition.row) * cellSize
-                        let endX = boardOffsetX + CGFloat(homePos.col) * cellSize
-                        let endY = boardOffsetY + CGFloat(homePos.row) * cellSize
-                        
-                        // Calculate the offset based on capture progress
-                        let xOffset = captured.progress * (endX - startX)
-                        let yOffset = captured.progress * (endY - startY)
-                        
-                        // Position the pawn at the start position and animate to end position
-                        PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
-                            .position(
-                                x: startX + xOffset + cellSize/2,
-                                y: startY + yOffset + cellSize/2
-                            )
                     }
                 }
             }
