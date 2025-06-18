@@ -529,9 +529,9 @@ class LudoGame: ObservableObject {
         } else {
             // Pawn is at home
             if steps == 6 {
-                // Move pawn to start position (index 0)
-                pawns[color]?[pawnIndex].positionIndex = 0
-                SoundManager.shared.playPawnLeaveHomeSound()
+                NotificationCenter.default.post(name: .animatePawnFromHome, object: nil, userInfo: ["color": color, "pawnId": pawnId])
+                // State is now set in completeMoveFromHome after animation
+                return // Return early, as completeMoveFromHome will handle the next turn.
             }
         }
         
@@ -683,4 +683,23 @@ class LudoGame: ObservableObject {
         
         return logParts.joined(separator: " | ")
     }
+
+    // This function will be called by the view after the "move from home" animation is complete.
+    func completeMoveFromHome(color: PlayerColor, pawnId: Int) {
+        // Now, officially update the pawn's state.
+        if let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) {
+            pawns[color]?[pawnIndex].positionIndex = 0
+            SoundManager.shared.playPawnLeaveHomeSound()
+        }
+        
+        // A roll of 6 always grants another turn.
+        GameLogger.shared.log("🔄 [TURN] Player \(currentPlayer.rawValue) gets another turn for rolling a 6.")
+        currentRollPlayer = nil
+        eligiblePawns.removeAll()
+        handleAITurn()
+    }
+}
+
+extension Notification.Name {
+    static let animatePawnFromHome = Notification.Name("AnimatePawnFromHome")
 } 
