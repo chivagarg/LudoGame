@@ -767,7 +767,7 @@ struct LudoBoardView: View {
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
-                        if !isPathAnimating && !isAnimatingHomeToStart && !isAnimatingCapture && !isDiceRolling {
+                        if !game.aiControlledPlayers.contains(color) && !isPathAnimating && !isAnimatingHomeToStart && !isAnimatingCapture && !isDiceRolling {
                             if game.isValidMove(color: color, pawnId: pawn.id) {
                                 let currentPos = pawn.positionIndex ?? -1
                                 let steps = game.diceValue
@@ -825,6 +825,8 @@ struct LudoBoardView: View {
         if game.selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
             PawnView(pawn: pawn, size: cellSize * pawnResizeFactor, currentPlayer: game.currentPlayer)
                 .onTapGesture {
+                    guard !game.aiControlledPlayers.contains(color) else { return } // <-- Block AI pawn taps
+                    
                     print("--- HOME PAWN TAPPED ---")
                     print("Pawn: \(pawn.color), id: \(pawn.id)")
                     print("Current Player: \(game.currentPlayer)")

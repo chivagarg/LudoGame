@@ -44,7 +44,16 @@ struct PlayerPanelView: View {
 
                 // 3. Dice (only for current player)
                 if showDice {
-                    DiceView(value: diceValue, isRolling: isDiceRolling || localDiceRolling, onTap: onDiceTap)
+                    DiceView(
+                        value: diceValue,
+                        isRolling: isDiceRolling || localDiceRolling,
+                        onTap: {
+                            // Disable tap for AI players
+                            if !game.aiControlledPlayers.contains(color) {
+                                onDiceTap()
+                            }
+                        }
+                    )
                 } else {
                     Spacer().frame(width: 60)
                 }
