@@ -124,16 +124,14 @@ struct RationalMoveStrategy: AILogicStrategy {
 /// An AI strategy that prioritizes aggressive moves to capture or chase opponents.
 struct AggressiveMoveStrategy: AILogicStrategy {
 
-    // A threshold for how close a pawn must be to an opponent to be considered a "chase".
-    private let chaseDistanceThreshold = 8
-
     func selectPawnToMove(from eligiblePawns: Set<Int>, for player: PlayerColor, in game: LudoGame) -> Int? {
         guard !eligiblePawns.isEmpty else { return nil }
         
         let currentPath = game.path(for: player)
         guard !currentPath.isEmpty else { return eligiblePawns.first }
 
-        // --- Tier 1: Offensive - Prioritize Capturing an Opponent ---
+        // --- Tier 1: Capture at All Costs ---
+        // Find any move that results in a direct capture. This is the highest priority.
         for pawnId in eligiblePawns {
             if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
                let positionIndex = pawn.positionIndex {
@@ -142,18 +140,19 @@ struct AggressiveMoveStrategy: AILogicStrategy {
                 if destinationIndex < currentPath.count {
                     let destination = currentPath[destinationIndex]
                     
+                    // A capture is only possible on an unsafe space.
                     if !game.isSafePosition(destination) {
                         for (opponentColor, opponentPawns) in game.pawns where opponentColor != player {
+                            let opponentPath = game.path(for: opponentColor)
+                            guard !opponentPath.isEmpty else { continue }
+                            
                             for opponentPawn in opponentPawns {
-                                let opponentPath = game.path(for: opponentColor)
                                 if let opponentIndex = opponentPawn.positionIndex,
-                                   opponentIndex >= 0,
-                                   !opponentPath.isEmpty,
-                                   opponentIndex < opponentPath.count {
+                                   opponentIndex >= 0 && opponentIndex < opponentPath.count {
                                     
                                     if opponentPath[opponentIndex] == destination {
-                                        print("🤖 [AI AGGRESSIVE] Found capture! Moving pawn \(pawnId).")
-                                        return pawnId
+                                        print("🤖 [AI BERSERKER] Found capture! Moving pawn \(pawnId).")
+                                        return pawnId // Highest priority: execute capture.
                                     }
                                 }
                             }
@@ -163,52 +162,38 @@ struct AggressiveMoveStrategy: AILogicStrategy {
             }
         }
         
-        // --- Tier 2: Prioritize Moving a Pawn from Home on a Roll of 6 ---
-        if game.diceValue == 6 {
-            let homePawnId = eligiblePawns.first { pawnId in
-                if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }) {
-                    return pawn.positionIndex == nil
-                }
-                return false
-            }
-            
-            if let pawnToMove = homePawnId {
-                print("🤖 [AI AGGRESSIVE] Rolled a 6. Prioritizing moving pawn \(pawnToMove) from home.")
-                return pawnToMove
-            }
-        }
-        
-        // --- Tier 3: Chase an Opponent ---
-        // Find the move that results in the smallest distance to any single opponent.
+        // --- Tier 2: Relentless Chase ---
+        // If no capture is possible, find the move that gets closest to any opponent.
         var chaseCandidates: [(pawnId: Int, minDistance: Int)] = []
 
         for pawnId in eligiblePawns {
-            if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-               let positionIndex = pawn.positionIndex {
+            // Pawns at home can't chase yet, so we only consider pawns on the board.
+            guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
+                  let positionIndex = pawn.positionIndex else { continue }
 
-                let destinationIndex = positionIndex + game.diceValue
-                if destinationIndex < currentPath.count {
-                    let destination = currentPath[destinationIndex]
-                    var closestOpponentDistance = Int.max
+            let destinationIndex = positionIndex + game.diceValue
+            if destinationIndex < currentPath.count {
+                let destination = currentPath[destinationIndex]
+                var closestOpponentDistance = Int.max
 
-                    // Find the distance to the nearest opponent from this move's destination
-                    for (opponentColor, opponentPawns) in game.pawns where opponentColor != player {
-                        for opponentPawn in opponentPawns {
-                            let opponentPath = game.path(for: opponentColor)
-                            if let opponentIndex = opponentPawn.positionIndex,
-                               opponentIndex >= 0,
-                               !opponentPath.isEmpty,
-                               opponentIndex < opponentPath.count {
-                                let opponentPosition = opponentPath[opponentIndex]
-                                let distance = manhattanDistance(from: destination, to: opponentPosition)
-                                closestOpponentDistance = min(closestOpponentDistance, distance)
-                            }
+                // Find the distance to the nearest opponent from this move's destination.
+                for (opponentColor, opponentPawns) in game.pawns where opponentColor != player {
+                    let opponentPath = game.path(for: opponentColor)
+                    guard !opponentPath.isEmpty else { continue }
+
+                    for opponentPawn in opponentPawns {
+                        if let opponentIndex = opponentPawn.positionIndex,
+                           opponentIndex >= 0 && opponentIndex < opponentPath.count {
+                            let opponentPosition = opponentPath[opponentIndex]
+                            let distance = manhattanDistance(from: destination, to: opponentPosition)
+                            closestOpponentDistance = min(closestOpponentDistance, distance)
                         }
                     }
-                    
-                    if closestOpponentDistance <= chaseDistanceThreshold {
-                        chaseCandidates.append((pawnId: pawnId, minDistance: closestOpponentDistance))
-                    }
+                }
+                
+                // If a valid distance was found, add it as a candidate.
+                if closestOpponentDistance != Int.max {
+                    chaseCandidates.append((pawnId: pawnId, minDistance: closestOpponentDistance))
                 }
             }
         }
@@ -217,50 +202,25 @@ struct AggressiveMoveStrategy: AILogicStrategy {
         if !chaseCandidates.isEmpty {
             let bestChaseMove = chaseCandidates.min(by: { $0.minDistance < $1.minDistance })
             if let pawnToMove = bestChaseMove?.pawnId {
-                 print("🤖 [AI AGGRESSIVE] Found chase opportunity. Moving pawn \(pawnToMove).")
+                 print("🤖 [AI BERSERKER] No capture found. Chasing with pawn \(pawnToMove) to get closer.")
                 return pawnToMove
             }
         }
-
-
-        // --- Tier 4: Progress Safely / Furthest Pawn ---
-        // If no attack is possible, move based on position.
-        // Prioritize moves that land on a safe spot.
-        let safeMovers = eligiblePawns.filter { pawnId in
-            if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-               let positionIndex = pawn.positionIndex {
-                let destinationIndex = positionIndex + game.diceValue
-                if destinationIndex < currentPath.count {
-                    return game.isSafePosition(currentPath[destinationIndex])
-                }
-            }
-            return false
-        }
-
-        // If there are moves that land on a safe spot, take the one from the most advanced pawn.
-        if !safeMovers.isEmpty {
-            let pawnToMove = safeMovers.max { (pawnIdA, pawnIdB) -> Bool in
-                let posA = game.pawns[player]?.first(where: { $0.id == pawnIdA })?.positionIndex ?? 0
-                let posB = game.pawns[player]?.first(where: { $0.id == pawnIdB })?.positionIndex ?? 0
-                return posA < posB
-            }
-            print("🤖 [AI AGGRESSIVE] No chase found. Moving most advanced pawn to a safe spot: \(pawnToMove ?? -1).")
-            return pawnToMove
-        }
-
-        // --- Tier 5: Fallback - Move the Most Advanced Pawn ---
-        // If no safe move is possible, just move the most advanced pawn.
-        let pawnToMove = eligiblePawns.max { (pawnIdA, pawnIdB) -> Bool in
-            let posA = game.pawns[player]?.first(where: { $0.id == pawnIdA })?.positionIndex ?? 0
-            let posB = game.pawns[player]?.first(where: { $0.id == pawnIdB })?.positionIndex ?? 0
+        
+        // --- Tier 3: Last Resort ---
+        // If no other move is possible (e.g., can't chase, must move from home), pick any valid move.
+        // The most advanced pawn is a reasonable default.
+        let fallbackMove = eligiblePawns.max { (pawnIdA, pawnIdB) -> Bool in
+            let posA = game.pawns[player]?.first(where: { $0.id == pawnIdA })?.positionIndex ?? -1
+            let posB = game.pawns[player]?.first(where: { $0.id == pawnIdB })?.positionIndex ?? -1
             return posA < posB
         }
-        print("🤖 [AI AGGRESSIVE] No optimal move found. Moving most advanced pawn: \(pawnToMove ?? -1).")
-        return pawnToMove
+        print("🤖 [AI BERSERKER] No capture or chase possible. Making fallback move with pawn \(fallbackMove ?? -1).")
+        return fallbackMove
     }
 
     /// Calculates the Manhattan distance between two board positions.
-    private func manhattanDistance(from pos1: Position, to pos2: Position) -> Int {
-        return abs(pos1.row - pos2.row) + abs(pos1.col - pos2.col)
+    private func manhattanDistance(from: Position, to: Position) -> Int {
+        return abs(from.row - to.row) + abs(from.col - to.col)
     }
 } 
