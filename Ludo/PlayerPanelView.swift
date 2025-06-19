@@ -27,10 +27,20 @@ struct PlayerPanelView: View {
                     Circle()
                         .fill(color.toSwiftUIColor(for: color).opacity(0.7))
                         .frame(width: 70, height: 70)
-                    Image("avatar_\(color.rawValue)")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 60, height: 60)
+
+                    if game.aiControlledPlayers.contains(color) {
+                        Image("avatar_alien")
+                            .renderingMode(.template)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.black)
+                    } else {
+                        Image("avatar_\(color.rawValue)")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60, height: 60)
+                    }
                 }
                 .frame(width: 80, height: 80)
 
