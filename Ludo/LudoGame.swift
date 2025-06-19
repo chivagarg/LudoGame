@@ -163,6 +163,27 @@ class LudoGame: ObservableObject {
 
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
+    private func areAllPawnsAtHome(for color: PlayerColor) -> Bool {
+        guard let playerPawns = pawns[color] else { return false }
+        return playerPawns.allSatisfy { $0.positionIndex == nil }
+    }
+    
+    private func getDiceRoll() -> Int {
+        if areAllPawnsAtHome(for: currentPlayer) {
+            GameLogger.shared.log("🎲 [INFO] All pawns are at home. Doubling the chance of rolling a 6.")
+            // Weighted roll: ~33.3% chance of 6
+            let randomValue = Double.random(in: 0.0..<1.0)
+            if randomValue < (1.0 / 3.0) {
+                return 6
+            } else {
+                return Int.random(in: 1...5)
+            }
+        } else {
+            // Standard roll
+            return Int.random(in: 1...6)
+        }
+    }
+    
     func rollDice() {
         GameLogger.shared.log("🎲 [ACTION] Attempting to roll dice for \(self.currentPlayer.rawValue)...")
         // Don't allow rolling if the player has completed their game
@@ -178,8 +199,8 @@ class LudoGame: ObservableObject {
             return
         }
         
-        // Roll the dice
-        diceValue = Int.random(in: 1...6)
+        diceValue = getDiceRoll()
+
         rollID += 1 // Increment the roll ID to ensure UI updates
         GameLogger.shared.log("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
