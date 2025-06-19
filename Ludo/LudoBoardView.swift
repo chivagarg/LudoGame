@@ -15,6 +15,9 @@ struct LudoBoardView: View {
     @State private var isPathAnimating = false
     @State private var previousPawnsAtHome = 0
     
+    private let pawnResizeFactor: CGFloat = 0.9
+    private let boardScaleFactor: CGFloat = 0.75
+    
     private func getDicePosition() -> (row: Int, col: Int)? {
         if game.hasCompletedGame(color: game.currentPlayer) {
             return nil
@@ -33,7 +36,7 @@ struct LudoBoardView: View {
     }
     
     private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, boardOffsetX: CGFloat, boardOffsetY: CGFloat) {
-        let boardSize = min(geometry.size.width, geometry.size.height) * 0.95
+        let boardSize = min(geometry.size.width, geometry.size.height) * boardScaleFactor
         let cellSize = boardSize / CGFloat(gridSize)
         let boardOffsetX = (geometry.size.width - boardSize) / 2
         let boardOffsetY = (geometry.size.height - boardSize) / 2
@@ -152,6 +155,21 @@ struct LudoBoardView: View {
             let (boardSize, cellSize, boardOffsetX, boardOffsetY) = calculateBoardDimensions(geometry: geometry)
             
             ZStack {
+                VStack {
+                    HStack {
+                        PlayerPanelView(color: .red)
+                        Spacer()
+                        PlayerPanelView(color: .green)
+                    }
+                    Spacer()
+                    HStack {
+                        PlayerPanelView(color: .blue)
+                        Spacer()
+                        PlayerPanelView(color: .yellow)
+                    }
+                }
+                .padding()
+
                 VStack(spacing: 0) {
                     ForEach(0..<gridSize, id: \.self) { row in
                         HStack(spacing: 0) {
@@ -597,12 +615,12 @@ struct LudoBoardView: View {
     private func calculatePawnSizeAndOffset(cellSize: CGFloat, totalPawns: Int, index: Int) -> (size: CGFloat, xOffset: CGFloat, yOffset: CGFloat) {
         // Special case for single pawn
         if totalPawns == 1 {
-            let size = cellSize * 0.8 // Keep original size for single pawn
+            let size = cellSize * pawnResizeFactor // Keep original size for single pawn
             return (size, 0, 0) // Center in cell with no offset
         }
         
         // Base size for calculations
-        let baseSize = cellSize * 0.8
+        let baseSize = cellSize * pawnResizeFactor
         
         // Define layouts for different numbers of pawns
         switch totalPawns {
@@ -764,7 +782,7 @@ struct LudoBoardView: View {
     private func homePawnView(pawn: PawnState, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         // Only draw pawn if the player color is selected
         if game.selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
+            PawnView(pawn: pawn, size: cellSize * pawnResizeFactor, currentPlayer: game.currentPlayer)
                 .onTapGesture {
                     print("--- HOME PAWN TAPPED ---")
                     print("Pawn: \(pawn.color), id: \(pawn.id)")

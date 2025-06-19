@@ -11,6 +11,7 @@ struct PawnView: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: size, height: size)
-            .shadow(color: .black.opacity(0.3), radius: size / 15, x: 0, y: size / 15)
+            .shadow(color: .black.opacity(0.2), radius: size / 10, x: 0, y: size / 10) // Soft, ambient shadow
+            .shadow(color: .black.opacity(0.5), radius: size / 40, x: 0, y: size / 40) // Sharp, contact shadow
     }
 } 

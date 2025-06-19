@@ -24,6 +24,8 @@
 		DA79441E2DFF817E00EE49FC /* AIPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79441D2DFF817E00EE49FC /* AIPlayer.swift */; };
 		DA7944242DFFB24000EE49FC /* GameLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944232DFFB24000EE49FC /* GameLogger.swift */; };
 		DA7944262E03D27200EE49FC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA7944252E03D27200EE49FC /* Assets.xcassets */; };
+		DA7944302E04B55000EE49FC /* PlayerPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79442F2E04B55000EE49FC /* PlayerPanelView.swift */; };
+		DA7944322E04B69500EE49FC /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944312E04B69500EE49FC /* Extensions.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD32DEA05DC00073666 /* hop.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCD2DEA05DC00073666 /* hop.wav */; };
@@ -63,6 +65,8 @@
 		DA79441D2DFF817E00EE49FC /* AIPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlayer.swift; sourceTree = "<group>"; };
 		DA7944232DFFB24000EE49FC /* GameLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLogger.swift; sourceTree = "<group>"; };
 		DA7944252E03D27200EE49FC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DA79442F2E04B55000EE49FC /* PlayerPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPanelView.swift; sourceTree = "<group>"; };
+		DA7944312E04B69500EE49FC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -108,6 +112,8 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA7944312E04B69500EE49FC /* Extensions.swift */,
+				DA79442F2E04B55000EE49FC /* PlayerPanelView.swift */,
 				DA7944232DFFB24000EE49FC /* GameLogger.swift */,
 				DA79441D2DFF817E00EE49FC /* AIPlayer.swift */,
 				DA79441B2DFF7CBD00EE49FC /* boing.mp3 */,
@@ -264,7 +270,9 @@
 				DA7944162DFA8E3100EE49FC /* StartGameView.swift in Sources */,
 				DA471F622DF407C300955EC1 /* PawnState.swift in Sources */,
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
+				DA7944322E04B69500EE49FC /* Extensions.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,
+				DA7944302E04B55000EE49FC /* PlayerPanelView.swift in Sources */,
 				DA7944242DFFB24000EE49FC /* GameLogger.swift in Sources */,
 				DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */,
