@@ -15,6 +15,7 @@ struct LudoBoardView: View {
     @State private var capturedPawns: [(pawn: PawnState, progress: Double)] = []
     @State private var currentStep = 0
     @State private var isPathAnimating = false
+    @State private var isAnimatingHomeToStart = false
     @State private var previousPawnsAtHome = 0
     
     private let pawnResizeFactor: CGFloat = 0.9
@@ -361,6 +362,8 @@ struct LudoBoardView: View {
                       let pawnId = userInfo["pawnId"] as? Int,
                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
                 
+                isAnimatingHomeToStart = true // <-- Lock the UI
+                
                 if color == .red && pawnId == 0 {
                     GameLogger.shared.log("🐞 DEBUG LOG 3: Starting 'move from home' animation for Red Pawn 0. Its positionIndex is: \(String(describing: pawn.positionIndex))", level: .debug)
                 }
@@ -377,6 +380,7 @@ struct LudoBoardView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Match the spring response time
                     homeToStartPawns.removeAll { $0.pawn.id == pawn.id && $0.pawn.color == color }
                     game.completeMoveFromHome(color: color, pawnId: pawnId)
+                    isAnimatingHomeToStart = false // <-- Unlock the UI
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .animatePawnCapture)) { notification in
@@ -759,7 +763,7 @@ struct LudoBoardView: View {
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
-                        if !isPathAnimating {
+                        if !isPathAnimating && !isAnimatingHomeToStart {
                             if game.isValidMove(color: color, pawnId: pawn.id) {
                                 let currentPos = pawn.positionIndex ?? -1
                                 let steps = game.diceValue
@@ -827,7 +831,7 @@ struct LudoBoardView: View {
                         GameLogger.shared.log("🐞 DEBUG LOG 2: Tapped Red Pawn 0 at home. Its positionIndex is: \(String(describing: pawn.positionIndex))", level: .debug)
                     }
                     
-                    if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
+                    if color == game.currentPlayer && !isPathAnimating && !isAnimatingHomeToStart && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
                         print("Condition met. Calling movePawn.")
                         // Instantly move the pawn without animation or sound
                         game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
