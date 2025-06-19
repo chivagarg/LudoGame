@@ -10,6 +10,7 @@ struct LudoBoardView: View {
     @State private var isDiceRolling = false
     @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var homeToStartPawns: [(pawn: PawnState, progress: Double)] = []
+    @State private var capturedPawns: [(pawn: PawnState, progress: Double)] = []
     @State private var currentStep = 0
     @State private var isPathAnimating = false
     @State private var previousPawnsAtHome = 0
@@ -206,6 +207,39 @@ struct LudoBoardView: View {
                         .allowsHitTesting(false) // Don't let it intercept taps while animating
                 }
 
+                // Pawns animating from their path position to their Home base (on capture)
+                ForEach(capturedPawns, id: \.pawn.id) { capturedPawn in
+                    if let startPositionIndex = capturedPawn.pawn.positionIndex {
+                        let pawn = capturedPawn.pawn
+                        let progress = capturedPawn.progress
+                        
+                        // Get start (path) and end (home) positions
+                        let pathPosition = game.path(for: pawn.color)[startPositionIndex]
+                        let homePosition = getStartingHomePosition(pawn: pawn, color: pawn.color)
+
+                        // Interpolate the position based on progress
+                        let startX = CGFloat(pathPosition.col) + 0.5
+                        let startY = CGFloat(pathPosition.row) + 0.5
+                        let endX = CGFloat(homePosition.col) + 0.5
+                        let endY = CGFloat(homePosition.row) + 0.5
+                        
+                        let currentX = startX + (endX - startX) * progress
+                        let currentY = startY + (endY - startY) * progress
+                        
+                        // Add a hop effect using a sine wave
+                        let hopHeight = -cellSize * 1.5 // Hop 1.5 cells high
+                        let yOffset = sin(progress * .pi) * hopHeight
+                        
+                        PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
+                            .position(
+                                x: boardOffsetX + currentX * cellSize,
+                                y: boardOffsetY + currentY * cellSize + yOffset
+                            )
+                            .zIndex(50)
+                            .allowsHitTesting(false)
+                    }
+                }
+
                 // Dice View
                 if let dicePos = getDicePosition() {
                     DiceView(value: game.diceValue, isRolling: isDiceRolling) {
@@ -286,6 +320,26 @@ struct LudoBoardView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Match the spring response time
                     homeToStartPawns.removeAll { $0.pawn.id == pawn.id && $0.pawn.color == color }
                     game.completeMoveFromHome(color: color, pawnId: pawnId)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .animatePawnCapture)) { notification in
+                guard let userInfo = notification.userInfo,
+                      let color = userInfo["color"] as? PlayerColor,
+                      let pawnId = userInfo["pawnId"] as? Int,
+                      let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
+                
+                capturedPawns.append((pawn: pawn, progress: 0))
+                
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
+                    if let index = capturedPawns.firstIndex(where: { $0.pawn.id == pawnId && $0.pawn.color == color }) {
+                        capturedPawns[index].progress = 1.0
+                    }
+                }
+                
+                // After the animation duration, complete the move in the model
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    game.completePawnCapture(color: color, pawnId: pawnId)
+                    capturedPawns.removeAll { $0.pawn.id == pawnId && $0.pawn.color == color }
                 }
             }
         }

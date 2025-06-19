@@ -514,8 +514,12 @@ class LudoGame: ObservableObject {
                             let otherPosition = path(for: otherColor)[otherPositionIndex]
                             
                             if otherPosition == newPosition {
-                                // Capture the pawn
-                                pawns[otherColor]?[otherIndex].positionIndex = nil
+                                // Capture the pawn - Post notification to animate it
+                                NotificationCenter.default.post(
+                                    name: .animatePawnCapture,
+                                    object: nil,
+                                    userInfo: ["color": otherColor, "pawnId": otherPawn.id]
+                                )
                                 SoundManager.shared.playPawnCaptureSound()
                                 shouldGetAnotherRoll = true
                                 // Add 3 points for capture
@@ -719,8 +723,16 @@ class LudoGame: ObservableObject {
         eligiblePawns.removeAll()
         handleAITurn()
     }
+
+    // This function is called by the view after a pawn capture animation is complete.
+    func completePawnCapture(color: PlayerColor, pawnId: Int) {
+        if let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) {
+            pawns[color]?[pawnIndex].positionIndex = nil
+        }
+    }
 }
 
 extension Notification.Name {
     static let animatePawnFromHome = Notification.Name("AnimatePawnFromHome")
+    static let animatePawnCapture = Notification.Name("AnimatePawnCapture")
 } 
