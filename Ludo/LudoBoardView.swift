@@ -8,7 +8,7 @@ struct LudoBoardView: View {
     let gridSize = 15
     
     @State private var isDiceRolling = false
-    @State private var animatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
+    @State private var pathAnimatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var homeToStartPawns: [(pawn: PawnState, progress: Double)] = []
     @State private var capturedPawns: [(pawn: PawnState, progress: Double)] = []
     @State private var currentStep = 0
@@ -76,6 +76,7 @@ struct LudoBoardView: View {
         
         func animateNextStep() {
             guard currentStep < steps else {
+                self.pathAnimatingPawns.removeAll()
                 completion()
                 return
             }
@@ -90,13 +91,13 @@ struct LudoBoardView: View {
                 return
             }
             
-            animatingPawns[key] = (currentFrom, currentTo, 0)
+            pathAnimatingPawns[key] = (currentFrom, currentTo, 0)
             
             // Play hop sound for each step
             SoundManager.shared.playPawnHopSound()
             
             withAnimation(.spring(response: 0.15, dampingFraction: 0.3, blendDuration: 0)) {
-                animatingPawns[key]?.progress = 1.0
+                pathAnimatingPawns[key]?.progress = 1.0
             }
             
             currentStep += 1
@@ -126,7 +127,7 @@ struct LudoBoardView: View {
     
     private func getCurrentPosition(pawn: PawnState, color: PlayerColor, positionIndex: Int) -> (row: Int, col: Int) {
         let key = "\(color.rawValue)-\(pawn.id)"
-        if let animation = animatingPawns[key] {
+        if let animation = pathAnimatingPawns[key] {
             let progress = animation.progress
             let startPos = game.path(for: color)[animation.start]
             let endPos = game.path(for: color)[animation.end]
@@ -293,6 +294,7 @@ struct LudoBoardView: View {
                        let steps = userInfo["steps"] as? Int,
                        let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
                         animatePawnMovementForPath(pawn: pawn, color: color, from: from, to: to, steps: steps) {
+                            self.pathAnimatingPawns.removeAll()
                             game.movePawn(color: color, pawnId: pawnId, steps: steps)
                             isPathAnimating = false
                             isDiceRolling = false
@@ -307,6 +309,10 @@ struct LudoBoardView: View {
                       let color = userInfo["color"] as? PlayerColor,
                       let pawnId = userInfo["pawnId"] as? Int,
                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
+                
+                if color == .red && pawnId == 0 {
+                    GameLogger.shared.log("🐞 DEBUG LOG 3: Starting 'move from home' animation for Red Pawn 0. Its positionIndex is: \(String(describing: pawn.positionIndex))", level: .debug)
+                }
                 
                 homeToStartPawns.append((pawn: pawn, progress: 0))
                 
@@ -338,6 +344,9 @@ struct LudoBoardView: View {
                 
                 // After the animation duration, complete the move in the model
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    if color == .red && pawnId == 0 {
+                        GameLogger.shared.log("🐞 DEBUG LOG 1: Completing capture for Red Pawn 0. Its positionIndex is currently: \(String(describing: pawn.positionIndex))", level: .debug)
+                    }
                     game.completePawnCapture(color: color, pawnId: pawnId)
                     capturedPawns.removeAll { $0.pawn.id == pawnId && $0.pawn.color == color }
                 }
@@ -675,8 +684,8 @@ struct LudoBoardView: View {
             let currentPos = getCurrentPosition(pawn: pawn, color: color, positionIndex: positionIndex)
             if currentPos.row == row && currentPos.col == col {
                 let key = "\(color.rawValue)-\(pawn.id)"
-                let hopOffset = animatingPawns[key] != nil ? sin(animatingPawns[key]!.progress * .pi) * 60 : 0
-                let isAnimating = animatingPawns[key] != nil
+                let hopOffset = pathAnimatingPawns[key] != nil ? sin(pathAnimatingPawns[key]!.progress * .pi) * 60 : 0
+                let isAnimating = pathAnimatingPawns[key] != nil
                 
                 // Count total pawns in this cell
                 let totalPawns = countPawnsInCell(row: row, col: col)
@@ -698,6 +707,7 @@ struct LudoBoardView: View {
                                 
                                 if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
                                     animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps) {
+                                        self.pathAnimatingPawns.removeAll()
                                         game.movePawn(color: color, pawnId: pawn.id, steps: steps)
                                         isPathAnimating = false
                                         isDiceRolling = false
@@ -753,6 +763,10 @@ struct LudoBoardView: View {
                     print("Current Player: \(game.currentPlayer)")
                     print("Dice Value: \(game.diceValue)")
                     print("Is Eligible: \(game.eligiblePawns.contains(pawn.id))")
+                    
+                    if color == .red && pawn.id == 0 {
+                        GameLogger.shared.log("🐞 DEBUG LOG 2: Tapped Red Pawn 0 at home. Its positionIndex is: \(String(describing: pawn.positionIndex))", level: .debug)
+                    }
                     
                     if color == game.currentPlayer && !isPathAnimating && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
                         print("Condition met. Calling movePawn.")
