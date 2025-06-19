@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PlayerPanelView: View {
+    @EnvironmentObject var game: LudoGame
     let color: PlayerColor
 
     var body: some View {
@@ -12,6 +13,18 @@ struct PlayerPanelView: View {
             // Colored overlay rectangle
             RoundedRectangle(cornerRadius: 20)
                 .fill(color.toSwiftUIColor(for: color).opacity(0.5))
+            
+            VStack {
+                Text(color.rawValue.capitalized)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(color.toSwiftUIColor(for: color).opacity(0.8))
+                
+                Text("Score: \(game.scores[color] ?? 0)")
+                    .font(.headline)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.black)
         }
         .frame(width: 200, height: 100) // Made the panel longer
         .overlay(

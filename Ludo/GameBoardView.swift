@@ -15,13 +15,6 @@ struct GameBoardView: View {
                 )
             }
             
-            ScoringPanelView(
-                scores: game.scores,
-                hasCompletedGame: { color in
-                    game.hasCompletedGame(color: color)
-                }
-            )
-            
             LudoBoardView()
         }
     }

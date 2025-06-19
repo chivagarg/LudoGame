@@ -33,7 +33,6 @@
 		DAFC6FD52DEA05DC00073666 /* dice.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCC2DEA05DC00073666 /* dice.wav */; };
 		DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFC6FCE2DEA05DC00073666 /* SoundManager.swift */; };
 		DAFC6FDB2DEA11FA00073666 /* GameOverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFC6FD92DEA11FA00073666 /* GameOverView.swift */; };
-		DAFC6FDC2DEA11FA00073666 /* ScoringPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAFC6FDA2DEA11FA00073666 /* ScoringPanelView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,7 +74,6 @@
 		DAFC6FCF2DEA05DC00073666 /* swish.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = swish.wav; sourceTree = "<group>"; };
 		DAFC6FD02DEA05DC00073666 /* victory.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = victory.wav; sourceTree = "<group>"; };
 		DAFC6FD92DEA11FA00073666 /* GameOverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverView.swift; sourceTree = "<group>"; };
-		DAFC6FDA2DEA11FA00073666 /* ScoringPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringPanelView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -128,7 +126,6 @@
 				DA471F612DF407C300955EC1 /* PawnState.swift */,
 				DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */,
 				DAFC6FD92DEA11FA00073666 /* GameOverView.swift */,
-				DAFC6FDA2DEA11FA00073666 /* ScoringPanelView.swift */,
 				DAFC6FCB2DEA05DC00073666 /* capture.wav */,
 				DAFC6FCC2DEA05DC00073666 /* dice.wav */,
 				DAFC6FCD2DEA05DC00073666 /* hop.wav */,
@@ -281,7 +278,6 @@
 				DA7944182DFA8E8000EE49FC /* GameBoardView.swift in Sources */,
 				DA7944142DFA8C7B00EE49FC /* LudoBoardView.swift in Sources */,
 				DA79440E2DFA871F00EE49FC /* SettingsTableView.swift in Sources */,
-				DAFC6FDC2DEA11FA00073666 /* ScoringPanelView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
