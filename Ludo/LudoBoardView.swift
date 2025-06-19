@@ -16,6 +16,7 @@ struct LudoBoardView: View {
     @State private var currentStep = 0
     @State private var isPathAnimating = false
     @State private var isAnimatingHomeToStart = false
+    @State private var isAnimatingCapture = false
     @State private var previousPawnsAtHome = 0
     
     private let pawnResizeFactor: CGFloat = 0.9
@@ -389,6 +390,8 @@ struct LudoBoardView: View {
                       let pawnId = userInfo["pawnId"] as? Int,
                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
                 
+                isAnimatingCapture = true // <-- Lock for capture
+                
                 capturedPawns.append((pawn: pawn, progress: 0))
                 
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
@@ -404,6 +407,7 @@ struct LudoBoardView: View {
                     }
                     game.completePawnCapture(color: color, pawnId: pawnId)
                     capturedPawns.removeAll { $0.pawn.id == pawnId && $0.pawn.color == color }
+                    isAnimatingCapture = false // <-- Unlock for capture
                 }
             }
         }
@@ -763,7 +767,7 @@ struct LudoBoardView: View {
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
-                        if !isPathAnimating && !isAnimatingHomeToStart {
+                        if !isPathAnimating && !isAnimatingHomeToStart && !isAnimatingCapture && !isDiceRolling {
                             if game.isValidMove(color: color, pawnId: pawn.id) {
                                 let currentPos = pawn.positionIndex ?? -1
                                 let steps = game.diceValue
@@ -831,7 +835,7 @@ struct LudoBoardView: View {
                         GameLogger.shared.log("🐞 DEBUG LOG 2: Tapped Red Pawn 0 at home. Its positionIndex is: \(String(describing: pawn.positionIndex))", level: .debug)
                     }
                     
-                    if color == game.currentPlayer && !isPathAnimating && !isAnimatingHomeToStart && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
+                    if color == game.currentPlayer && !isPathAnimating && !isAnimatingHomeToStart && !isAnimatingCapture && !isDiceRolling && game.diceValue == 6 && game.eligiblePawns.contains(pawn.id) {
                         print("Condition met. Calling movePawn.")
                         // Instantly move the pawn without animation or sound
                         game.movePawn(color: color, pawnId: pawn.id, steps: game.diceValue)
