@@ -3,6 +3,13 @@ import SwiftUI
 struct PlayerPanelView: View {
     @EnvironmentObject var game: LudoGame
     let color: PlayerColor
+    let showDice: Bool
+    let diceValue: Int
+    let isDiceRolling: Bool
+    let onDiceTap: () -> Void
+    @State private var localDiceRolling: Bool = false
+    
+    private let diceAnimationDuration: TimeInterval = 0.8
 
     var body: some View {
         ZStack {
@@ -35,9 +42,12 @@ struct PlayerPanelView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
 
-                // 3. Empty section for future use
-                Spacer()
-                    .frame(width: 24)
+                // 3. Dice (only for current player)
+                if showDice {
+                    DiceView(value: diceValue, isRolling: isDiceRolling || localDiceRolling, onTap: onDiceTap)
+                } else {
+                    Spacer().frame(width: 60)
+                }
             }
             .padding(.horizontal, 8)
         }
@@ -47,5 +57,13 @@ struct PlayerPanelView: View {
                 .stroke(color.toSwiftUIColor(for: color), lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 5)
+        .onChange(of: game.rollID) { _ in
+            if showDice && !isDiceRolling && !localDiceRolling {
+                localDiceRolling = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + diceAnimationDuration) {
+                    localDiceRolling = false
+                }
+            }
+        }
     }
 } 

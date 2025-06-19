@@ -163,6 +163,9 @@ class LudoGame: ObservableObject {
 
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
+    // Animation and delay constants
+    static let turnAdvanceDelay: TimeInterval = 1.2
+    
     private func areAllPawnsAtHome(for color: PlayerColor) -> Bool {
         guard let playerPawns = pawns[color] else { return false }
         return playerPawns.allSatisfy { $0.positionIndex == nil }
@@ -224,9 +227,8 @@ class LudoGame: ObservableObject {
             if aiControlledPlayers.contains(currentPlayer) {
                 if let strategy = aiStrategies[currentPlayer],
                    let pawnId = strategy.selectPawnToMove(from: eligiblePawns, for: currentPlayer, in: self) {
-                    
                     // Add a delay to make the AI's move feel more natural
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                         // Find the selected pawn to check its state
                         if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
                             
@@ -261,7 +263,7 @@ class LudoGame: ObservableObject {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                         // Only auto-move if the pawn is on the path (not in home)
                         if pawn.positionIndex != nil {
                             let currentPos = pawn.positionIndex ?? -1
@@ -290,7 +292,7 @@ class LudoGame: ObservableObject {
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
             // Keep the current player's roll visible for 1 seconds before moving to next turn
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
             }
         }
@@ -327,7 +329,7 @@ class LudoGame: ObservableObject {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                         // Only auto-move if the pawn is on the path (not in home)
                         if pawn.positionIndex != nil {
                             let currentPos = pawn.positionIndex ?? -1
@@ -354,8 +356,8 @@ class LudoGame: ObservableObject {
         }
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
-            // Keep the current player's roll visible for 1 seconds before moving to next turn
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            // Keep the current player's roll visible for a short duration before moving to next turn
+            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
             }
         }

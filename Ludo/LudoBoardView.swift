@@ -186,22 +186,78 @@ struct LudoBoardView: View {
                 )
 
                 // Panels in corners, floating off the board
-                PlayerPanelView(color: .red)
-                    .environmentObject(game)
-                    .frame(width: panelWidth, height: panelHeight)
-                    .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
-                PlayerPanelView(color: .green)
-                    .environmentObject(game)
-                    .frame(width: panelWidth, height: panelHeight)
-                    .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
-                PlayerPanelView(color: .blue)
-                    .environmentObject(game)
-                    .frame(width: panelWidth, height: panelHeight)
-                    .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
-                PlayerPanelView(color: .yellow)
-                    .environmentObject(game)
-                    .frame(width: panelWidth, height: panelHeight)
-                    .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+                PlayerPanelView(
+                    color: .red,
+                    showDice: game.currentPlayer == .red,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isDiceRolling = false
+                            }
+                        }
+                    }
+                )
+                .environmentObject(game)
+                .frame(width: panelWidth, height: panelHeight)
+                .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
+                PlayerPanelView(
+                    color: .green,
+                    showDice: game.currentPlayer == .green,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isDiceRolling = false
+                            }
+                        }
+                    }
+                )
+                .environmentObject(game)
+                .frame(width: panelWidth, height: panelHeight)
+                .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
+                PlayerPanelView(
+                    color: .blue,
+                    showDice: game.currentPlayer == .blue,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isDiceRolling = false
+                            }
+                        }
+                    }
+                )
+                .environmentObject(game)
+                .frame(width: panelWidth, height: panelHeight)
+                .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+                PlayerPanelView(
+                    color: .yellow,
+                    showDice: game.currentPlayer == .yellow,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                isDiceRolling = false
+                            }
+                        }
+                    }
+                )
+                .environmentObject(game)
+                .frame(width: panelWidth, height: panelHeight)
+                .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
 
                 // Pawns animating from their Home base to their starting path position
                 ForEach(homeToStartPawns, id: \.pawn.id) { homeToStartPawn in
@@ -264,37 +320,6 @@ struct LudoBoardView: View {
                             )
                             .zIndex(50)
                             .allowsHitTesting(false)
-                    }
-                }
-
-                // Dice View
-                if let dicePos = getDicePosition() {
-                    DiceView(value: game.diceValue, isRolling: isDiceRolling) {
-                        // Only allow rolling if:
-                        // 1. Not already rolling
-                        // 2. No eligible pawns to move
-                        // 3. No current roll (currentRollPlayer is nil)
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
-                            isDiceRolling = true
-                            game.rollDice()
-                            // Simulate rolling animation
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                    .position(
-                        x: boardOffsetX + CGFloat(dicePos.col + 1) * cellSize,
-                        y: boardOffsetY + CGFloat(dicePos.row + 1) * cellSize
-                    )
-                    .onChange(of: game.rollID) { _ in
-                        // Only trigger animation if we're not already rolling from a tap
-                        if !isDiceRolling {
-                            isDiceRolling = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                isDiceRolling = false
-                            }
-                        }
                     }
                 }
             }
