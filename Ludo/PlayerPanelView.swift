@@ -37,7 +37,7 @@ struct PlayerPanelView: View {
                 // 2. Score display
                 VStack {
                     Text("\(game.scores[color] ?? 0)")
-                        .font(.system(size: 28, weight: .semibold, design: .rounded))
+                        .font(.system(size: 24, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -51,7 +51,7 @@ struct PlayerPanelView: View {
             }
             .padding(.horizontal, 8)
         }
-        .frame(width: 200, height: 100)
+        .frame(width: 220, height: 100)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(color.toSwiftUIColor(for: color), lineWidth: 2)
