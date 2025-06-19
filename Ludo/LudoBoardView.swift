@@ -423,27 +423,35 @@ struct LudoBoardView: View {
         } else {
             ZStack {
                 if row < 6 && col < 6 {
-                    Rectangle().fill(Color.red.opacity(0.7))
                     if (row == 1 || row == 4) && (col == 1 || col == 4) {
-                        Circle().fill(Color.red).padding(cellSize * 0.1)
+                        Rectangle().fill(Color.white)
+                        Rectangle().fill(Color.red.opacity(0.3))
+                    } else {
+                        Rectangle().fill(Color.red.opacity(0.7))
                     }
                 // Green Home Area
                 } else if row < 6 && col > 8 {
-                    Rectangle().fill(Color.green.opacity(0.7))
                     if (row == 1 || row == 4) && (col == 10 || col == 13) {
-                        Circle().fill(Color.green).padding(cellSize * 0.1)
+                        Rectangle().fill(Color.white)
+                        Rectangle().fill(Color.green.opacity(0.3))
+                    } else {
+                        Rectangle().fill(Color.green.opacity(0.7))
                     }
                 // Blue Home Area
                 } else if row > 8 && col < 6 {
-                    Rectangle().fill(Color.blue.opacity(0.7))
                     if (row == 10 || row == 13) && (col == 1 || col == 4) {
-                        Circle().fill(Color.blue).padding(cellSize * 0.1)
+                        Rectangle().fill(Color.white)
+                        Rectangle().fill(Color.blue.opacity(0.3))
+                    } else {
+                        Rectangle().fill(Color.blue.opacity(0.7))
                     }
                 // Yellow Home Area
                 } else if row > 8 && col > 8 {
-                    Rectangle().fill(Color.yellow.opacity(0.7))
                     if (row == 10 || row == 13) && (col == 10 || col == 13) {
-                        Circle().fill(Color.yellow).padding(cellSize * 0.1)
+                        Rectangle().fill(Color.white)
+                        Rectangle().fill(Color.yellow.opacity(0.3))
+                    } else {
+                        Rectangle().fill(Color.yellow.opacity(0.7))
                     }
                 // Red Safe Zone
                 } else if row == 7 && (1...5).contains(col) {
