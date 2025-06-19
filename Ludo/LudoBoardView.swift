@@ -7,6 +7,8 @@ struct LudoBoardView: View {
     static var renderCount = 0
     let gridSize = 15
     
+    let maximized: Bool
+    
     @State private var isDiceRolling = false
     @State private var pathAnimatingPawns: [String: (start: Int, end: Int, progress: Double)] = [:]
     @State private var homeToStartPawns: [(pawn: PawnState, progress: Double)] = []
@@ -16,7 +18,7 @@ struct LudoBoardView: View {
     @State private var previousPawnsAtHome = 0
     
     private let pawnResizeFactor: CGFloat = 0.9
-    private let boardScaleFactor: CGFloat = 0.75
+    private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.85 }
     
     private func getDicePosition() -> (row: Int, col: Int)? {
         if game.hasCompletedGame(color: game.currentPlayer) {
@@ -153,29 +155,17 @@ struct LudoBoardView: View {
 
         return GeometryReader { geometry in
             let (boardSize, cellSize, boardOffsetX, boardOffsetY) = calculateBoardDimensions(geometry: geometry)
-            
+            let panelWidth: CGFloat = 200
+            let panelHeight: CGFloat = 100
+            let overlap: CGFloat = 20
+            let horizontalInset: CGFloat = maximized ? 180 : 160
             ZStack {
-                VStack {
-                    HStack {
-                        PlayerPanelView(color: .red)
-                        Spacer()
-                        PlayerPanelView(color: .green)
-                    }
-                    Spacer()
-                    HStack {
-                        PlayerPanelView(color: .blue)
-                        Spacer()
-                        PlayerPanelView(color: .yellow)
-                    }
-                }
-                .padding()
-
+                // Board
                 VStack(spacing: 0) {
                     ForEach(0..<gridSize, id: \.self) { row in
                         HStack(spacing: 0) {
                             ForEach(0..<gridSize, id: \.self) { col in
                                 let pawns = self.pawnsInCell(row: row, col: col)
-                                
                                 BoardCellView(
                                     pawnsInCell: pawns,
                                     parent: self,
@@ -194,7 +184,25 @@ struct LudoBoardView: View {
                     RoundedRectangle(cornerRadius: cellSize / 4)
                         .stroke(Color.black, lineWidth: 2)
                 )
-                
+
+                // Panels in corners, floating off the board
+                PlayerPanelView(color: .red)
+                    .environmentObject(game)
+                    .frame(width: panelWidth, height: panelHeight)
+                    .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
+                PlayerPanelView(color: .green)
+                    .environmentObject(game)
+                    .frame(width: panelWidth, height: panelHeight)
+                    .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
+                PlayerPanelView(color: .blue)
+                    .environmentObject(game)
+                    .frame(width: panelWidth, height: panelHeight)
+                    .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+                PlayerPanelView(color: .yellow)
+                    .environmentObject(game)
+                    .frame(width: panelWidth, height: panelHeight)
+                    .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+
                 // Pawns animating from their Home base to their starting path position
                 ForEach(homeToStartPawns, id: \.pawn.id) { homeToStartPawn in
                     let pawn = homeToStartPawn.pawn

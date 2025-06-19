@@ -4,18 +4,21 @@ struct GameBoardView: View {
     @EnvironmentObject var game: LudoGame
     
     var body: some View {
-        VStack(spacing: 16) {
+        ZStack {
             if game.isAdminMode {
-                AdminControlsView(
-                    currentPlayer: game.currentPlayer,
-                    eligiblePawns: game.eligiblePawns,
-                    onTestRoll: { value in
-                        game.testRollDice(value: value)
-                    }
-                )
+                VStack(spacing: 16) {
+                    AdminControlsView(
+                        currentPlayer: game.currentPlayer,
+                        eligiblePawns: game.eligiblePawns,
+                        onTestRoll: { value in
+                            game.testRollDice(value: value)
+                        }
+                    )
+                    LudoBoardView(maximized: false)
+                }
+            } else {
+                LudoBoardView(maximized: true)
             }
-            
-            LudoBoardView()
         }
     }
 } 
