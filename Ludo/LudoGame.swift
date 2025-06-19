@@ -401,7 +401,7 @@ class LudoGame: ObservableObject {
         if hasCompletedGame(color: currentPlayer) {
             // Before recursing, check if ALL *selected* players have completed.
             // If so, the game is over.
-            if hasAllPlayersCompleted() {
+            if haveAllOtherPlayersCompleted() {
                 isGameOver = true
                 finalRankings = getFinalRankings() // Finalize rankings on game over
                 return // Exit if game is truly over
@@ -543,7 +543,7 @@ class LudoGame: ObservableObject {
                 
                 // If this was the last pawn for this player, check for game over
                 if hasCompletedGame(color: color) {
-                    if hasAllPlayersCompleted() {
+                    if haveAllOtherPlayersCompleted() {
                         isGameOver = true
                         finalRankings = getFinalRankings()
                         return  // Exit early if game is over
@@ -648,8 +648,13 @@ class LudoGame: ObservableObject {
         return newIndex >= currentPath.count - 1 ? -1 : newIndex
     }
 
-    func hasAllPlayersCompleted() -> Bool {
-        return PlayerColor.allCases.allSatisfy { hasCompletedGame(color: $0) }
+    func haveAllOtherPlayersCompleted() -> Bool {
+        // Count how many of the selected players have finished the game.
+        let finishedPlayersCount = selectedPlayers.filter { hasCompletedGame(color: $0) }.count
+        
+        // The game is over if the number of players who have NOT finished is 1 or less.
+        let activePlayerCount = selectedPlayers.count - finishedPlayersCount
+        return activePlayerCount <= 1
     }
 
     func getFinalRankings() -> [PlayerColor] {
