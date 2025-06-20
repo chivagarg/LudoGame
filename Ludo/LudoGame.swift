@@ -373,6 +373,13 @@ class LudoGame: ObservableObject {
     
     func nextTurn(clearRoll: Bool = true) {
         GameLogger.shared.log("🔄 [TURN] Advancing turn from \(currentPlayer.rawValue)...")
+
+        // Reset Mirchi arrows at the start of each turn
+        if gameMode == .mirchi {
+            mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+            GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
+        }
+
         // Get all selected players in the order of PlayerColor.allCases
         let orderedPlayers = PlayerColor.allCases.filter { selectedPlayers.contains($0) }
 
