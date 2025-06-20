@@ -5,6 +5,12 @@ enum PlayerColor: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum GameMode: String, CaseIterable, Identifiable {
+    case classic = "Classic"
+    case mirchi = "Mirchi"
+    var id: String { rawValue }
+}
+
 struct Position: Equatable {
     var row: Int
     var col: Int
@@ -31,6 +37,7 @@ class LudoGame: ObservableObject {
     @Published var finalRankings: [PlayerColor] = []  // Track final player rankings
     @Published var selectedPlayers: Set<PlayerColor> = []
     @Published var aiControlledPlayers: Set<PlayerColor> = []
+    @Published var gameMode: GameMode = .classic
 
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
@@ -422,7 +429,9 @@ class LudoGame: ObservableObject {
         return playerPawns.allSatisfy { $0.positionIndex == -1 }
     }
     
-    func startGame(selectedPlayers: Set<PlayerColor>, aiPlayers: Set<PlayerColor> = []) {
+    func startGame(selectedPlayers: Set<PlayerColor>, aiPlayers: Set<PlayerColor> = [], mode: GameMode) {
+        GameLogger.shared.log("[SETUP] New Game. Players: \(selectedPlayers.count), AI: \(aiPlayers.count), Mode: \(mode.rawValue)")
+        self.gameMode = mode
         self.selectedPlayers = selectedPlayers
         self.aiControlledPlayers = aiPlayers
         

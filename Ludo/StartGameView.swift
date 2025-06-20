@@ -4,6 +4,7 @@ struct StartGameView: View {
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
     @Binding var aiPlayers: Set<PlayerColor>
+    @Binding var selectedMode: GameMode
     let onStartGame: () -> Void
     
     var body: some View {
@@ -13,6 +14,20 @@ struct StartGameView: View {
                 .fontWeight(.bold)
             
             SettingsTableView(isAdminMode: $isAdminMode)
+            
+            VStack {
+                Text("Game Mode")
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                Picker("Game Mode", selection: $selectedMode) {
+                    ForEach(GameMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+            }
+            .padding(.vertical)
+            .frame(width: 300)
             
             PlayerSelectionView(selectedPlayers: $selectedPlayers, aiPlayers: $aiPlayers)
             

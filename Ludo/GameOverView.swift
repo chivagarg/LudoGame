@@ -38,7 +38,7 @@ struct GameOverView: View {
             .padding()
             
             Button("Play Again") {
-                game.startGame(selectedPlayers: selectedPlayers)
+                game.startGame(selectedPlayers: selectedPlayers, aiPlayers: game.aiControlledPlayers, mode: game.gameMode)
             }
             .font(.title2)
             .padding()
