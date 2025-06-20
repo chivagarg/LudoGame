@@ -162,6 +162,20 @@ struct AggressiveMoveStrategy: AILogicStrategy {
             }
         }
         
+        // --- Tier 1.5: Probabilistic Home Exit on a 6 ---
+        if game.diceValue == 6 {
+            let homePawns = eligiblePawns.filter { pawnId in
+                game.pawns[player]?.first(where: { $0.id == pawnId })?.positionIndex == nil
+            }
+            if !homePawns.isEmpty {
+                // With a 60% probability, choose to move a pawn from home.
+                if Double.random(in: 0.0..<1.0) < 0.6 {
+                    print("🤖 [AI BERSERKER] Rolled a 6, probabilistic choice to move pawn from home.")
+                    return homePawns.first!
+                }
+            }
+        }
+        
         // --- Tier 2: Relentless Chase ---
         // If no capture is possible, find the move that gets closest to any opponent.
         var chaseCandidates: [(pawnId: Int, minDistance: Int)] = []
