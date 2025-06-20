@@ -38,6 +38,7 @@ class LudoGame: ObservableObject {
     @Published var selectedPlayers: Set<PlayerColor> = []
     @Published var aiControlledPlayers: Set<PlayerColor> = []
     @Published var gameMode: GameMode = .classic
+    @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
 
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
@@ -457,11 +458,14 @@ class LudoGame: ObservableObject {
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
-        // Initialize pawns only for selected players
-        self.pawns = [:] // Clear existing pawns
+        self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+
+        // Initialize pawns for all players, but only selected ones will be visible/used
+        var allPawns: [PlayerColor: [PawnState]] = [:]
         for color in selectedPlayers {
-            self.pawns[color] = (0..<4).map { PawnState(id: $0, color: color, positionIndex: nil) }
+            allPawns[color] = (0..<4).map { PawnState(id: $0, color: color, positionIndex: nil) }
         }
+        self.pawns = allPawns
         
         handleAITurn()
     }

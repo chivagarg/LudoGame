@@ -160,7 +160,8 @@ struct LudoBoardView: View {
             let panelWidth: CGFloat = 220
             let panelHeight: CGFloat = 100
             let overlap: CGFloat = 20
-            let horizontalInset: CGFloat = maximized ? 190 : 170
+            let horizontalInset: CGFloat = (maximized ? 190 : 170) + (game.gameMode == .mirchi ? 20 : 0)
+
             ZStack {
                 // Board
                 VStack(spacing: 0) {

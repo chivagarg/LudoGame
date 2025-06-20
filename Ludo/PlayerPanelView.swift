@@ -12,6 +12,8 @@ struct PlayerPanelView: View {
     private let diceAnimationDuration: TimeInterval = 0.8
 
     var body: some View {
+        let panelWidth: CGFloat = game.gameMode == .mirchi ? 260 : 220
+        
         ZStack {
             // White background rectangle
             RoundedRectangle(cornerRadius: 20)
@@ -45,14 +47,23 @@ struct PlayerPanelView: View {
                 .frame(width: 80, height: 80)
 
                 // 2. Score display
-                VStack {
-                    Text("\(game.scores[color] ?? 0)")
-                        .font(.system(size: 24, weight: .semibold, design: .rounded))
-                        .foregroundColor(.black)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
+                Text("\(game.scores[color] ?? 0)")
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
-                // 3. Dice (only for current player)
+                // 3. Mirchi Arrow (only in Mirchi mode)
+                if game.gameMode == .mirchi {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.title)
+                        .foregroundColor(game.mirchiArrowActivated[color] == true ? color.toSwiftUIColor(for: color) : .white)
+                        .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                        .onTapGesture {
+                            game.mirchiArrowActivated[color]?.toggle()
+                        }
+                }
+
+                // 4. Dice (only for current player)
                 if showDice {
                     DiceView(
                         value: diceValue,
@@ -70,7 +81,7 @@ struct PlayerPanelView: View {
             }
             .padding(.horizontal, 8)
         }
-        .frame(width: 220, height: 100)
+        .frame(width: panelWidth, height: 100)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(color.toSwiftUIColor(for: color), lineWidth: 2)
