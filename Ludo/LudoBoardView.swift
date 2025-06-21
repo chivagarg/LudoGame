@@ -102,7 +102,11 @@ struct LudoBoardView: View {
             pathAnimatingPawns[key] = (start: currentFrom, end: currentTo, progress: 0)
             
             // Play hop sound for each step
-            SoundManager.shared.playPawnHopSound()
+            if backward {
+                SoundManager.shared.playReverseHopSound()
+            } else {
+                SoundManager.shared.playPawnHopSound()
+            }
             
             withAnimation(.spring(response: 0.15, dampingFraction: 0.3, blendDuration: 0)) {
                 pathAnimatingPawns[key]?.progress = 1.0

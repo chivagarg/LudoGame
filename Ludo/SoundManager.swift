@@ -7,7 +7,8 @@ public class SoundManager {
     // Define constants for sound file names to avoid magic strings
     private struct SoundFiles {
         static let leaveHome = "boing.mp3"
-        static let hop = "hop2.wav"
+        static let hop = "hop.wav"
+        static let hopReverse = "hopReverse.wav"
         static let capture = "capture.wav"
         static let victory = "victory.wav"
         static let dice = "dice.wav"
@@ -19,6 +20,7 @@ public class SoundManager {
         // Preload all sound effects using the constants
         preloadSound(named: SoundFiles.leaveHome)
         preloadSound(named: SoundFiles.hop)
+        preloadSound(named: SoundFiles.hopReverse)
         preloadSound(named: SoundFiles.capture)
         preloadSound(named: SoundFiles.victory)
         preloadSound(named: SoundFiles.dice)
@@ -69,6 +71,10 @@ public class SoundManager {
     
     public func playPawnHopSound() {
         playSound(SoundFiles.hop)
+    }
+
+    public func playReverseHopSound() {
+        playSound(SoundFiles.hopReverse)
     }
     
     public func playPawnCaptureSound() {
