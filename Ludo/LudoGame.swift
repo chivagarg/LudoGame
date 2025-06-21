@@ -274,7 +274,8 @@ class LudoGame: ObservableObject {
                 }
             }
             // If there's exactly one eligible pawn (for a human player), simulate tapping it
-            else if eligiblePawns.count == 1 {
+            // If we are in Mirchi mode, we don't want to auto-move the pawn as the player may want to move backward
+            else if eligiblePawns.count == 1 && gameMode != .mirchi {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
@@ -346,7 +347,7 @@ class LudoGame: ObservableObject {
             }.map { $0.id })
             
             // If there's exactly one eligible pawn, simulate tapping it
-            if eligiblePawns.count == 1 {
+            if eligiblePawns.count == 1 && gameMode != .mirchi {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
