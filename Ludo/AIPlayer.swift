@@ -283,4 +283,30 @@ struct AggressiveMoveStrategy: AILogicStrategy {
     private func manhattanDistance(from: Position, to: Position) -> Int {
         return abs(from.row - to.row) + abs(from.col - to.col)
     }
+}
+
+/// An AI strategy specifically for testing that always prioritizes moving backward if possible.
+struct BackwardOnlyMoveStrategy: AILogicStrategy {
+    func selectPawnMovementStrategy(from eligiblePawns: Set<Int>, for player: PlayerColor, in game: LudoGame) -> AIPlayerMove? {
+        guard !eligiblePawns.isEmpty else { return nil }
+
+        // --- Priority 1: Find any valid backward move ---
+        if game.gameMode == .mirchi {
+            for pawnId in eligiblePawns {
+                if game.isValidBackwardMove(color: player, pawnId: pawnId) {
+                    GameLogger.shared.log("🤖 [AI BACKWARD TEST] Found valid backward move for pawn \(pawnId). Selecting it.", level: .debug)
+                    return (pawnId: pawnId, moveBackwards: true)
+                }
+            }
+        }
+
+        // --- Priority 2: Fallback to any forward move ---
+        // If no backward move was found, just pick the first available pawn and move it forward.
+        if let pawnId = eligiblePawns.first {
+            GameLogger.shared.log("🤖 [AI BACKWARD TEST] No backward move possible. Falling back to forward move for pawn \(pawnId).", level: .debug)
+            return (pawnId: pawnId, moveBackwards: false)
+        }
+        
+        return nil
+    }
 } 

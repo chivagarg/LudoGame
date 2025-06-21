@@ -348,9 +348,11 @@ struct LudoBoardView: View {
                        let to = userInfo["to"] as? Int,
                        let steps = userInfo["steps"] as? Int,
                        let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
-                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps) {
+                        let moveDirection = userInfo["moveDirection"] as? String
+                        let backward = (moveDirection == "backward")
+                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps, backward: backward) {
                             self.pathAnimatingPawns.removeAll()
-                            game.movePawn(color: color, pawnId: pawnId, steps: steps)
+                            game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward)
                             isPathAnimating = false
                             isDiceRolling = false
                         }

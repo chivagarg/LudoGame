@@ -242,20 +242,30 @@ class LudoGame: ObservableObject {
             if aiControlledPlayers.contains(currentPlayer) {
                 if let strategy = aiStrategies[currentPlayer],
                    let pawnAndDirection = strategy.selectPawnMovementStrategy(from: eligiblePawns, for: currentPlayer, in: self) {
-                    let pawnId = pawnAndDirection.pawnId // move.moveBackwards is ignored for now
+                    let pawnId = pawnAndDirection.pawnId
+                    let moveBackwards = pawnAndDirection.moveBackwards
+
+                    // If the AI chose a backward move, update the UI to show the arrow selected
+                    if moveBackwards {
+                        self.mirchiArrowActivated[self.currentPlayer] = true
+                        GameLogger.shared.log("🌶️ [AI] AI \(self.currentPlayer.rawValue) selected backward move.", level: .debug)
+                    }
+
                     // Add a delay to make the AI's move feel more natural
                     DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                         // Find the selected pawn to check its state
                         if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
                             // CASE 1: Pawn is at home and needs to move out (requires a 6)
                             if pawn.positionIndex == nil {
+                                // Backward moves from home are not possible, so this logic is safe.
                                 self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: self.diceValue)
                             }
                             // CASE 2: Pawn is already on the path
                             else {
                                 let currentPos = pawn.positionIndex ?? -1
                                 let steps = self.diceValue
-                                if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
+                                let moveDirection = moveBackwards ? "backward" : "forward"
+                                if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId, isBackward: moveBackwards) {
                                     NotificationCenter.default.post(
                                         name: NSNotification.Name("AnimatePawnMovement"),
                                         object: nil,
@@ -264,7 +274,8 @@ class LudoGame: ObservableObject {
                                             "pawnId": pawnId,
                                             "from": currentPos,
                                             "to": destinationIndex,
-                                            "steps": steps
+                                            "steps": steps,
+                                            "moveDirection": moveDirection
                                         ]
                                     )
                                 }
@@ -453,7 +464,16 @@ class LudoGame: ObservableObject {
         
         // Randomly assign a strategy to each AI player
         self.aiStrategies = [:]
+        var isFirstAI = true
         for aiPlayer in aiPlayers {
+            // For testing, assign the new BackwardOnlyMoveStrategy to the first AI player.
+            if isFirstAI {
+                aiStrategies[aiPlayer] = BackwardOnlyMoveStrategy()
+                GameLogger.shared.log("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is BackwardOnly (for testing).")
+                //isFirstAI = false
+                continue
+            }
+
             let possibleStrategies: [AILogicStrategy] = [RationalMoveStrategy(), AggressiveMoveStrategy()]
             if let chosenStrategy = possibleStrategies.randomElement() {
                 aiStrategies[aiPlayer] = chosenStrategy
@@ -714,13 +734,16 @@ class LudoGame: ObservableObject {
     }
     
     // Function to get the destination index for a move
-    func getDestinationIndex(color: PlayerColor, pawnId: Int) -> Int? {
+    func getDestinationIndex(color: PlayerColor, pawnId: Int, isBackward: Bool = false) -> Int? {
         guard let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
               let positionIndex = pawn.positionIndex else { return nil }
-        
         let currentPath = path(for: color)
-        let newIndex = positionIndex + diceValue
-        return newIndex >= currentPath.count - 1 ? -1 : newIndex
+        let newIndex = isBackward ? positionIndex - diceValue : positionIndex + diceValue
+        if isBackward {
+            return newIndex >= 0 ? newIndex : nil
+        } else {
+            return newIndex >= currentPath.count - 1 ? -1 : newIndex
+        }
     }
 
     func haveAllOtherPlayersCompleted() -> Bool {
