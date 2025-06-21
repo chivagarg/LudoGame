@@ -241,12 +241,12 @@ class LudoGame: ObservableObject {
             // If it's an AI's turn, let it make a move
             if aiControlledPlayers.contains(currentPlayer) {
                 if let strategy = aiStrategies[currentPlayer],
-                   let pawnId = strategy.selectPawnToMove(from: eligiblePawns, for: currentPlayer, in: self) {
+                   let pawnAndDirection = strategy.selectPawnMovementStrategy(from: eligiblePawns, for: currentPlayer, in: self) {
+                    let pawnId = pawnAndDirection.pawnId // move.moveBackwards is ignored for now
                     // Add a delay to make the AI's move feel more natural
                     DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
                         // Find the selected pawn to check its state
                         if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
-                            
                             // CASE 1: Pawn is at home and needs to move out (requires a 6)
                             if pawn.positionIndex == nil {
                                 self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: self.diceValue)
