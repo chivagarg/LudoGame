@@ -596,6 +596,28 @@ class LudoGame: ObservableObject {
         }
     }
     
+    // Function to move a pawn backward in Mirchi Mode
+    func movePawnBackward(color: PlayerColor, pawnId: Int, steps: Int) {
+        GameLogger.shared.log("🌶️ [MIRCHI] Attempting to move pawn \(pawnId) for \(color.rawValue) backward by \(steps) steps.")
+        
+        guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }),
+              let positionIndex = pawns[color]?[pawnIndex].positionIndex else {
+            GameLogger.shared.log("Error: Could not find pawn to move backward.", level: .error)
+            return
+        }
+
+        let newIndex = positionIndex - steps
+        guard newIndex >= 0 else {
+            GameLogger.shared.log("Error: Backward move would go past start.", level: .error)
+            return
+        }
+
+        pawns[color]?[pawnIndex].positionIndex = newIndex
+        
+        // A backward move always advances the turn
+        nextTurn(clearRoll: true)
+    }
+
     // Helper to check if a position is a safe spot
     func isSafePosition(_ position: Position) -> Bool {
         // Check if position is in any safe zone

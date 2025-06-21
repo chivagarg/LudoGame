@@ -69,18 +69,10 @@ struct LudoBoardView: View {
                additionalStarSpaces.contains(where: { $0.0 == row && $0.1 == col })
     }
     
-    private func animatePawnMovementForPath(pawn: PawnState, color: PlayerColor, from: Int, to: Int, steps: Int, completion: @escaping () -> Void) {
+    private func animatePawnMovementForPath(pawn: PawnState, color: PlayerColor, from: Int, steps: Int, backward: Bool = false, completion: @escaping () -> Void) {
         isPathAnimating = true
         currentStep = 0
-        
-        // Remove from homeToStartPawns if it's there (moving from starting home to path)
-        // homeToStartPawns.removeAll(where: { $0.color == color && $0.id == pawn.id })
-        
-        // Play swish sound if moving from home
-        if from == -1 {
-            SoundManager.shared.playSound("swish")
-        }
-        
+                
         func animateNextStep() {
             guard currentStep < steps else {
                 self.pathAnimatingPawns.removeAll()
@@ -89,16 +81,25 @@ struct LudoBoardView: View {
             }
             
             let key = "\(color.rawValue)-\(pawn.id)"
-            let currentFrom = from + currentStep
-            let currentTo = currentFrom + 1
+            let direction = backward ? -1 : 1
             
-            // Safety check: if we're at the end of the path, don't try to animate further
-            if currentTo >= game.path(for: color).count {
-                isPathAnimating = false
-                return
+            let currentFrom = from + (currentStep * direction)
+            let currentTo = currentFrom + direction
+            
+            // Safety check to avoid going off the path
+            if backward {
+                if currentTo < 0 {
+                    isPathAnimating = false
+                    return
+                }
+            } else {
+                if currentTo >= game.path(for: color).count {
+                    isPathAnimating = false
+                    return
+                }
             }
             
-            pathAnimatingPawns[key] = (currentFrom, currentTo, 0)
+            pathAnimatingPawns[key] = (start: currentFrom, end: currentTo, progress: 0)
             
             // Play hop sound for each step
             SoundManager.shared.playPawnHopSound()
@@ -110,7 +111,7 @@ struct LudoBoardView: View {
             currentStep += 1
             
             // Schedule next step with shorter delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 animateNextStep()
             }
         }
@@ -347,7 +348,7 @@ struct LudoBoardView: View {
                        let to = userInfo["to"] as? Int,
                        let steps = userInfo["steps"] as? Int,
                        let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
-                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, to: to, steps: steps) {
+                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps) {
                             self.pathAnimatingPawns.removeAll()
                             game.movePawn(color: color, pawnId: pawnId, steps: steps)
                             isPathAnimating = false
@@ -769,16 +770,32 @@ struct LudoBoardView: View {
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
                         if !game.aiControlledPlayers.contains(color) && !isPathAnimating && !isAnimatingHomeToStart && !isAnimatingCapture && !isDiceRolling {
-                            if game.isValidMove(color: color, pawnId: pawn.id) {
-                                let currentPos = pawn.positionIndex ?? -1
-                                let steps = game.diceValue
-                                
-                                if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
-                                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, to: destinationIndex, steps: steps) {
+                            // Path 1: Mirchi Mode with activated arrow
+                            if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {
+                                GameLogger.shared.log("🌶️ [MIRCHI] MIRCHI MODE ON AND arrow activated for \(color.rawValue).", level: .debug)
+                                // In this path, we ONLY attempt a backward move. If not possible, we do nothing.
+                                if let currentPos = pawn.positionIndex, currentPos - game.diceValue >= 0 {
+                                    let steps = game.diceValue
+                                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
                                         self.pathAnimatingPawns.removeAll()
-                                        game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                                        game.movePawnBackward(color: color, pawnId: pawn.id, steps: steps)
                                         isPathAnimating = false
                                         isDiceRolling = false
+                                    }
+                                }
+                            } else {
+                                // CLASSIC MODE: Forward Movement Logic (unchanged)
+                                if game.isValidMove(color: color, pawnId: pawn.id) {
+                                    let currentPos = pawn.positionIndex ?? -1
+                                    let steps = game.diceValue
+                                    
+                                    if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
+                                        animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps) {
+                                            self.pathAnimatingPawns.removeAll()
+                                            game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                                            isPathAnimating = false
+                                            isDiceRolling = false
+                                        }
                                     }
                                 }
                             }
