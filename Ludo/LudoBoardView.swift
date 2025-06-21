@@ -164,168 +164,15 @@ struct LudoBoardView: View {
             let horizontalInset: CGFloat = (maximized ? 190 : 170) + (game.gameMode == .mirchi ? 20 : 0)
 
             ZStack {
-                // Board
-                VStack(spacing: 0) {
-                    ForEach(0..<gridSize, id: \.self) { row in
-                        HStack(spacing: 0) {
-                            ForEach(0..<gridSize, id: \.self) { col in
-                                let pawns = self.pawnsInCell(row: row, col: col)
-                                BoardCellView(
-                                    pawnsInCell: pawns,
-                                    parent: self,
-                                    row: row,
-                                    col: col,
-                                    cellSize: cellSize
-                                )
-                                .equatable()
-                            }
-                        }
-                    }
-                }
-                .frame(width: boardSize, height: boardSize)
-                .cornerRadius(cellSize / 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: cellSize / 4)
-                        .stroke(Color.black, lineWidth: 2)
-                )
+                // Board Grid extracted into a helper view
+                boardGridView(boardSize: boardSize, cellSize: cellSize)
 
-                // Panels in corners, floating off the board
-                PlayerPanelView(
-                    color: .red,
-                    showDice: game.currentPlayer == .red,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .frame(width: panelWidth, height: panelHeight)
-                .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
-                PlayerPanelView(
-                    color: .green,
-                    showDice: game.currentPlayer == .green,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .frame(width: panelWidth, height: panelHeight)
-                .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
-                PlayerPanelView(
-                    color: .blue,
-                    showDice: game.currentPlayer == .blue,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .frame(width: panelWidth, height: panelHeight)
-                .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
-                PlayerPanelView(
-                    color: .yellow,
-                    showDice: game.currentPlayer == .yellow,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .frame(width: panelWidth, height: panelHeight)
-                .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+                // Player panels extracted into a helper view
+                playerPanelsView(boardSize: boardSize, cellSize: cellSize, boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, panelWidth: panelWidth, panelHeight: panelHeight, horizontalInset: horizontalInset, overlap: overlap)
 
-                // Pawns animating from their Home base to their starting path position
-                ForEach(homeToStartPawns, id: \.pawn.id) { homeToStartPawn in
-                    let pawn = homeToStartPawn.pawn
-                    let progress = homeToStartPawn.progress
-                    
-                    // Get start (home) and end (path start) positions
-                    let homePosition = getStartingHomePosition(pawn: pawn, color: pawn.color)
-                    let pathStartPosition = game.path(for: pawn.color)[0]
-
-                    // Interpolate the position based on progress
-                    let startX = CGFloat(homePosition.col) + 0.5
-                    let startY = CGFloat(homePosition.row) + 0.5
-                    let endX = CGFloat(pathStartPosition.col) + 0.5
-                    let endY = CGFloat(pathStartPosition.row) + 0.5
-                    
-                    let currentX = startX + (endX - startX) * progress
-                    let currentY = startY + (endY - startY) * progress
-                    
-                    // Add a hop effect using a sine wave
-                    let hopHeight = -cellSize * 1.5 // Hop 1.5 cells high
-                    let yOffset = sin(progress * .pi) * hopHeight
-                    
-                    PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
-                        .position(
-                            x: boardOffsetX + currentX * cellSize,
-                            y: boardOffsetY + currentY * cellSize + yOffset
-                        )
-                        .zIndex(50) // Render above the board but below dice
-                        .allowsHitTesting(false) // Don't let it intercept taps while animating
-                }
-
-                // Pawns animating from their path position to their Home base (on capture)
-                ForEach(capturedPawns, id: \.pawn.id) { capturedPawn in
-                    if let startPositionIndex = capturedPawn.pawn.positionIndex {
-                        let pawn = capturedPawn.pawn
-                        let progress = capturedPawn.progress
-                        
-                        // Get start (path) and end (home) positions
-                        let pathPosition = game.path(for: pawn.color)[startPositionIndex]
-                        let homePosition = getStartingHomePosition(pawn: pawn, color: pawn.color)
-
-                        // Interpolate the position based on progress
-                        let startX = CGFloat(pathPosition.col) + 0.5
-                        let startY = CGFloat(pathPosition.row) + 0.5
-                        let endX = CGFloat(homePosition.col) + 0.5
-                        let endY = CGFloat(homePosition.row) + 0.5
-                        
-                        let currentX = startX + (endX - startX) * progress
-                        let currentY = startY + (endY - startY) * progress
-                        
-                        // Add a hop effect using a sine wave
-                        let hopHeight = -cellSize * 1.5 // Hop 1.5 cells high
-                        let yOffset = sin(progress * .pi) * hopHeight
-                        
-                        PawnView(pawn: pawn, size: cellSize * 0.8, currentPlayer: game.currentPlayer)
-                            .position(
-                                x: boardOffsetX + currentX * cellSize,
-                                y: boardOffsetY + currentY * cellSize + yOffset
-                            )
-                            .zIndex(50)
-                            .allowsHitTesting(false)
-                    }
-                }
+                // Animation overlays extracted into dedicated helper views
+                homeToStartPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
+                capturedPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
             }
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onChange(of: game.totalPawnsAtFinishingHome) { newCount in
@@ -350,6 +197,7 @@ struct LudoBoardView: View {
                        let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
                         let moveDirection = userInfo["moveDirection"] as? String
                         let backward = (moveDirection == "backward")
+                        
                         animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps, backward: backward) {
                             self.pathAnimatingPawns.removeAll()
                             game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward)
@@ -422,6 +270,110 @@ struct LudoBoardView: View {
         .aspectRatio(1, contentMode: .fit)
     }
     
+    @ViewBuilder
+    private func playerPanelsView(boardSize: CGFloat, cellSize: CGFloat, boardOffsetX: CGFloat, boardOffsetY: CGFloat, panelWidth: CGFloat, panelHeight: CGFloat, horizontalInset: CGFloat, overlap: CGFloat) -> some View {
+        // Panels in corners, floating off the board
+        PlayerPanelView(
+            color: .red,
+            showDice: game.currentPlayer == .red,
+            diceValue: game.diceValue,
+            isDiceRolling: isDiceRolling,
+            onDiceTap: {
+                if !isDiceRolling && game.eligiblePawns.isEmpty {
+                    isDiceRolling = true
+                    game.rollDice()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isDiceRolling = false
+                    }
+                }
+            }
+        )
+        .environmentObject(game)
+        .frame(width: panelWidth, height: panelHeight)
+        .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
+        PlayerPanelView(
+            color: .green,
+            showDice: game.currentPlayer == .green,
+            diceValue: game.diceValue,
+            isDiceRolling: isDiceRolling,
+            onDiceTap: {
+                if !isDiceRolling && game.eligiblePawns.isEmpty {
+                    isDiceRolling = true
+                    game.rollDice()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isDiceRolling = false
+                    }
+                }
+            }
+        )
+        .environmentObject(game)
+        .frame(width: panelWidth, height: panelHeight)
+        .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
+        PlayerPanelView(
+            color: .blue,
+            showDice: game.currentPlayer == .blue,
+            diceValue: game.diceValue,
+            isDiceRolling: isDiceRolling,
+            onDiceTap: {
+                if !isDiceRolling && game.eligiblePawns.isEmpty {
+                    isDiceRolling = true
+                    game.rollDice()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isDiceRolling = false
+                    }
+                }
+            }
+        )
+        .environmentObject(game)
+        .frame(width: panelWidth, height: panelHeight)
+        .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+        PlayerPanelView(
+            color: .yellow,
+            showDice: game.currentPlayer == .yellow,
+            diceValue: game.diceValue,
+            isDiceRolling: isDiceRolling,
+            onDiceTap: {
+                if !isDiceRolling && game.eligiblePawns.isEmpty {
+                    isDiceRolling = true
+                    game.rollDice()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isDiceRolling = false
+                    }
+                }
+            }
+        )
+        .environmentObject(game)
+        .frame(width: panelWidth, height: panelHeight)
+        .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+    }
+    
+    @ViewBuilder
+    private func boardGridView(boardSize: CGFloat, cellSize: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            ForEach(0..<gridSize, id: \.self) { row in
+                HStack(spacing: 0) {
+                    ForEach(0..<gridSize, id: \.self) { col in
+                        let pawns = self.pawnsInCell(row: row, col: col)
+                        BoardCellView(
+                            pawnsInCell: pawns,
+                            parent: self,
+                            row: row,
+                            col: col,
+                            cellSize: cellSize
+                        )
+                        .equatable()
+                    }
+                }
+            }
+        }
+        .frame(width: boardSize, height: boardSize)
+        .cornerRadius(cellSize / 4)
+        .overlay(
+            RoundedRectangle(cornerRadius: cellSize / 4)
+                .stroke(Color.black, lineWidth: 2)
+        )
+    }
+    
     private func pawnsInCell(row: Int, col: Int) -> [PawnState] {
         var pawnsInCell: [PawnState] = []
         for (_, pwns) in game.pawns {
@@ -454,11 +406,9 @@ struct LudoBoardView: View {
         let cellSize: CGFloat
 
         static func == (lhs: BoardCellView, rhs: BoardCellView) -> Bool {
+            // Revert to simpler check. PawnView now handles its own eligibility animation.
             let lhsPawnIDs = lhs.pawnsInCell.map { $0.id }.sorted()
             let rhsPawnIDs = rhs.pawnsInCell.map { $0.id }.sorted()
-            
-            // For the view to be considered "equal" (and thus skip a re-render),
-            // the pawns in the cell must be identical.
             return lhsPawnIDs == rhsPawnIDs
         }
 
@@ -771,7 +721,7 @@ struct LudoBoardView: View {
                 // Calculate size and position
                 let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
                 
-                PawnView(pawn: pawn, size: size, currentPlayer: game.currentPlayer)
+                PawnView(pawn: pawn, size: size)
                     .offset(x: xOffset, y: yOffset - hopOffset)
                     .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
                     .onTapGesture {
@@ -826,7 +776,7 @@ struct LudoBoardView: View {
             // Calculate size and position
             let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
             
-            PawnView(pawn: pawn, size: size, currentPlayer: game.currentPlayer)
+            PawnView(pawn: pawn, size: size)
                 .offset(x: xOffset, y: yOffset)
                 .shadow(color: .black.opacity(0.2), radius: 2)
         }
@@ -850,7 +800,7 @@ struct LudoBoardView: View {
     private func homePawnView(pawn: PawnState, color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
         // Only draw pawn if the player color is selected
         if game.selectedPlayers.contains(color) && isCorrectStartingHomePosition(pawn: pawn, color: color, row: row, col: col) {
-            PawnView(pawn: pawn, size: cellSize * pawnResizeFactor, currentPlayer: game.currentPlayer)
+            PawnView(pawn: pawn, size: cellSize * pawnResizeFactor)
                 .onTapGesture {
                     guard !game.aiControlledPlayers.contains(color) else { return } // <-- Block AI pawn taps
                     
@@ -904,6 +854,68 @@ struct LudoBoardView: View {
                    (pawn.id == 1 && row == 10 && col == 4) ||
                    (pawn.id == 2 && row == 13 && col == 1) ||
                    (pawn.id == 3 && row == 13 && col == 4)
+        }
+    }
+
+    @ViewBuilder
+    private func homeToStartPawnAnimationOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
+        ForEach(homeToStartPawns, id: \.pawn.id) { homeToStartPawn in
+            let pawn = homeToStartPawn.pawn
+            let progress = homeToStartPawn.progress
+            
+            let homePosition = getStartingHomePosition(pawn: pawn, color: pawn.color)
+            let pathStartPosition = game.path(for: pawn.color)[0]
+
+            let startX = CGFloat(homePosition.col) + 0.5
+            let startY = CGFloat(homePosition.row) + 0.5
+            let endX = CGFloat(pathStartPosition.col) + 0.5
+            let endY = CGFloat(pathStartPosition.row) + 0.5
+            
+            let currentX = startX + (endX - startX) * progress
+            let currentY = startY + (endY - startY) * progress
+            
+            let hopHeight = -cellSize * 1.5
+            let yOffset = sin(progress * .pi) * hopHeight
+            
+            PawnView(pawn: pawn, size: cellSize * 0.8)
+                .position(
+                    x: boardOffsetX + currentX * cellSize,
+                    y: boardOffsetY + currentY * cellSize + yOffset
+                )
+                .zIndex(50)
+                .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder
+    private func capturedPawnAnimationOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
+        ForEach(capturedPawns, id: \.pawn.id) { capturedPawn in
+            if let startPositionIndex = capturedPawn.pawn.positionIndex {
+                let pawn = capturedPawn.pawn
+                let progress = capturedPawn.progress
+                
+                let pathPosition = game.path(for: pawn.color)[startPositionIndex]
+                let homePosition = getStartingHomePosition(pawn: pawn, color: pawn.color)
+
+                let startX = CGFloat(pathPosition.col) + 0.5
+                let startY = CGFloat(pathPosition.row) + 0.5
+                let endX = CGFloat(homePosition.col) + 0.5
+                let endY = CGFloat(homePosition.row) + 0.5
+                
+                let currentX = startX + (endX - startX) * progress
+                let currentY = startY + (endY - startY) * progress
+                
+                let hopHeight = -cellSize * 1.5
+                let yOffset = sin(progress * .pi) * hopHeight
+                
+                PawnView(pawn: pawn, size: cellSize * 0.8)
+                    .position(
+                        x: boardOffsetX + currentX * cellSize,
+                        y: boardOffsetY + currentY * cellSize + yOffset
+                    )
+                    .zIndex(50)
+                    .allowsHitTesting(false)
+            }
         }
     }
 } 

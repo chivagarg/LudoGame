@@ -464,7 +464,7 @@ class LudoGame: ObservableObject {
         
         // Randomly assign a strategy to each AI player
         self.aiStrategies = [:]
-        var isFirstAI = true
+        var isFirstAI = false
         for aiPlayer in aiPlayers {
             // For testing, assign the new BackwardOnlyMoveStrategy to the first AI player.
             if isFirstAI {
