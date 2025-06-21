@@ -374,15 +374,17 @@ struct LudoBoardView: View {
                 }
                 
                 homeToStartPawns.append((pawn: pawn, progress: 0))
+
+                let animationDuration = 0.25
                 
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.5, blendDuration: 0)) {
+                withAnimation(.easeInOut(duration: animationDuration)) {
                     if let index = homeToStartPawns.firstIndex(where: { $0.pawn.id == pawn.id && $0.pawn.color == color }) {
                         homeToStartPawns[index].progress = 1.0
                     }
                 }
                 
                 // After the animation duration, complete the move in the model
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Match the spring response time
+                DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) { // Match the animation duration
                     homeToStartPawns.removeAll { $0.pawn.id == pawn.id && $0.pawn.color == color }
                     game.completeMoveFromHome(color: color, pawnId: pawnId)
                     isAnimatingHomeToStart = false // <-- Unlock the UI
