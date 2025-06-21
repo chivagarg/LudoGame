@@ -197,6 +197,13 @@ class LudoGame: ObservableObject {
     
     func rollDice() {
         GameLogger.shared.log("🎲 [ACTION] Attempting to roll dice for \(self.currentPlayer.rawValue)...")
+
+        // Reset Mirchi arrows at the start of each turn
+        if gameMode == .mirchi {
+            mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+            GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
+        }
+
         // Don't allow rolling if the player has completed their game
         guard !hasCompletedGame(color: currentPlayer) else {
             GameLogger.shared.log("🎲 [GUARD FAILED] Player \(currentPlayer.rawValue) has already completed the game.")
@@ -308,9 +315,15 @@ class LudoGame: ObservableObject {
     
     // Function to set a specific dice value for testing
     func testRollDice(value: Int) {
+        // Reset Mirchi arrows at the start of each turn
+        if gameMode == .mirchi {
+            mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+            GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
+        }
+        
         // Only allow rolling if there are no eligible pawns
         guard eligiblePawns.isEmpty else { return }
-        
+
         // Set the specified dice value
         diceValue = value
         rollID += 1 // Increment the roll ID to ensure UI updates
@@ -373,12 +386,6 @@ class LudoGame: ObservableObject {
     
     func nextTurn(clearRoll: Bool = true) {
         GameLogger.shared.log("🔄 [TURN] Advancing turn from \(currentPlayer.rawValue)...")
-
-        // Reset Mirchi arrows at the start of each turn
-        if gameMode == .mirchi {
-            mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
-            GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
-        }
 
         // Get all selected players in the order of PlayerColor.allCases
         let orderedPlayers = PlayerColor.allCases.filter { selectedPlayers.contains($0) }
@@ -491,13 +498,20 @@ class LudoGame: ObservableObject {
 
     // MARK: - Game Logic
 
-    // Function to move a pawn
-    func movePawn(color: PlayerColor, pawnId: Int, steps: Int) {
+    // Function to move a pawn (handles both forward and backward movement)
+    func movePawn(color: PlayerColor, pawnId: Int, steps: Int, backward: Bool = false) {
+        // --- Forward Movement Logic (existing code) ---
         GameLogger.shared.log("[PAWN POSITIONS BEFORE MOVE] \(generatePawnPositionLogString())", level: .debug)
         defer {
             GameLogger.shared.log("[PAWN POSITIONS AFTER MOVE] \(generatePawnPositionLogString())", level: .debug)
         }
         
+        // Reset Mirchi arrows at the start of each turn
+        if gameMode == .mirchi {
+            mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+            GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
+        }
+
         GameLogger.shared.log("♟️ [ACTION] Attempting to move pawn \(pawnId) for \(color.rawValue) with dice \(steps)")
         // Only allow moving if:
         // 1. It's your turn
@@ -510,14 +524,26 @@ class LudoGame: ObservableObject {
         
         guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
         
+        // Precondition check for backward moves
+        if backward {
+            guard let positionIndex = pawns[color]?[pawnIndex].positionIndex, positionIndex >= 0 else {
+                fatalError("Invalid backward move: Pawn must be on the path (not at home or finished).")
+            }
+        }
+        
         var shouldGetAnotherRoll = false
         
         if let positionIndex = pawns[color]?[pawnIndex].positionIndex {
             // Pawn is on the path
             let currentPath = path(for: color)
-            let newIndex = positionIndex + steps
+            let newIndex = backward ? positionIndex - steps : positionIndex + steps
+
+            // This is a programmer error. The view logic should prevent this.
+            guard !backward || newIndex >= 0 else {
+                fatalError("Invalid backward move: resulted in a negative pawn position index.")
+            }
             
-            if newIndex < currentPath.count - 1 {
+            if newIndex >= 0 && newIndex < currentPath.count - 1 {
                 // First check if the new position would result in a capture
                 let newPosition = currentPath[newIndex]
                 
@@ -574,6 +600,11 @@ class LudoGame: ObservableObject {
                 }
             }
         } else {
+            // A pawn at home cannot be moved backward. This is a programmer error.
+            guard !backward else {
+                fatalError("Invalid move: cannot move a pawn at home backward.")
+            }
+            
             // Pawn is at home
             if steps == 6 {
                 NotificationCenter.default.post(name: .animatePawnFromHome, object: nil, userInfo: ["color": color, "pawnId": pawnId])
@@ -596,28 +627,6 @@ class LudoGame: ObservableObject {
         }
     }
     
-    // Function to move a pawn backward in Mirchi Mode
-    func movePawnBackward(color: PlayerColor, pawnId: Int, steps: Int) {
-        GameLogger.shared.log("🌶️ [MIRCHI] Attempting to move pawn \(pawnId) for \(color.rawValue) backward by \(steps) steps.")
-        
-        guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }),
-              let positionIndex = pawns[color]?[pawnIndex].positionIndex else {
-            GameLogger.shared.log("Error: Could not find pawn to move backward.", level: .error)
-            return
-        }
-
-        let newIndex = positionIndex - steps
-        guard newIndex >= 0 else {
-            GameLogger.shared.log("Error: Backward move would go past start.", level: .error)
-            return
-        }
-
-        pawns[color]?[pawnIndex].positionIndex = newIndex
-        
-        // A backward move always advances the turn
-        nextTurn(clearRoll: true)
-    }
-
     // Helper to check if a position is a safe spot
     func isSafePosition(_ position: Position) -> Bool {
         // Check if position is in any safe zone
@@ -680,6 +689,27 @@ class LudoGame: ObservableObject {
         }
         
         return true
+    }
+    
+    // Function to validate if a backward move is legal in Mirchi Mode
+    func isValidBackwardMove(color: PlayerColor, pawnId: Int) -> Bool {
+        // Standard move validation
+        guard color == currentPlayer,
+              color == currentRollPlayer,
+              eligiblePawns.contains(pawnId) else {
+            return false
+        }
+        
+        // Backward-specific validation
+        guard let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
+              let positionIndex = pawn.positionIndex,
+              positionIndex >= 0 else {
+            // Pawn must be on the path (not at home or finished)
+            return false
+        }
+        
+        // Ensure the move does not go past the start of the path
+        return positionIndex - diceValue >= 0
     }
     
     // Function to get the destination index for a move

@@ -777,13 +777,13 @@ struct LudoBoardView: View {
                             return
                         }
 
-                        if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {                     
+                        if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {                   
                              GameLogger.shared.log("🌶️ [MIRCHI] MIRCHI MODE ON AND arrow activated for \(color.rawValue).", level: .debug)
-                            if let currentPos = pawn.positionIndex, currentPos - game.diceValue >= 0 {
+                            if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id) {
                                 let steps = game.diceValue
                                 animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
                                     self.pathAnimatingPawns.removeAll()
-                                    game.movePawnBackward(color: color, pawnId: pawn.id, steps: steps)
+                                    game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true)
                                     isPathAnimating = false
                                     isDiceRolling = false
                                 }
