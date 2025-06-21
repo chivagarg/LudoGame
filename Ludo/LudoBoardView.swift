@@ -400,14 +400,16 @@ struct LudoBoardView: View {
                 
                 capturedPawns.append((pawn: pawn, progress: 0))
                 
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.5, blendDuration: 0)) {
+                let animationDuration = 0.60
+
+                withAnimation(.easeInOut(duration: animationDuration)) {
                     if let index = capturedPawns.firstIndex(where: { $0.pawn.id == pawnId && $0.pawn.color == color }) {
                         capturedPawns[index].progress = 1.0
                     }
                 }
                 
                 // After the animation duration, complete the move in the model
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
                     if color == .red && pawnId == 0 {
                         GameLogger.shared.log("🐞 DEBUG LOG 1: Completing capture for Red Pawn 0. Its positionIndex is currently: \(String(describing: pawn.positionIndex))", level: .debug)
                     }
