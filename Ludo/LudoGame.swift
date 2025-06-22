@@ -1,10 +1,5 @@
 import Foundation
 
-enum PlayerColor: String, CaseIterable, Identifiable {
-    case red, green, yellow, blue
-    var id: String { rawValue }
-}
-
 enum GameMode: String, CaseIterable, Identifiable {
     case classic = "Classic"
     case mirchi = "Mirchi"
@@ -15,12 +10,6 @@ struct Position: Equatable {
     var row: Int
     var col: Int
 }
-
-// struct PawnState: Identifiable {
-//     let id: Int // 0-3 for each player
-//     let color: PlayerColor
-//     var positionIndex: Int? // nil = at home, 0...N = on path, -1 = finished
-// }
 
 class LudoGame: ObservableObject {
     // MARK: - Game Constants

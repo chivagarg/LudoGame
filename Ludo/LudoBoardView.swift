@@ -1,6 +1,16 @@
 import SwiftUI
 import AVFoundation
 
+// MARK: - Trail Particle Structure
+struct TrailParticle: Identifiable {
+    let id = UUID()
+    let position: (row: Int, col: Int)
+    let color: PlayerColor
+    var opacity: Double
+    var age: Double // 0.0 to 1.0, where 1.0 means fully faded
+    let createdAt: Date
+}
+
 struct LudoBoardView: View {
     @EnvironmentObject var game: LudoGame
     
@@ -18,6 +28,9 @@ struct LudoBoardView: View {
     @State private var isAnimatingHomeToStart = false
     @State private var isAnimatingCapture = false
     @State private var previousPawnsAtHome = 0
+    
+    // MARK: - Trail Animation State
+    @State private var trailParticles: [TrailParticle] = []
     
     private let pawnResizeFactor: CGFloat = 0.9
     private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.85 }
@@ -99,6 +112,17 @@ struct LudoBoardView: View {
                 }
             }
             
+            // Spawn trail particle at the starting position of this step
+            let startPosition = game.path(for: color)[currentFrom]
+            let trailParticle = TrailParticle(
+                position: (row: startPosition.row, col: startPosition.col),
+                color: color,
+                opacity: 0.6,
+                age: 0.0,
+                createdAt: Date()
+            )
+            trailParticles.append(trailParticle)
+            
             pathAnimatingPawns[key] = (start: currentFrom, end: currentTo, progress: 0)
             
             // Play hop sound for each step
@@ -177,6 +201,9 @@ struct LudoBoardView: View {
                 // Animation overlays extracted into dedicated helper views
                 homeToStartPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
                 capturedPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
+                
+                // MARK: - Trail Particles Overlay
+                trailParticlesOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
             }
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onChange(of: game.totalPawnsAtFinishingHome) { newCount in
@@ -212,6 +239,9 @@ struct LudoBoardView: View {
                 }
                 // Sync initial pawn count
                 previousPawnsAtHome = game.totalPawnsAtFinishingHome
+                
+                // Start particle aging timer
+                startParticleAgingTimer()
             }
             .onReceive(NotificationCenter.default.publisher(for: .animatePawnFromHome)) { notification in
                 guard let userInfo = notification.userInfo,
@@ -920,6 +950,35 @@ struct LudoBoardView: View {
                     .zIndex(50)
                     .allowsHitTesting(false)
             }
+        }
+    }
+
+    private func startParticleAgingTimer() {
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            // Age all particles
+            for i in trailParticles.indices {
+                trailParticles[i].age += 0.05 // Increase age by 0.05 each frame
+                trailParticles[i].opacity = 0.6 * (1.0 - trailParticles[i].age) // Fade from 0.6 to 0.0
+            }
+            
+            // Remove fully faded particles
+            trailParticles.removeAll { $0.age >= 1.0 }
+        }
+    }
+
+    @ViewBuilder
+    private func trailParticlesOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
+        ForEach(trailParticles) { particle in
+            Circle()
+                .fill(particle.color.color)
+                .opacity(particle.opacity)
+                .frame(width: cellSize * 0.3, height: cellSize * 0.3)
+                .position(
+                    x: boardOffsetX + (CGFloat(particle.position.col) + 0.5) * cellSize,
+                    y: boardOffsetY + (CGFloat(particle.position.row) + 0.5) * cellSize
+                )
+                .zIndex(40) // Above board, below pawns
+                .allowsHitTesting(false)
         }
     }
 } 
