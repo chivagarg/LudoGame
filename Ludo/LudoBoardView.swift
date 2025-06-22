@@ -969,10 +969,7 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func trailParticlesOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
         ForEach(trailParticles) { particle in
-            Circle()
-                .fill(particle.color.color)
-                .opacity(particle.opacity)
-                .frame(width: cellSize * 0.3, height: cellSize * 0.3)
+            TrailParticleView(particle: particle, cellSize: cellSize)
                 .position(
                     x: boardOffsetX + (CGFloat(particle.position.col) + 0.5) * cellSize,
                     y: boardOffsetY + (CGFloat(particle.position.row) + 0.5) * cellSize
