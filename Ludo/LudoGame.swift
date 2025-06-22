@@ -33,7 +33,7 @@ class LudoGame: ObservableObject {
         static let startingPathIndex = 0
         
         // Dice values
-        static let requiredRollToLeaveHome = 6
+        static let sixDiceRoll = 6
     }
     
     @Published var currentPlayer: PlayerColor = .red
@@ -195,7 +195,7 @@ class LudoGame: ObservableObject {
             // Weighted roll: ~33.3% chance of 6
             let randomValue = Double.random(in: 0.0..<1.0)
             if randomValue < GameConstants.weightedSixProbability {
-                return GameConstants.requiredRollToLeaveHome
+                return GameConstants.sixDiceRoll
             } else {
                 return Int.random(in: 1...(GameConstants.standardDiceSides - 1))
             }
@@ -244,7 +244,7 @@ class LudoGame: ObservableObject {
                     return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
                 } else {
                     // Pawn is at home and dice is 6
-                    return diceValue == GameConstants.requiredRollToLeaveHome
+                    return diceValue == GameConstants.sixDiceRoll
                 }
             }.map { $0.id })
             
@@ -363,7 +363,7 @@ class LudoGame: ObservableObject {
                     return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
                 } else {
                     // Pawn is at home and dice is 6
-                    return diceValue == GameConstants.requiredRollToLeaveHome
+                    return diceValue == GameConstants.sixDiceRoll
                 }
             }.map { $0.id })
             
@@ -531,11 +531,7 @@ class LudoGame: ObservableObject {
 
     // Function to move a pawn (handles both forward and backward movement)
     func movePawn(color: PlayerColor, pawnId: Int, steps: Int, backward: Bool = false) {
-        // --- Forward Movement Logic (existing code) ---
-        GameLogger.shared.log("[PAWN POSITIONS BEFORE MOVE] \(generatePawnPositionLogString())", level: .debug)
-        defer {
-            GameLogger.shared.log("[PAWN POSITIONS AFTER MOVE] \(generatePawnPositionLogString())", level: .debug)
-        }
+        logPawnPositionsBeforeAndAfterMove(color: color, pawnId: pawnId, steps: steps)
         
         // Reset Mirchi arrows at the start of each turn
         if gameMode == .mirchi {
@@ -543,110 +539,40 @@ class LudoGame: ObservableObject {
             GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
         }
 
-        GameLogger.shared.log("♟️ [ACTION] Attempting to move pawn \(pawnId) for \(color.rawValue) with dice \(steps)")
-        // Only allow moving if:
-        // 1. It's your turn
-        // 2. It's your roll (and currentRollPlayer is not nil)
-        // 3. The pawn is eligible to move
-        guard color == currentPlayer,
-              let rollPlayer = currentRollPlayer,
-              color == rollPlayer,
-              eligiblePawns.contains(pawnId) else { return }
-        
-        guard let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return }
-        
-        // Precondition check for backward moves
-        if backward {
-            guard let positionIndex = pawns[color]?[pawnIndex].positionIndex, positionIndex >= GameConstants.startingPathIndex else {
-                fatalError("Invalid backward move: Pawn must be on the path (not at home or finished).")
-            }
-        }
+        guard let pawnIndex = getValidatedPawnIndex(color: color, pawnId: pawnId, backward: backward) else { return }
         
         var shouldGetAnotherRoll = false
         
-        if let positionIndex = pawns[color]?[pawnIndex].positionIndex {
-            // Pawn is on the path
+        let isPawnOnPath = pawns[color]?[pawnIndex].positionIndex != nil
+
+        if isPawnOnPath {
             let currentPath = path(for: color)
+            let positionIndex = pawns[color]?[pawnIndex].positionIndex ?? 0
             let newIndex = backward ? positionIndex - steps : positionIndex + steps
 
             // This is a programmer error. The view logic should prevent this.
             guard !backward || newIndex >= 0 else {
+                GameLogger.shared.log("❌ [FATAL] Invalid backward move: resulted in negative pawn position index. Color: \(color.rawValue), PawnIndex: \(pawnIndex), PositionIndex: \(positionIndex), Steps: \(steps), NewIndex: \(newIndex)", level: .error)
                 fatalError("Invalid backward move: resulted in a negative pawn position index.")
             }
             
-            if newIndex >= GameConstants.startingPathIndex && newIndex < currentPath.count - 1 {
-                // First check if the new position would result in a capture
-                let newPosition = currentPath[newIndex]
-                
-                // Check if the position is a safe spot
-                let isSafeSpot = isSafePosition(newPosition)
-                
-                if !isSafeSpot {
-                    // Check for captures at the new position
-                    for (otherColor, otherPawns) in pawns {
-                        if otherColor == color { continue }
-                        
-                        for (otherIndex, otherPawn) in otherPawns.enumerated() {
-                            guard let otherPositionIndex = otherPawn.positionIndex,
-                                  otherPositionIndex >= GameConstants.startingPathIndex else { continue }
-                            
-                            let otherPosition = path(for: otherColor)[otherPositionIndex]
-                            
-                            if otherPosition == newPosition {
-                                // Capture the pawn - Post notification to animate it
-                                NotificationCenter.default.post(
-                                    name: .animatePawnCapture,
-                                    object: nil,
-                                    userInfo: ["color": otherColor, "pawnId": otherPawn.id]
-                                )
-                                SoundManager.shared.playPawnCaptureSound()
-                                shouldGetAnotherRoll = true
-                                // Add points for capture
-                                scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
-                            }
-                        }
-                    }
-                }
-                
-                // Now move the pawn
-                pawns[color]?[pawnIndex].positionIndex = newIndex
-            } else if newIndex == currentPath.count - 1 {
-                // Pawn reaches home
-                pawns[color]?[pawnIndex].positionIndex = GameConstants.finishedPawnIndex
-                shouldGetAnotherRoll = true // Get another roll for reaching home
-                
-                // Add points for reaching home based on global order
-                totalPawnsAtFinishingHome += 1
-                let points = GameConstants.maxScorePerPawn - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
-                scores[color] = (scores[color] ?? 0) + points
-                
-                // If this was the last pawn for this player, check for game over
-                if hasCompletedGame(color: color) {
-                    if haveAllOtherPlayersCompleted() {
-                        isGameOver = true
-                        finalRankings = getFinalRankings()
-                        return  // Exit early if game is over
-                    }
-                    nextTurn(clearRoll: true)
-                }
+            let isPawnMovingToAnotherSpotOnPath = newIndex >= GameConstants.startingPathIndex && newIndex < currentPath.count - 1
+            let isPawnReachingHome = newIndex == currentPath.count - 1
+
+            if isPawnMovingToAnotherSpotOnPath {
+                shouldGetAnotherRoll = movePawnToAnotherSpotOnPath(color: color, pawnIndex: pawnIndex, currentPath: currentPath, newIndex: newIndex)
+            } else if isPawnReachingHome {
+                shouldGetAnotherRoll = movePawnToHome(color: color, pawnIndex: pawnIndex)
             }
-        } else {
-            // A pawn at home cannot be moved backward. This is a programmer error.
-            guard !backward else {
-                fatalError("Invalid move: cannot move a pawn at home backward.")
-            }
-            
+        } else {            
             // Pawn is at home
-            if steps == GameConstants.requiredRollToLeaveHome {
+            if steps == GameConstants.sixDiceRoll {
                 NotificationCenter.default.post(name: .animatePawnFromHome, object: nil, userInfo: ["color": color, "pawnId": pawnId])
-                // State is now set in completeMoveFromHome after animation
-                return // Return early, as completeMoveFromHome will handle the next turn.
+                return
             }
         }
         
-        // After moving the pawn, check if we should advance the turn
-        // Keep the same player's turn if they rolled a 6, captured a pawn, or reached home
-        if shouldGetAnotherRoll || diceValue == GameConstants.requiredRollToLeaveHome {
+        if shouldGetAnotherRoll || diceValue == GameConstants.sixDiceRoll {
             // Player gets another roll - clear the roll but keep the same player
             GameLogger.shared.log("🔄 [TURN] Player \(currentPlayer.rawValue) gets another turn.")
             currentRollPlayer = nil
@@ -842,6 +768,99 @@ class LudoGame: ObservableObject {
         if let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) {
             pawns[color]?[pawnIndex].positionIndex = GameConstants.homePawnIndex
         }
+    }
+
+    private func logPawnPositionsBeforeAndAfterMove(color: PlayerColor, pawnId: Int, steps: Int) {
+        GameLogger.shared.log("[PAWN POSITIONS BEFORE MOVE] \(generatePawnPositionLogString())", level: .debug)
+        GameLogger.shared.log("♟️ [ACTION] Attempting to move pawn \(pawnId) for \(color.rawValue) with dice \(steps)")
+        defer {
+            GameLogger.shared.log("[PAWN POSITIONS AFTER MOVE] \(generatePawnPositionLogString())", level: .debug)
+        }
+    }
+
+    private func getValidatedPawnIndex(color: PlayerColor, pawnId: Int, backward: Bool) -> Int? {
+        // Only allow moving if:
+        // 1. It's your turn
+        // 2. It's your roll (and currentRollPlayer is not nil)
+        // 3. The pawn is eligible to move
+        guard color == currentPlayer,
+              let rollPlayer = currentRollPlayer,
+              color == rollPlayer,
+              eligiblePawns.contains(pawnId),
+              let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) else { return nil }
+        
+        // Precondition check for backward moves
+        if backward {
+            guard let positionIndex = pawns[color]?[pawnIndex].positionIndex, positionIndex >= GameConstants.startingPathIndex else {
+                GameLogger.shared.log("❌ [FATAL] Invalid backward move: Pawn \(pawnId) for \(color.rawValue) must be on the path (not at home or finished). Current position: \(String(describing: pawns[color]?[pawnIndex].positionIndex))", level: .error)
+                fatalError("Invalid backward move: Pawn must be on the path (not at home or finished).")
+            }
+        }
+        
+        return pawnIndex
+    }
+
+    private func movePawnToAnotherSpotOnPath(color: PlayerColor, pawnIndex: Int, currentPath: [Position], newIndex: Int) -> Bool {
+        var shouldGetAnotherRoll = false
+        
+        // First check if the new position would result in a capture
+        let newPosition = currentPath[newIndex]
+        
+        // Check if the position is a safe spot
+        let isSafeSpot = isSafePosition(newPosition)
+        
+        if !isSafeSpot {
+            // Check for captures at the new position
+            for (otherColor, otherPawns) in pawns {
+                if otherColor == color { continue }
+                
+                for (otherIndex, otherPawn) in otherPawns.enumerated() {
+                    guard let otherPositionIndex = otherPawn.positionIndex,
+                          otherPositionIndex >= GameConstants.startingPathIndex else { continue }
+                    
+                    let otherPosition = path(for: otherColor)[otherPositionIndex]
+                    
+                    if otherPosition == newPosition {
+                        // Capture the pawn - Post notification to animate it
+                        NotificationCenter.default.post(
+                            name: .animatePawnCapture,
+                            object: nil,
+                            userInfo: ["color": otherColor, "pawnId": otherPawn.id]
+                        )
+                        SoundManager.shared.playPawnCaptureSound()
+                        shouldGetAnotherRoll = true
+                        // Add points for capture
+                        scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
+                    }
+                }
+            }
+        }
+        
+        // Now move the pawn
+        pawns[color]?[pawnIndex].positionIndex = newIndex
+        return shouldGetAnotherRoll
+    }
+
+    private func movePawnToHome(color: PlayerColor, pawnIndex: Int) -> Bool {
+        // Pawn reaches home
+        pawns[color]?[pawnIndex].positionIndex = GameConstants.finishedPawnIndex
+        
+        // Add points for reaching home based on global order
+        totalPawnsAtFinishingHome += 1
+        let points = GameConstants.maxScorePerPawn - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
+        scores[color] = (scores[color] ?? 0) + points
+        
+        // If this was the last pawn for this player, check for game over
+        if hasCompletedGame(color: color) {
+            if haveAllOtherPlayersCompleted() {
+                isGameOver = true
+                finalRankings = getFinalRankings()
+                return true  // Exit early if game is over
+            }
+            nextTurn(clearRoll: true)
+        }
+        
+        return true // Get another roll for reaching home
     }
 }
 
