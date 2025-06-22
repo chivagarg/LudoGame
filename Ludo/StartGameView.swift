@@ -46,3 +46,4 @@ struct StartGameView: View {
         .background(Color.gray.opacity(0.05))
     }
 } 
+ 

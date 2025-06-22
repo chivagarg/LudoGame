@@ -23,6 +23,30 @@ struct Position: Equatable {
 // }
 
 class LudoGame: ObservableObject {
+    // MARK: - Game Constants
+    private enum GameConstants {
+        // Scoring
+        static let maxScorePerPawn = 16
+        static let capturePoints = 3
+        
+        // Dice rolling
+        static let weightedSixProbability = 1.0 / 3.0
+        static let standardDiceSides = 6
+        
+        // Timing
+        static let turnAdvanceDelay: TimeInterval = 1.2
+        static let aiThinkingDelay: TimeInterval = 1.0
+        
+        // Game state
+        static let pawnsPerPlayer = 4
+        static let finishedPawnIndex = -1
+        static let homePawnIndex: Int? = nil
+        static let startingPathIndex = 0
+        
+        // Dice values
+        static let requiredRollToLeaveHome = 6
+    }
+    
     @Published var currentPlayer: PlayerColor = .red
     @Published var diceValue: Int = 1
     @Published var rollID: Int = 0 // A counter that increments on each roll to trigger animations
@@ -171,9 +195,6 @@ class LudoGame: ObservableObject {
 
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
-    // Animation and delay constants
-    static let turnAdvanceDelay: TimeInterval = 1.2
-    
     private func areAllPawnsAtHome(for color: PlayerColor) -> Bool {
         guard let playerPawns = pawns[color] else { return false }
         return playerPawns.allSatisfy { $0.positionIndex == nil }
@@ -184,14 +205,14 @@ class LudoGame: ObservableObject {
             GameLogger.shared.log("🎲 [INFO] All pawns are at home. Doubling the chance of rolling a 6.")
             // Weighted roll: ~33.3% chance of 6
             let randomValue = Double.random(in: 0.0..<1.0)
-            if randomValue < (1.0 / 3.0) {
-                return 6
+            if randomValue < GameConstants.weightedSixProbability {
+                return GameConstants.requiredRollToLeaveHome
             } else {
-                return Int.random(in: 1...5)
+                return Int.random(in: 1...(GameConstants.standardDiceSides - 1))
             }
         } else {
             // Standard roll
-            return Int.random(in: 1...6)
+            return Int.random(in: 1...GameConstants.standardDiceSides)
         }
     }
     
@@ -231,10 +252,10 @@ class LudoGame: ObservableObject {
                     // Check if the move would overshoot home
                     let currentPath = path(for: currentPlayer)
                     let newIndex = positionIndex + diceValue
-                    return positionIndex >= 0 && newIndex <= currentPath.count - 1
+                    return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
                 } else {
                     // Pawn is at home and dice is 6
-                    return diceValue == 6
+                    return diceValue == GameConstants.requiredRollToLeaveHome
                 }
             }.map { $0.id })
             
@@ -252,7 +273,7 @@ class LudoGame: ObservableObject {
                     }
 
                     // Add a delay to make the AI's move feel more natural
-                    DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                         // Find the selected pawn to check its state
                         if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
                             // CASE 1: Pawn is at home and needs to move out (requires a 6)
@@ -290,7 +311,7 @@ class LudoGame: ObservableObject {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
-                    DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                         // Only auto-move if the pawn is on the path (not in home)
                         if pawn.positionIndex != nil {
                             let currentPos = pawn.positionIndex ?? -1
@@ -319,7 +340,7 @@ class LudoGame: ObservableObject {
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
             // Keep the current player's roll visible for 1 seconds before moving to next turn
-            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
             }
         }
@@ -350,10 +371,10 @@ class LudoGame: ObservableObject {
                     // Check if the move would overshoot home
                     let currentPath = path(for: currentPlayer)
                     let newIndex = positionIndex + diceValue
-                    return positionIndex >= 0 && newIndex <= currentPath.count - 1
+                    return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
                 } else {
                     // Pawn is at home and dice is 6
-                    return diceValue == 6
+                    return diceValue == GameConstants.requiredRollToLeaveHome
                 }
             }.map { $0.id })
             
@@ -362,7 +383,7 @@ class LudoGame: ObservableObject {
                 if let pawnId = eligiblePawns.first,
                    let pawn = currentPawns.first(where: { $0.id == pawnId }) {
                     // Add a small delay to show the dice roll before moving
-                    DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                         // Only auto-move if the pawn is on the path (not in home)
                         if pawn.positionIndex != nil {
                             let currentPos = pawn.positionIndex ?? -1
@@ -390,7 +411,7 @@ class LudoGame: ObservableObject {
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
             // Keep the current player's roll visible for a short duration before moving to next turn
-            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.turnAdvanceDelay) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
             }
         }
@@ -453,7 +474,7 @@ class LudoGame: ObservableObject {
     // Check if a player has all their pawns in the finishing home
     func hasCompletedGame(color: PlayerColor) -> Bool {
         guard let playerPawns = pawns[color] else { return false }
-        return playerPawns.allSatisfy { $0.positionIndex == -1 }
+        return playerPawns.allSatisfy { $0.positionIndex == GameConstants.finishedPawnIndex }
     }
     
     func startGame(selectedPlayers: Set<PlayerColor>, aiPlayers: Set<PlayerColor> = [], mode: GameMode) {
@@ -498,7 +519,7 @@ class LudoGame: ObservableObject {
         // Initialize pawns for all players, but only selected ones will be visible/used
         var allPawns: [PlayerColor: [PawnState]] = [:]
         for color in selectedPlayers {
-            allPawns[color] = (0..<4).map { PawnState(id: $0, color: color, positionIndex: nil) }
+            allPawns[color] = (0..<GameConstants.pawnsPerPlayer).map { PawnState(id: $0, color: color, positionIndex: GameConstants.homePawnIndex) }
         }
         self.pawns = allPawns
         
@@ -547,7 +568,7 @@ class LudoGame: ObservableObject {
         
         // Precondition check for backward moves
         if backward {
-            guard let positionIndex = pawns[color]?[pawnIndex].positionIndex, positionIndex >= 0 else {
+            guard let positionIndex = pawns[color]?[pawnIndex].positionIndex, positionIndex >= GameConstants.startingPathIndex else {
                 fatalError("Invalid backward move: Pawn must be on the path (not at home or finished).")
             }
         }
@@ -564,7 +585,7 @@ class LudoGame: ObservableObject {
                 fatalError("Invalid backward move: resulted in a negative pawn position index.")
             }
             
-            if newIndex >= 0 && newIndex < currentPath.count - 1 {
+            if newIndex >= GameConstants.startingPathIndex && newIndex < currentPath.count - 1 {
                 // First check if the new position would result in a capture
                 let newPosition = currentPath[newIndex]
                 
@@ -578,7 +599,7 @@ class LudoGame: ObservableObject {
                         
                         for (otherIndex, otherPawn) in otherPawns.enumerated() {
                             guard let otherPositionIndex = otherPawn.positionIndex,
-                                  otherPositionIndex >= 0 else { continue }
+                                  otherPositionIndex >= GameConstants.startingPathIndex else { continue }
                             
                             let otherPosition = path(for: otherColor)[otherPositionIndex]
                             
@@ -591,8 +612,8 @@ class LudoGame: ObservableObject {
                                 )
                                 SoundManager.shared.playPawnCaptureSound()
                                 shouldGetAnotherRoll = true
-                                // Add 3 points for capture
-                                scores[color] = (scores[color] ?? 0) + 3
+                                // Add points for capture
+                                scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
                             }
                         }
                     }
@@ -602,12 +623,12 @@ class LudoGame: ObservableObject {
                 pawns[color]?[pawnIndex].positionIndex = newIndex
             } else if newIndex == currentPath.count - 1 {
                 // Pawn reaches home
-                pawns[color]?[pawnIndex].positionIndex = -1
+                pawns[color]?[pawnIndex].positionIndex = GameConstants.finishedPawnIndex
                 shouldGetAnotherRoll = true // Get another roll for reaching home
                 
                 // Add points for reaching home based on global order
                 totalPawnsAtFinishingHome += 1
-                let points = 16 - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
+                let points = GameConstants.maxScorePerPawn - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
                 scores[color] = (scores[color] ?? 0) + points
                 
                 // If this was the last pawn for this player, check for game over
@@ -627,7 +648,7 @@ class LudoGame: ObservableObject {
             }
             
             // Pawn is at home
-            if steps == 6 {
+            if steps == GameConstants.requiredRollToLeaveHome {
                 NotificationCenter.default.post(name: .animatePawnFromHome, object: nil, userInfo: ["color": color, "pawnId": pawnId])
                 // State is now set in completeMoveFromHome after animation
                 return // Return early, as completeMoveFromHome will handle the next turn.
@@ -636,7 +657,7 @@ class LudoGame: ObservableObject {
         
         // After moving the pawn, check if we should advance the turn
         // Keep the same player's turn if they rolled a 6, captured a pawn, or reached home
-        if shouldGetAnotherRoll || diceValue == 6 {
+        if shouldGetAnotherRoll || diceValue == GameConstants.requiredRollToLeaveHome {
             // Player gets another roll - clear the roll but keep the same player
             GameLogger.shared.log("🔄 [TURN] Player \(currentPlayer.rawValue) gets another turn.")
             currentRollPlayer = nil
@@ -724,13 +745,13 @@ class LudoGame: ObservableObject {
         // Backward-specific validation
         guard let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
               let positionIndex = pawn.positionIndex,
-              positionIndex >= 0 else {
+              positionIndex >= GameConstants.startingPathIndex else {
             // Pawn must be on the path (not at home or finished)
             return false
         }
         
         // Ensure the move does not go past the start of the path
-        return positionIndex - diceValue >= 0
+        return positionIndex - diceValue >= GameConstants.startingPathIndex
     }
     
     // Function to get the destination index for a move
@@ -740,9 +761,9 @@ class LudoGame: ObservableObject {
         let currentPath = path(for: color)
         let newIndex = isBackward ? positionIndex - diceValue : positionIndex + diceValue
         if isBackward {
-            return newIndex >= 0 ? newIndex : nil
+            return newIndex >= GameConstants.startingPathIndex ? newIndex : nil
         } else {
-            return newIndex >= currentPath.count - 1 ? -1 : newIndex
+            return newIndex >= currentPath.count - 1 ? GameConstants.finishedPawnIndex : newIndex
         }
     }
 
@@ -763,7 +784,7 @@ class LudoGame: ObservableObject {
         if aiControlledPlayers.contains(currentPlayer) {
             GameLogger.shared.log("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
             // Add a delay to simulate the AI "thinking" before rolling
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.aiThinkingDelay) {
                 GameLogger.shared.log("🤖 [AI] AI \(self.currentPlayer.rawValue) is now attempting to roll the dice.")
                 // Ensure it's still the AI's turn before rolling.
                 if self.aiControlledPlayers.contains(self.currentPlayer) {
@@ -788,7 +809,7 @@ class LudoGame: ObservableObject {
             for pawn in playerPawns.sorted(by: { $0.id < $1.id }) {
                 var positionDescription: String
                 if let positionIndex = pawn.positionIndex {
-                    if positionIndex == -1 {
+                    if positionIndex == GameConstants.finishedPawnIndex {
                         positionDescription = "Finished"
                     } else {
                         let path = self.path(for: pawn.color)
@@ -816,7 +837,7 @@ class LudoGame: ObservableObject {
     func completeMoveFromHome(color: PlayerColor, pawnId: Int) {
         // Now, officially update the pawn's state.
         if let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) {
-            pawns[color]?[pawnIndex].positionIndex = 0
+            pawns[color]?[pawnIndex].positionIndex = GameConstants.startingPathIndex
             SoundManager.shared.playPawnLeaveHomeSound()
         }
         
@@ -830,7 +851,7 @@ class LudoGame: ObservableObject {
     // This function is called by the view after a pawn capture animation is complete.
     func completePawnCapture(color: PlayerColor, pawnId: Int) {
         if let pawnIndex = pawns[color]?.firstIndex(where: { $0.id == pawnId }) {
-            pawns[color]?[pawnIndex].positionIndex = nil
+            pawns[color]?[pawnIndex].positionIndex = GameConstants.homePawnIndex
         }
     }
 }

@@ -310,3 +310,4 @@ struct BackwardOnlyMoveStrategy: AILogicStrategy {
         return nil
     }
 } 
+ 
