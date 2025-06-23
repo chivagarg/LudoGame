@@ -139,7 +139,7 @@ struct LudoBoardView: View {
             currentStep += 1
             
             // Schedule next step with shorter delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
                 animateNextStep()
             }
         }

@@ -20,7 +20,7 @@ struct PawnView: View {
             .frame(width: size, height: size)
             .shadow(color: .black.opacity(0.2), radius: size / 10, x: 0, y: size / 10) // Soft, ambient shadow
             .shadow(color: .black.opacity(0.5), radius: size / 40, x: 0, y: size / 40) // Sharp, contact shadow
-            .scaleEffect(isAnimating ? 1.25 : 1.0)
+            .scaleEffect(isAnimating ? 1.2 : 1.0)
             .onAppear {
                 updateAnimation(for: isEligible)
             }
