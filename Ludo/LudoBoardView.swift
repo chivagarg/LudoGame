@@ -440,10 +440,11 @@ struct LudoBoardView: View {
         let cellSize: CGFloat
 
         static func == (lhs: BoardCellView, rhs: BoardCellView) -> Bool {
-            // Revert to simpler check. PawnView now handles its own eligibility animation.
-            let lhsPawnIDs = lhs.pawnsInCell.map { $0.id }.sorted()
-            let rhsPawnIDs = rhs.pawnsInCell.map { $0.id }.sorted()
-            return lhsPawnIDs == rhsPawnIDs
+            // Create a unique identifier string (e.g., "red-0") for each pawn so pawns with the
+            // same id but different colors are considered different
+            let lhsPawnKeys = lhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
+            let rhsPawnKeys = rhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
+            return lhsPawnKeys == rhsPawnKeys
         }
 
         var body: some View {
