@@ -13,7 +13,7 @@ struct PawnView: View {
     }
 
     var body: some View {
-        Image("pawn_\(pawn.color.rawValue)")
+        Image("pawn_\(pawn.color.rawValue)_marble")
             .renderingMode(.original)
             .resizable()
             .aspectRatio(contentMode: .fit)

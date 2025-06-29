@@ -32,7 +32,7 @@ struct LudoBoardView: View {
     // MARK: - Trail Animation State
     @State private var trailParticles: [TrailParticle] = []
     
-    private let pawnResizeFactor: CGFloat = 0.9
+    private let pawnResizeFactor: CGFloat = 1.0
     private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.85 }
     
     private func getDicePosition() -> (row: Int, col: Int)? {
