@@ -319,7 +319,7 @@ struct LudoBoardView: View {
                         if !isDiceRolling && game.eligiblePawns.isEmpty {
                             isDiceRolling = true
                             game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
                                 isDiceRolling = false
                             }
                         }
@@ -339,7 +339,7 @@ struct LudoBoardView: View {
                         if !isDiceRolling && game.eligiblePawns.isEmpty {
                             isDiceRolling = true
                             game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
                                 isDiceRolling = false
                             }
                         }
@@ -362,7 +362,7 @@ struct LudoBoardView: View {
                         if !isDiceRolling && game.eligiblePawns.isEmpty {
                             isDiceRolling = true
                             game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
                                 isDiceRolling = false
                             }
                         }
@@ -382,7 +382,7 @@ struct LudoBoardView: View {
                         if !isDiceRolling && game.eligiblePawns.isEmpty {
                             isDiceRolling = true
                             game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
                                 isDiceRolling = false
                             }
                         }

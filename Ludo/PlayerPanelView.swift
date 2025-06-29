@@ -8,8 +8,6 @@ struct PlayerPanelView: View {
     let isDiceRolling: Bool
     let onDiceTap: () -> Void
     @State private var localDiceRolling: Bool = false
-    
-    public let diceAnimationDuration: TimeInterval = 0.8
 
     var body: some View {
         ZStack {
@@ -84,7 +82,7 @@ struct PlayerPanelView: View {
         .onChange(of: game.rollID) { _ in
             if showDice && !isDiceRolling && !localDiceRolling {
                 localDiceRolling = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + diceAnimationDuration) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
                     localDiceRolling = false
                 }
             }
