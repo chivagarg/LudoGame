@@ -9,11 +9,9 @@ struct PlayerPanelView: View {
     let onDiceTap: () -> Void
     @State private var localDiceRolling: Bool = false
     
-    private let diceAnimationDuration: TimeInterval = 0.8
+    public let diceAnimationDuration: TimeInterval = 0.8
 
     var body: some View {
-        let panelWidth: CGFloat = game.gameMode == .mirchi ? 260 : 220
-        
         ZStack {
             if game.selectedPlayers.contains(color) {
                 // White background rectangle
@@ -24,66 +22,60 @@ struct PlayerPanelView: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(color.toSwiftUIColor(for: color).opacity(0.5))
 
-                HStack(spacing: 12) {
-                    // 1. Avatar (larger)
-                    ZStack {
-                        Circle()
-                            .fill(color.toSwiftUIColor(for: color).opacity(0.7))
-                            .frame(width: 70, height: 70)
-
-                        if game.aiControlledPlayers.contains(color) {
-                            Image("avatar_alien")
-                                .renderingMode(.template)
+                HStack(spacing: 6) {
+                    // 1. Avatar with Score Pill
+                    ZStack(alignment: .bottomTrailing) {
+                        // Avatar
+                        ZStack {
+                            Image("pawn_\(color.rawValue)_marble")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 60, height: 60)
-                                .foregroundColor(.black)
-                        } else {
-                            Image("avatar_\(color.rawValue)")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 60, height: 60)
+                                .frame(width: 80, height: 80)
                         }
+                        .frame(width: 100, height: 80)
+                        
+                        // Score Pill
+                        Text("\(game.scores[color] ?? 0)")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(color.toSwiftUIColor(for: color))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(Color.white))
+                            .offset(x: 8, y: 8)
                     }
-                    .frame(width: 80, height: 80)
+                    .frame(width: 100, height: 100)
+                    .offset(x: -20, y: -5)
 
-                    // 2. Score display
-                    Text("\(game.scores[color] ?? 0)")
-                        .font(.system(size: 24, weight: .semibold, design: .rounded))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity, alignment: .center)
-
-                    // 3. Mirchi Arrow (only in Mirchi mode)
+                    // 2. Mirchi Arrow (only in Mirchi mode)
                     if game.gameMode == .mirchi {
                         Image(systemName: "arrow.down.circle.fill")
                             .font(.title)
                             .foregroundColor(game.mirchiArrowActivated[color] == true ? color.toSwiftUIColor(for: color) : .white)
                             .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                            .offset(x: -10)
                             .onTapGesture {
                                 game.mirchiArrowActivated[color]?.toggle()
                             }
                     }
 
-                    // 4. Dice (only for current player)
-                    if showDice {
-                        DiceView(
-                            value: diceValue,
-                            isRolling: isDiceRolling || localDiceRolling,
-                            onTap: {
-                                // Disable tap for AI players
-                                if !game.aiControlledPlayers.contains(color) {
-                                    onDiceTap()
-                                }
+                    // 3. Dice (only for current player, uses opacity to maintain layout)
+                    DiceView(
+                        value: diceValue,
+                        isRolling: isDiceRolling || localDiceRolling,
+                        onTap: {
+                            // Disable tap for AI players
+                            if !game.aiControlledPlayers.contains(color) {
+                                onDiceTap()
                             }
-                        )
-                    } else {
-                        Spacer().frame(width: 60)
-                    }
+                        }
+                    )
+                    .opacity(showDice ? 1.0 : 0.0)
+                    .allowsHitTesting(showDice)
                 }
                 .padding(.horizontal, 8)
             }
         }
-        .frame(width: panelWidth, height: 100)
+        .frame(height: 100)
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(game.selectedPlayers.contains(color) ? color.toSwiftUIColor(for: color) : Color.clear, lineWidth: 2)

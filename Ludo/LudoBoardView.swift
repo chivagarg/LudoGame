@@ -33,7 +33,7 @@ struct LudoBoardView: View {
     @State private var trailParticles: [TrailParticle] = []
     
     private let pawnResizeFactor: CGFloat = 1.0
-    private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.85 }
+    private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.90 }
     
     private func getDicePosition() -> (row: Int, col: Int)? {
         if game.hasCompletedGame(color: game.currentPlayer) {
@@ -186,17 +186,13 @@ struct LudoBoardView: View {
 
         return GeometryReader { geometry in
             let (boardSize, cellSize, boardOffsetX, boardOffsetY) = calculateBoardDimensions(geometry: geometry)
-            let panelWidth: CGFloat = 220
-            let panelHeight: CGFloat = 100
-            let overlap: CGFloat = 20
-            let horizontalInset: CGFloat = (maximized ? 190 : 170) + (game.gameMode == .mirchi ? 20 : 0)
 
             ZStack {
                 // Board Grid extracted into a helper view
                 boardGridView(boardSize: boardSize, cellSize: cellSize)
 
                 // Player panels extracted into a helper view
-                playerPanelsView(boardSize: boardSize, cellSize: cellSize, boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, panelWidth: panelWidth, panelHeight: panelHeight, horizontalInset: horizontalInset, overlap: overlap)
+                playerPanelsView(boardOffsetY: boardOffsetY)
 
                 // Animation overlays extracted into dedicated helper views
                 homeToStartPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
@@ -305,80 +301,98 @@ struct LudoBoardView: View {
     }
     
     @ViewBuilder
-    private func playerPanelsView(boardSize: CGFloat, cellSize: CGFloat, boardOffsetX: CGFloat, boardOffsetY: CGFloat, panelWidth: CGFloat, panelHeight: CGFloat, horizontalInset: CGFloat, overlap: CGFloat) -> some View {
-        // Panels in corners, floating off the board
-        PlayerPanelView(
-            color: .red,
-            showDice: game.currentPlayer == .red,
-            diceValue: game.diceValue,
-            isDiceRolling: isDiceRolling,
-            onDiceTap: {
-                if !isDiceRolling && game.eligiblePawns.isEmpty {
-                    isDiceRolling = true
-                    game.rollDice()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isDiceRolling = false
+    private func playerPanelsView(boardOffsetY: CGFloat) -> some View {
+        // Calculate the required vertical padding to make the panels "hang" off the board.
+        // Panel height is 100. We want 15% (15pt) overlap, so 85% (85pt) should be outside.
+        // The padding from the screen edge needs to be the board's offset minus the 85pt overhang.
+        let verticalPadding = boardOffsetY - 85
+
+        VStack {
+            // Top Row: Red and Green Panels
+            HStack {
+                PlayerPanelView(
+                    color: .red,
+                    showDice: game.currentPlayer == .red,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                                isDiceRolling = false
+                            }
+                        }
                     }
-                }
-            }
-        )
-        .environmentObject(game)
-        .frame(width: panelWidth, height: panelHeight)
-        .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
-        PlayerPanelView(
-            color: .green,
-            showDice: game.currentPlayer == .green,
-            diceValue: game.diceValue,
-            isDiceRolling: isDiceRolling,
-            onDiceTap: {
-                if !isDiceRolling && game.eligiblePawns.isEmpty {
-                    isDiceRolling = true
-                    game.rollDice()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isDiceRolling = false
+                )
+                .environmentObject(game)
+                .fixedSize(horizontal: true, vertical: true)
+                
+                Spacer(minLength: 100)
+                
+                PlayerPanelView(
+                    color: .green,
+                    showDice: game.currentPlayer == .green,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                                isDiceRolling = false
+                            }
+                        }
                     }
-                }
+                )
+                .environmentObject(game)
+                .fixedSize(horizontal: true, vertical: true)
             }
-        )
-        .environmentObject(game)
-        .frame(width: panelWidth, height: panelHeight)
-        .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY - panelHeight/2 + overlap)
-        PlayerPanelView(
-            color: .blue,
-            showDice: game.currentPlayer == .blue,
-            diceValue: game.diceValue,
-            isDiceRolling: isDiceRolling,
-            onDiceTap: {
-                if !isDiceRolling && game.eligiblePawns.isEmpty {
-                    isDiceRolling = true
-                    game.rollDice()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isDiceRolling = false
+            
+            Spacer()
+            
+            // Bottom Row: Blue and Yellow Panels
+            HStack {
+                PlayerPanelView(
+                    color: .blue,
+                    showDice: game.currentPlayer == .blue,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                                isDiceRolling = false
+                            }
+                        }
                     }
-                }
-            }
-        )
-        .environmentObject(game)
-        .frame(width: panelWidth, height: panelHeight)
-        .position(x: boardOffsetX - panelWidth/2 + horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
-        PlayerPanelView(
-            color: .yellow,
-            showDice: game.currentPlayer == .yellow,
-            diceValue: game.diceValue,
-            isDiceRolling: isDiceRolling,
-            onDiceTap: {
-                if !isDiceRolling && game.eligiblePawns.isEmpty {
-                    isDiceRolling = true
-                    game.rollDice()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isDiceRolling = false
+                )
+                .environmentObject(game)
+                .fixedSize(horizontal: true, vertical: false)
+                
+                Spacer(minLength: 100)
+                
+                PlayerPanelView(
+                    color: .yellow,
+                    showDice: game.currentPlayer == .yellow,
+                    diceValue: game.diceValue,
+                    isDiceRolling: isDiceRolling,
+                    onDiceTap: {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                            isDiceRolling = true
+                            game.rollDice()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + LudoGame.Constants.diceAnimationDuration) {
+                                isDiceRolling = false
+                            }
+                        }
                     }
-                }
+                )
+                .environmentObject(game)
+                .fixedSize(horizontal: true, vertical: false)
             }
-        )
-        .environmentObject(game)
-        .frame(width: panelWidth, height: panelHeight)
-        .position(x: boardOffsetX + boardSize + panelWidth/2 - horizontalInset, y: boardOffsetY + boardSize + panelHeight/2 - overlap)
+        }
+        .padding(.vertical, verticalPadding)
     }
     
     @ViewBuilder
