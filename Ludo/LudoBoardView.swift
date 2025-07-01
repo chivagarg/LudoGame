@@ -274,6 +274,7 @@ struct LudoBoardView: View {
                       let pawnId = userInfo["pawnId"] as? Int,
                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
                 
+                SoundManager.shared.playPawnCaptureSound()
                 isAnimatingCapture = true // <-- Lock for capture
                 
                 capturedPawns.append((pawn: pawn, progress: 0))

@@ -804,7 +804,6 @@ class LudoGame: ObservableObject {
                             object: nil,
                             userInfo: ["color": otherColor, "pawnId": otherPawn.id]
                         )
-                        SoundManager.shared.playPawnCaptureSound()
                         shouldGetAnotherRoll = true
                         // Add points for capture
                         scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
