@@ -281,6 +281,7 @@ struct LudoBoardView: View {
                 else { return }
                 
                 SoundManager.shared.playPawnCaptureSound()
+                game.isBusy = true // Block moves/rolls during capture animation
                 isAnimatingCapture = true // <-- Lock for capture
                 
                 capturedPawns.append((pawn: pawn, progress: 0))
@@ -302,6 +303,11 @@ struct LudoBoardView: View {
                     game.completePawnCapture(color: color, pawnId: pawnId)
                     capturedPawns.removeAll { $0.pawn.id == pawnId && $0.pawn.color == color }
                     isAnimatingCapture = false // <-- Unlock for capture
+                    // Step 3: Unblock game and trigger AI if needed
+                    game.isBusy = false
+                    if game.aiControlledPlayers.contains(game.currentPlayer) {
+                        game.handleAITurn()
+                    }
                 }
             }
         }
@@ -324,7 +330,7 @@ struct LudoBoardView: View {
                     diceValue: game.diceValue,
                     isDiceRolling: isDiceRolling,
                     onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
                             isDiceRolling = true
                             game.rollDice()
                             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
@@ -344,7 +350,7 @@ struct LudoBoardView: View {
                     diceValue: game.diceValue,
                     isDiceRolling: isDiceRolling,
                     onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
                             isDiceRolling = true
                             game.rollDice()
                             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
@@ -367,7 +373,7 @@ struct LudoBoardView: View {
                     diceValue: game.diceValue,
                     isDiceRolling: isDiceRolling,
                     onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
                             isDiceRolling = true
                             game.rollDice()
                             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
@@ -387,7 +393,7 @@ struct LudoBoardView: View {
                     diceValue: game.diceValue,
                     isDiceRolling: isDiceRolling,
                     onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty {
+                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
                             isDiceRolling = true
                             game.rollDice()
                             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {

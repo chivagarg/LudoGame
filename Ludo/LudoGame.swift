@@ -33,6 +33,10 @@ class LudoGame: ObservableObject {
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
 
+    // Busy state for blocking moves/rolls during animation
+    // E.g. when a pawn is being captured, we don't want to allow the player to roll the dice or move the pawn
+    @Published var isBusy: Bool = false
+
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
         Position(row: 7, col: 1), Position(row: 7, col: 2), Position(row: 7, col: 3), Position(row: 7, col: 4), Position(row: 7, col: 5)
@@ -672,7 +676,9 @@ class LudoGame: ObservableObject {
         return PlayerColor.allCases.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
     }
 
-    private func handleAITurn() {
+    func handleAITurn() {
+        // Block AI from acting if the game is busy (e.g., animation in progress)
+        if isBusy { return }
         if aiControlledPlayers.contains(currentPlayer) {
             GameLogger.shared.log("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
             // Add a delay to simulate the AI "thinking" before rolling
