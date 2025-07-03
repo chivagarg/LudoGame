@@ -49,7 +49,7 @@ public enum GameConstants {
     // Dice values
     static let sixDiceRoll = 6
 
-
+    static let captureAnimationCellsPerSecond: Double = 12.0 // Controls the speed of the capture animation
     static let diceAnimationDuration: TimeInterval = 0.8
 }
 

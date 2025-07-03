@@ -88,7 +88,8 @@ struct LudoBoardView: View {
                 
         func animateNextStep() {
             guard currentStep < steps else {
-                self.pathAnimatingPawns.removeAll()
+                let key = "\(color.rawValue)-\(pawn.id)"
+                self.pathAnimatingPawns.removeValue(forKey: key)  // Clear specific pawn data
                 completion()
                 return
             }
@@ -102,11 +103,15 @@ struct LudoBoardView: View {
             // Safety check to avoid going off the path
             if backward {
                 if currentTo < 0 {
+                    let key = "\(color.rawValue)-\(pawn.id)"
+                    pathAnimatingPawns.removeValue(forKey: key)  // Clear specific pawn data
                     isPathAnimating = false
                     return
                 }
             } else {
                 if currentTo >= game.path(for: color).count {
+                    let key = "\(color.rawValue)-\(pawn.id)"
+                    pathAnimatingPawns.removeValue(forKey: key)  // Clear specific pawn data
                     isPathAnimating = false
                     return
                 }
@@ -226,7 +231,6 @@ struct LudoBoardView: View {
                         let backward = (moveDirection == "backward")
                         
                         animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps, backward: backward) {
-                            self.pathAnimatingPawns.removeAll()
                             game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward)
                             isPathAnimating = false
                             isDiceRolling = false
@@ -272,16 +276,22 @@ struct LudoBoardView: View {
                 guard let userInfo = notification.userInfo,
                       let color = userInfo["color"] as? PlayerColor,
                       let pawnId = userInfo["pawnId"] as? Int,
-                      let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
+                      let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }),
+                      let startPositionIndex = pawn.positionIndex // We need the start index to calculate path length
+                else { return }
                 
                 SoundManager.shared.playPawnCaptureSound()
                 isAnimatingCapture = true // <-- Lock for capture
                 
                 capturedPawns.append((pawn: pawn, progress: 0))
                 
-                let animationDuration = 0.60
+                // --- Dynamically Calculate Animation Duration ---
+                let animationPath = createCaptureAnimationPath(for: pawn, from: startPositionIndex)
+                let pathLength = Double(animationPath.count - 1)
+                let calculatedDuration = pathLength / GameConstants.captureAnimationCellsPerSecond
+                let animationDuration = max(0.8, calculatedDuration) // Enforce a minimum duration
 
-                withAnimation(.easeInOut(duration: animationDuration)) {
+                withAnimation(.linear(duration: animationDuration)) {
                     if let index = capturedPawns.firstIndex(where: { $0.pawn.id == pawnId && $0.pawn.color == color }) {
                         capturedPawns[index].progress = 1.0
                     }
@@ -289,9 +299,6 @@ struct LudoBoardView: View {
                 
                 // After the animation duration, complete the move in the model
                 DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-                    if color == .red && pawnId == 0 {
-                        GameLogger.shared.log("🐞 DEBUG LOG 1: Completing capture for Red Pawn 0. Its positionIndex is currently: \(String(describing: pawn.positionIndex))", level: .debug)
-                    }
                     game.completePawnCapture(color: color, pawnId: pawnId)
                     capturedPawns.removeAll { $0.pawn.id == pawnId && $0.pawn.color == color }
                     isAnimatingCapture = false // <-- Unlock for capture
@@ -788,7 +795,6 @@ struct LudoBoardView: View {
                             if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id) {
                                 let steps = game.diceValue
                                 animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
-                                    self.pathAnimatingPawns.removeAll()
                                     game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true)
                                     isPathAnimating = false
                                     isDiceRolling = false
@@ -801,7 +807,6 @@ struct LudoBoardView: View {
                                 
                                 if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
                                     animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps) {
-                                        self.pathAnimatingPawns.removeAll()
                                         game.movePawn(color: color, pawnId: pawn.id, steps: steps)
                                         isPathAnimating = false
                                         isDiceRolling = false
@@ -940,33 +945,38 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func capturedPawnAnimationOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
         ForEach(capturedPawns, id: \.pawn.id) { capturedPawn in
+            // Check if we have enough data to proceed
             if let startPositionIndex = capturedPawn.pawn.positionIndex {
                 let pawn = capturedPawn.pawn
                 let progress = capturedPawn.progress
-                
-                let pathPosition = game.path(for: pawn.color)[startPositionIndex]
-                let homePosition = getStartingHomePosition(pawn: pawn, color: pawn.color)
 
-                let startX = CGFloat(pathPosition.col) + 0.5
-                let startY = CGFloat(pathPosition.row) + 0.5
-                let endX = CGFloat(homePosition.col) + 0.5
-                let endY = CGFloat(homePosition.row) + 0.5
-                
-                let currentX = startX + (endX - startX) * progress
-                let currentY = startY + (endY - startY) * progress
-                
-                let hopHeight = -cellSize * 1.5
-                let yOffset = sin(progress * .pi) * hopHeight
-                
-                PawnView(pawn: pawn, size: cellSize * 0.8)
-                    .position(
-                        x: boardOffsetX + currentX * cellSize,
-                        y: boardOffsetY + currentY * cellSize + yOffset
-                    )
-                    .zIndex(50)
-                    .allowsHitTesting(false)
+                let animationPath = createCaptureAnimationPath(for: pawn, from: startPositionIndex)
+
+                // Ensure path is valid and has a starting point before trying to animate
+                if let startPoint = animationPath.first {
+                    
+                    // 2. The view is positioned at the starting point of the path.
+                    let startX = boardOffsetX + (CGFloat(startPoint.col) + 0.5) * cellSize
+                    let startY = boardOffsetY + (CGFloat(startPoint.row) + 0.5) * cellSize
+                    
+                    PawnView(pawn: pawn, size: cellSize * 0.8)
+                        .position(x: startX, y: startY)
+                        // 3. The modifier then handles the translation FROM that starting point.
+                        .modifier(FollowPathEffect(path: animationPath, progress: progress, cellSize: cellSize))
+                        .zIndex(50)
+                        .allowsHitTesting(false)
+                }
             }
         }
+    }
+
+    /// Creates the sequence of board positions for the capture animation path.
+    private func createCaptureAnimationPath(for pawn: PawnState, from startIndex: Int) -> [Position] {
+        let playerPath = game.path(for: pawn.color)
+        let reversedPathToStart = Array(playerPath[0...startIndex]).reversed()
+        let homePosCoords = getStartingHomePosition(pawn: pawn, color: pawn.color)
+        let homePosition = Position(row: homePosCoords.row, col: homePosCoords.col)
+        return reversedPathToStart + [homePosition]
     }
 
     private func startParticleAgingTimer() {

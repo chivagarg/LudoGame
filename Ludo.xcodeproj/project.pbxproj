@@ -28,6 +28,7 @@
 		DA7944392E0750EE00EE49FC /* hop.wav in Resources */ = {isa = PBXBuildFile; fileRef = DA7944372E0750EE00EE49FC /* hop.wav */; };
 		DA79443A2E0750EE00EE49FC /* hopReverse.wav in Resources */ = {isa = PBXBuildFile; fileRef = DA7944382E0750EE00EE49FC /* hopReverse.wav */; };
 		DA79443E2E08C43C00EE49FC /* TrailParticleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */; };
+		DA7944402E14C7E800EE49FC /* FollowPathEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
@@ -69,6 +70,7 @@
 		DA7944372E0750EE00EE49FC /* hop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hop.wav; sourceTree = "<group>"; };
 		DA7944382E0750EE00EE49FC /* hopReverse.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hopReverse.wav; sourceTree = "<group>"; };
 		DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailParticleView.swift; sourceTree = "<group>"; };
+		DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowPathEffect.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */,
 				DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */,
 				DA7944372E0750EE00EE49FC /* hop.wav */,
 				DA7944382E0750EE00EE49FC /* hopReverse.wav */,
@@ -265,6 +268,7 @@
 			files = (
 				DA79441E2DFF817E00EE49FC /* AIPlayer.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */,
+				DA7944402E14C7E800EE49FC /* FollowPathEffect.swift in Sources */,
 				DA79440C2DFA861D00EE49FC /* DiceView.swift in Sources */,
 				DA7944122DFA8AB700EE49FC /* PawnView.swift in Sources */,
 				DA7944162DFA8E3100EE49FC /* StartGameView.swift in Sources */,
