@@ -434,6 +434,10 @@ struct LudoBoardView: View {
         var pawnsInCell: [PawnState] = []
         for (_, pwns) in game.pawns {
             for pawn in pwns {
+                // Exclude pawns currently being captured (in capturedPawns)
+                if capturedPawns.contains(where: { $0.pawn.id == pawn.id && $0.pawn.color == pawn.color }) {
+                    continue
+                }
                 // Check home pawns
                 if pawn.positionIndex == nil {
                     let homePos = getStartingHomePosition(pawn: pawn, color: pawn.color)
@@ -627,7 +631,10 @@ struct LudoBoardView: View {
 
     @ViewBuilder
     private func pawnsForColor(color: PlayerColor, row: Int, col: Int, cellSize: CGFloat) -> some View {
-        ForEach(game.pawns[color] ?? [], id: \.id) { pawnState in
+        ForEach((game.pawns[color] ?? []).filter { pawnState in
+            // Exclude pawns currently being captured (in capturedPawns)
+            !capturedPawns.contains(where: { $0.pawn.id == pawnState.id && $0.pawn.color == pawnState.color })
+        }, id: \.id) { pawnState in
             pawnView(pawn: pawnState, color: color, row: row, col: col, cellSize: cellSize)
         }
     }
@@ -657,6 +664,10 @@ struct LudoBoardView: View {
         var count = 0
         for (_, pwns) in game.pawns {
             for pawn in pwns {
+                // Exclude pawns currently being captured (in capturedPawns)
+                if capturedPawns.contains(where: { $0.pawn.id == pawn.id && $0.pawn.color == pawn.color }) {
+                    continue
+                }
                 if let positionIndex = pawn.positionIndex, positionIndex >= 0 {
                     let currentPos = getCurrentPosition(pawn: pawn, color: pawn.color, positionIndex: positionIndex)
                     if currentPos.row == row && currentPos.col == col {

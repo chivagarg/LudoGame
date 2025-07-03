@@ -32,7 +32,7 @@ class LudoGame: ObservableObject {
 
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
-    
+
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
         Position(row: 7, col: 1), Position(row: 7, col: 2), Position(row: 7, col: 3), Position(row: 7, col: 4), Position(row: 7, col: 5)
@@ -322,7 +322,7 @@ class LudoGame: ObservableObject {
         
         // Only allow rolling if there are no eligible pawns
         guard eligiblePawns.isEmpty else { return }
-
+        
         // Set the specified dice value
         diceValue = value
         rollID += 1 // Increment the roll ID to ensure UI updates
@@ -515,7 +515,7 @@ class LudoGame: ObservableObject {
             mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
             GameLogger.shared.log("🌶️ [MIRCHI] Arrows reset for new turn.", level: .debug)
         }
-
+        
         guard let pawnIndex = getValidatedPawnIndex(color: color, pawnId: pawnId, backward: backward) else { return }
         
         var shouldGetAnotherRoll = false
@@ -541,7 +541,7 @@ class LudoGame: ObservableObject {
             } else if isPawnReachingHome {
                 shouldGetAnotherRoll = movePawnToHome(color: color, pawnIndex: pawnIndex)
             }
-        } else {            
+        } else {
             // Pawn is at home
             if steps == GameConstants.sixDiceRoll {
                 NotificationCenter.default.post(name: .animatePawnFromHome, object: nil, userInfo: ["color": color, "pawnId": pawnId])
