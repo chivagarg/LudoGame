@@ -44,7 +44,22 @@ struct PlayerPanelView: View {
                     .frame(width: 100, height: 100)
                     .offset(x: -20, y: -5)
 
-                    // 2. Mirchi Arrow (only in Mirchi mode)
+                    // 2. Kill counts with pill (immediately after avatar)
+                    ZStack(alignment: .bottomTrailing) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 48, weight: .bold))
+                            .foregroundColor(.red)
+                        Text("\(game.killCounts[color] ?? 0)")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Color.white))
+                            .offset(x: 8, y: 8)
+                    }
+                    .offset(x: -16) 
+
+                    // 3. Mirchi Arrow (only in Mirchi mode)
                     if game.gameMode == .mirchi {
                         Image(systemName: "arrow.down.circle.fill")
                             .font(.title)
@@ -56,7 +71,7 @@ struct PlayerPanelView: View {
                             }
                     }
 
-                    // 3. Dice (only for current player, uses opacity to maintain layout)
+                    // 4. Dice (only for current player, uses opacity to maintain layout)
                     DiceView(
                         value: diceValue,
                         isRolling: isDiceRolling || localDiceRolling,

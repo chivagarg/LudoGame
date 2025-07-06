@@ -30,6 +30,9 @@ class LudoGame: ObservableObject {
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
 
+    // Track number of pawns each player has captured
+    @Published var killCounts: [PlayerColor: Int] = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
+
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
 
@@ -790,6 +793,8 @@ class LudoGame: ObservableObject {
                         shouldGetAnotherRoll = true
                         // Add points for capture
                         scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
+                        // Increment kill count for capturing player
+                        killCounts[color] = (killCounts[color] ?? 0) + 1
                     }
                 }
             }
