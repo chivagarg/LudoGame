@@ -164,15 +164,14 @@ class LudoGame: ObservableObject {
     ]
 
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
-    
-    private func areAllPawnsAtHome(for color: PlayerColor) -> Bool {
-        guard let playerPawns = pawns[color] else { return false }
-        return playerPawns.allSatisfy { $0.positionIndex == nil }
-    }
+
     
     private func getDiceRoll() -> Int {
-        if areAllPawnsAtHome(for: currentPlayer) {
-            GameLogger.shared.log("🎲 [INFO] All pawns are at home. Doubling the chance of rolling a 6.")
+        // Only consider pawns that are not finished
+        let unfinishedPawns = pawns[currentPlayer]?.filter { $0.positionIndex != GameConstants.finishedPawnIndex } ?? []
+        let allUnfinishedAtHome = unfinishedPawns.allSatisfy { $0.positionIndex == nil }
+        if allUnfinishedAtHome && !unfinishedPawns.isEmpty {
+            GameLogger.shared.log("🎲 [INFO] All unfinished pawns are at home. Doubling the chance of rolling a 6.")
             // Weighted roll: ~33.3% chance of 6
             let randomValue = Double.random(in: 0.0..<1.0)
             if randomValue < GameConstants.weightedSixProbability {
