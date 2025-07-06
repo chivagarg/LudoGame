@@ -216,18 +216,7 @@ class LudoGame: ObservableObject {
         
         // Mark eligible pawns based on the roll
         if let currentPawns = pawns[currentPlayer] {
-            eligiblePawns = Set(currentPawns.filter { pawn in
-                if let positionIndex = pawn.positionIndex {
-                    // Pawn is on the path
-                    // Check if the move would overshoot home
-                    let currentPath = path(for: currentPlayer)
-                    let newIndex = positionIndex + diceValue
-                    return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
-                } else {
-                    // Pawn is at home and dice is 6
-                    return diceValue == GameConstants.sixDiceRoll
-                }
-            }.map { $0.id })
+            eligiblePawns = getEligiblePawns()
             
             // If it's an AI's turn, let it make a move
             if aiControlledPlayers.contains(currentPlayer) {
@@ -335,18 +324,7 @@ class LudoGame: ObservableObject {
         
         // Mark eligible pawns based on the roll
         if let currentPawns = pawns[currentPlayer] {
-            eligiblePawns = Set(currentPawns.filter { pawn in
-                if let positionIndex = pawn.positionIndex {
-                    // Pawn is on the path
-                    // Check if the move would overshoot home
-                    let currentPath = path(for: currentPlayer)
-                    let newIndex = positionIndex + diceValue
-                    return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
-                } else {
-                    // Pawn is at home and dice is 6
-                    return diceValue == GameConstants.sixDiceRoll
-                }
-            }.map { $0.id })
+            eligiblePawns = getEligiblePawns()
             
             // If there's exactly one eligible pawn, simulate tapping it
             if eligiblePawns.count == 1 && gameMode != .mirchi {
@@ -843,6 +821,37 @@ class LudoGame: ObservableObject {
         }
         
         return true // Get another roll for reaching home
+    }
+
+    // Returns the set of eligible pawn IDs for the current player and dice value
+    private func getEligiblePawns() -> Set<Int> {
+        guard let currentPawns = pawns[currentPlayer] else { return [] }
+        return Set(currentPawns.filter { pawn in
+            if gameMode == .mirchi {
+                // Eligible if can move forward OR backward
+                var canMoveBackward = false
+                var canMoveForward = false
+                if let positionIndex = pawn.positionIndex {
+                    let currentPath = path(for: currentPlayer)
+                    let newIndex = positionIndex + diceValue
+                    canMoveForward = positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
+                    canMoveBackward = (positionIndex - diceValue) >= GameConstants.startingPathIndex
+                } else {
+                    canMoveForward = diceValue == GameConstants.sixDiceRoll
+                    canMoveBackward = false // Can't move backward from home
+                }
+                return canMoveForward || canMoveBackward
+            } else {
+                // Classic mode: only forward moves
+                if let positionIndex = pawn.positionIndex {
+                    let currentPath = path(for: currentPlayer)
+                    let newIndex = positionIndex + diceValue
+                    return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
+                } else {
+                    return diceValue == GameConstants.sixDiceRoll
+                }
+            }
+        }.map { $0.id })
     }
 }
 
