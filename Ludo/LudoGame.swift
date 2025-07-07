@@ -625,6 +625,17 @@ class LudoGame: ObservableObject {
             // Pawn must be on the path (not at home or finished)
             return false
         }
+
+        // Backward move is not allowed from any safe zone
+        let currentPath = path(for: color)
+        let currentPosition = currentPath[positionIndex]
+        let inSafeZone = Self.redSafeZone.contains(currentPosition) ||
+                         Self.greenSafeZone.contains(currentPosition) ||
+                         Self.yellowSafeZone.contains(currentPosition) ||
+                         Self.blueSafeZone.contains(currentPosition)
+        if inSafeZone {
+            return false
+        }
         
         // Ensure the move does not go past the start of the path
         return positionIndex - diceValue >= GameConstants.startingPathIndex
@@ -831,29 +842,12 @@ class LudoGame: ObservableObject {
     private func getEligiblePawns() -> Set<Int> {
         guard let currentPawns = pawns[currentPlayer] else { return [] }
         return Set(currentPawns.filter { pawn in
-            if gameMode == .mirchi {
-                // Eligible if can move forward OR backward
-                var canMoveBackward = false
-                var canMoveForward = false
-                if let positionIndex = pawn.positionIndex {
-                    let currentPath = path(for: currentPlayer)
-                    let newIndex = positionIndex + diceValue
-                    canMoveForward = positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
-                    canMoveBackward = (positionIndex - diceValue) >= GameConstants.startingPathIndex
-                } else {
-                    canMoveForward = diceValue == GameConstants.sixDiceRoll
-                    canMoveBackward = false // Can't move backward from home
-                }
-                return canMoveForward || canMoveBackward
+            if let positionIndex = pawn.positionIndex {
+                let currentPath = path(for: currentPlayer)
+                let newIndex = positionIndex + diceValue
+                return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
             } else {
-                // Classic mode: only forward moves
-                if let positionIndex = pawn.positionIndex {
-                    let currentPath = path(for: currentPlayer)
-                    let newIndex = positionIndex + diceValue
-                    return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
-                } else {
-                    return diceValue == GameConstants.sixDiceRoll
-                }
+                return diceValue == GameConstants.sixDiceRoll
             }
         }.map { $0.id })
     }
