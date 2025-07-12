@@ -4,7 +4,7 @@ struct PawnView: View {
     @EnvironmentObject var game: LudoGame
     let pawn: PawnState
     let size: CGFloat
-
+    
     @State private var isAnimating = false
     
     private var isEligible: Bool {
@@ -17,7 +17,7 @@ struct PawnView: View {
             .renderingMode(.original)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .frame(width: size, height: size)
+            .frame(width: size, height: size) // For now, same size, logic will be in board
             .shadow(color: .black.opacity(0.2), radius: size / 10, x: 0, y: size / 10) // Soft, ambient shadow
             .shadow(color: .black.opacity(0.5), radius: size / 40, x: 0, y: size / 40) // Sharp, contact shadow
             .scaleEffect(isAnimating ? 1.2 : 1.0)

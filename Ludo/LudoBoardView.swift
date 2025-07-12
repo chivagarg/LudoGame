@@ -421,7 +421,9 @@ struct LudoBoardView: View {
                             parent: self,
                             row: row,
                             col: col,
-                            cellSize: cellSize
+                            cellSize: cellSize,
+                            currentPlayer: game.currentPlayer,
+                            eligiblePawns: game.eligiblePawns
                         )
                         .equatable()
                     }
@@ -470,13 +472,21 @@ struct LudoBoardView: View {
         let row: Int
         let col: Int
         let cellSize: CGFloat
+        let currentPlayer: PlayerColor
+        let eligiblePawns: Set<Int>
+
+        // Compute the set of eligible pawn IDs in this cell
+        var eligiblePawnIdsInCell: Set<Int> {
+            return Set(pawnsInCell.filter { $0.color == currentPlayer && eligiblePawns.contains($0.id) }.map { $0.id })
+        }
 
         static func == (lhs: BoardCellView, rhs: BoardCellView) -> Bool {
             // Create a unique identifier string (e.g., "red-0") for each pawn so pawns with the
             // same id but different colors are considered different
             let lhsPawnKeys = lhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
             let rhsPawnKeys = rhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
-            return lhsPawnKeys == rhsPawnKeys
+            // Also compare eligible pawn IDs in the cell
+            return lhsPawnKeys == rhsPawnKeys && lhs.eligiblePawnIdsInCell == rhs.eligiblePawnIdsInCell
         }
 
         var body: some View {
@@ -786,52 +796,31 @@ struct LudoBoardView: View {
                 let hopOffset = pathAnimatingPawns[key] != nil ? sin(pathAnimatingPawns[key]!.progress * .pi) * 60 : 0
                 let isAnimating = pathAnimatingPawns[key] != nil
                 
-                // Count total pawns in this cell
-                let totalPawns = countPawnsInCell(row: row, col: col)
+                let isExpanded = isExpanded(pawn: pawn, row: row, col: col)
                 
-                // Calculate this pawn's index in the cell
-                let pawnIndex = getPawnIndexInCell(pawn: pawn, color: color, row: row, col: col)
-                
-                // Calculate size and position
-                let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
-                
-                PawnView(pawn: pawn, size: size)
-                    .offset(x: xOffset, y: yOffset - hopOffset)
-                    .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
-                    .onTapGesture {
-                        if game.aiControlledPlayers.contains(color) {
-                            return
+                if isExpanded {
+                    PawnView(pawn: pawn, size: cellSize * pawnResizeFactor)
+                        .offset(x: 0, y: -hopOffset)
+                        .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
+                        .zIndex(1)
+                        .onTapGesture {
+                            handlePawnTap(pawn: pawn, color: color)
                         }
+                } else {
+                    // Count total pawns in this cell
+                    let totalPawns = countPawnsInCell(row: row, col: col)
+                    // Calculate this pawn's index in the cell
+                    let pawnIndex = getPawnIndexInCell(pawn: pawn, color: color, row: row, col: col)
 
-                        if isPathAnimating || isAnimatingHomeToStart || isAnimatingCapture || isDiceRolling {
-                            return
+                    let (size, xOffset, yOffset) = calculatePawnSizeAndOffset(cellSize: cellSize, totalPawns: totalPawns, index: pawnIndex)
+                    PawnView(pawn: pawn, size: size)
+                        .offset(x: xOffset, y: yOffset - hopOffset)
+                        .shadow(color: .black.opacity(isAnimating ? 0.3 : 0.1), radius: isAnimating ? 4 : 2)
+                        .zIndex(0)
+                        .onTapGesture {
+                            handlePawnTap(pawn: pawn, color: color)
                         }
-
-                        if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {                   
-                             GameLogger.shared.log("🌶️ [MIRCHI] MIRCHI MODE ON AND arrow activated for \(color.rawValue).", level: .debug)
-                            if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id) {
-                                let steps = game.diceValue
-                                animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
-                                    game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true)
-                                    isPathAnimating = false
-                                    isDiceRolling = false
-                                }
-                            }
-                        } else {
-                            if game.isValidMove(color: color, pawnId: pawn.id) {
-                                let currentPos = pawn.positionIndex ?? -1
-                                let steps = game.diceValue
-                                
-                                if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
-                                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps) {
-                                        game.movePawn(color: color, pawnId: pawn.id, steps: steps)
-                                        isPathAnimating = false
-                                        isDiceRolling = false
-                                    }
-                                }
-                            }
-                        }
-                    }
+                }
             }
         }
     }
@@ -1020,5 +1009,66 @@ struct LudoBoardView: View {
                 .zIndex(40) // Above board, below pawns
                 .allowsHitTesting(false)
         }
+    }
+
+    // Helper for pawn tap logic from pathPawnView
+    private func handlePawnTap(pawn: PawnState, color: PlayerColor) {
+        if game.aiControlledPlayers.contains(color) {
+            return
+        }
+
+        if isPathAnimating || isAnimatingHomeToStart || isAnimatingCapture || isDiceRolling {
+            return
+        }
+
+        if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {
+            GameLogger.shared.log("🌶️ [MIRCHI] MIRCHI MODE ON AND arrow activated for \(color.rawValue).", level: .debug)
+            if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id) {
+                let steps = game.diceValue
+                animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
+                    game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true)
+                    isPathAnimating = false
+                    isDiceRolling = false
+                }
+            }
+        } else {
+            if game.isValidMove(color: color, pawnId: pawn.id) {
+                let currentPos = pawn.positionIndex ?? -1
+                let steps = game.diceValue
+                
+                if let destinationIndex = game.getDestinationIndex(color: color, pawnId: pawn.id) {
+                    animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps) {
+                        game.movePawn(color: color, pawnId: pawn.id, steps: steps)
+                        isPathAnimating = false
+                        isDiceRolling = false
+                    }
+                }
+            }
+        }
+    }
+
+    // Helper to find all eligible pawns in a given cell
+    private func eligiblePawnsInCell(row: Int, col: Int) -> [PawnState] {
+        var pawns: [PawnState] = []
+        for (_, pwns) in game.pawns {
+            for p in pwns {
+                if let posIndex = p.positionIndex, posIndex >= 0 {
+                    let pos = getCurrentPosition(pawn: p, color: p.color, positionIndex: posIndex)
+                    if pos.row == row && pos.col == col {
+                        if p.color == game.currentPlayer && game.eligiblePawns.contains(p.id) {
+                            pawns.append(p)
+                        }
+                    }
+                }
+            }
+        }
+        return pawns
+    }
+
+    // Helper to determine if a pawn is the expanded pawn in a cell
+    private func isExpanded(pawn: PawnState, row: Int, col: Int) -> Bool {
+        let eligiblePawnsInCell = eligiblePawnsInCell(row: row, col: col)
+        guard let expandedPawn = eligiblePawnsInCell.first else { return false }
+        return pawn.id == expandedPawn.id && pawn.color == expandedPawn.color
     }
 } 
