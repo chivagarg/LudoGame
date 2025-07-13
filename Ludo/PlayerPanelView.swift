@@ -44,20 +44,20 @@ struct PlayerPanelView: View {
                     .frame(width: 100, height: 100)
                     .offset(x: -20, y: -5)
 
-                    // 2. Kill counts with pill (immediately after avatar)
-                    ZStack(alignment: .bottomTrailing) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 48, weight: .bold))
-                            .foregroundColor(.red)
+                    // 2. Kill counts: skull icon with score underneath
+                    VStack(spacing: 4) {
+                        Image("skull")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 48, height: 48)
                         Text("\(game.killCounts[color] ?? 0)")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.red)
+                            .foregroundColor(.black)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 4)
                             .background(Capsule().fill(Color.white))
-                            .offset(x: 8, y: 8)
                     }
-                    .offset(x: -16) 
+                    .offset(x: -16)
 
                     // 3. Mirchi Arrow (only in Mirchi mode)
                     if game.gameMode == .mirchi {
