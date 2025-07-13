@@ -820,13 +820,27 @@ class LudoGame: ObservableObject {
         // Pawn reaches home
         pawns[color]?[pawnIndex].positionIndex = GameConstants.finishedPawnIndex
         
-        // Add points for reaching home based on global order
+        // Add fixed points for reaching home
+        scores[color] = (scores[color] ?? 0) + 10
+
+        // Track total pawns reaching home (maintained for potential external uses)
         totalPawnsAtFinishingHome += 1
-        let points = GameConstants.maxScorePerPawn - (totalPawnsAtFinishingHome - 1)  // First pawn gets 16, second gets 15, etc.
-        scores[color] = (scores[color] ?? 0) + points
-        
+
         // If this was the last pawn for this player, check for game over
         if hasCompletedGame(color: color) {
+            // Award completion bonus based on order of finishing
+            if !homeCompletionOrder.contains(color) {
+                homeCompletionOrder.append(color)
+                let bonus: Int
+                switch homeCompletionOrder.count {
+                case 1: bonus = 35   // First player to finish
+                case 2: bonus = 20   // Second player
+                case 3: bonus = 10   // Third player
+                default: bonus = 0   // Fourth or later
+                }
+                scores[color] = (scores[color] ?? 0) + bonus
+            }
+
             if haveAllOtherPlayersCompleted() {
                 isGameOver = true
                 finalRankings = getFinalRankings()
