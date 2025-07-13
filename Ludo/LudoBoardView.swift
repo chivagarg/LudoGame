@@ -209,6 +209,8 @@ struct LudoBoardView: View {
                 
                 // MARK: - Trail Particles Overlay
                 trailParticlesOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
+                // Confetti and +10 overlay
+                ConfettiOverlay()
             }
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onChange(of: game.totalPawnsAtFinishingHome) { newCount in

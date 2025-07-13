@@ -29,6 +29,8 @@
 		DA79443A2E0750EE00EE49FC /* hopReverse.wav in Resources */ = {isa = PBXBuildFile; fileRef = DA7944382E0750EE00EE49FC /* hopReverse.wav */; };
 		DA79443E2E08C43C00EE49FC /* TrailParticleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */; };
 		DA7944402E14C7E800EE49FC /* FollowPathEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */; };
+		DA7944452E2457B100EE49FC /* ConfettiOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944442E2457B100EE49FC /* ConfettiOverlay.swift */; };
+		DA7944482E245ADD00EE49FC /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DA7944472E245ADD00EE49FC /* ConfettiSwiftUI */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
@@ -71,6 +73,7 @@
 		DA7944382E0750EE00EE49FC /* hopReverse.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = hopReverse.wav; sourceTree = "<group>"; };
 		DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailParticleView.swift; sourceTree = "<group>"; };
 		DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowPathEffect.swift; sourceTree = "<group>"; };
+		DA7944442E2457B100EE49FC /* ConfettiOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiOverlay.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -89,6 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA7944482E245ADD00EE49FC /* ConfettiSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -114,6 +118,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA7944442E2457B100EE49FC /* ConfettiOverlay.swift */,
 				DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */,
 				DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */,
 				DA7944372E0750EE00EE49FC /* hop.wav */,
@@ -226,6 +231,9 @@
 				Base,
 			);
 			mainGroup = 1A1A1A1A1A1A1A1A1A1A1A22;
+			packageReferences = (
+				DA7944462E245ADD00EE49FC /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+			);
 			productRefGroup = 1A1A1A1A1A1A1A1A1A1A1A24 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -268,6 +276,7 @@
 			files = (
 				DA79441E2DFF817E00EE49FC /* AIPlayer.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */,
+				DA7944452E2457B100EE49FC /* ConfettiOverlay.swift in Sources */,
 				DA7944402E14C7E800EE49FC /* FollowPathEffect.swift in Sources */,
 				DA79440C2DFA861D00EE49FC /* DiceView.swift in Sources */,
 				DA7944122DFA8AB700EE49FC /* PawnView.swift in Sources */,
@@ -553,6 +562,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		DA7944462E245ADD00EE49FC /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DA7944472E245ADD00EE49FC /* ConfettiSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DA7944462E245ADD00EE49FC /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
+			productName = ConfettiSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1A1A1A1A1A1A1A1A1A1A1A29 /* Project object */;
 }

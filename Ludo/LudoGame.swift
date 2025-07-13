@@ -838,6 +838,9 @@ class LudoGame: ObservableObject {
         // Add fixed points for reaching home
         scores[color] = (scores[color] ?? 0) + 10
 
+        // Notify UI for confetti / +10 animation
+        NotificationCenter.default.post(name: .pawnReachedHome, object: nil, userInfo: ["color": color])
+
         // Track total pawns reaching home (maintained for potential external uses)
         totalPawnsAtFinishingHome += 1
 
@@ -885,4 +888,5 @@ class LudoGame: ObservableObject {
 extension Notification.Name {
     static let animatePawnFromHome = Notification.Name("AnimatePawnFromHome")
     static let animatePawnCapture = Notification.Name("AnimatePawnCapture")
+    static let pawnReachedHome = Notification.Name("PawnReachedHome")
 } 
