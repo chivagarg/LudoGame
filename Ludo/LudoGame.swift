@@ -30,6 +30,9 @@ class LudoGame: ObservableObject {
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
 
+    // Remaining Mirchi (backward) moves per player
+    @Published var mirchiMovesRemaining: [PlayerColor: Int] = [.red: 5, .green: 5, .yellow: 5, .blue: 5]
+
     // Track number of pawns each player has captured
     @Published var killCounts: [PlayerColor: Int] = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
 
@@ -465,6 +468,8 @@ class LudoGame: ObservableObject {
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+        // Reset Mirchi move counts for selected players
+        mirchiMovesRemaining = Dictionary(uniqueKeysWithValues: selectedPlayers.map { ($0, 5) })
 
         // Initialize pawns for all players, but only selected ones will be visible/used
         var allPawns: [PlayerColor: [PawnState]] = [:]
@@ -522,6 +527,11 @@ class LudoGame: ObservableObject {
 
             if isPawnMovingToAnotherSpotOnPath {
                 shouldGetAnotherRoll = movePawnToAnotherSpotOnPath(color: color, pawnIndex: pawnIndex, currentPath: currentPath, newIndex: newIndex)
+
+                // Decrement Mirchi moves if this was a backward move
+                if backward {
+                    mirchiMovesRemaining[color] = max(0, mirchiMovesRemaining[color, default: 0] - 1)
+                }
             } else if isPawnReachingHome {
                 shouldGetAnotherRoll = movePawnToHome(color: color, pawnIndex: pawnIndex)
             }
@@ -615,6 +625,11 @@ class LudoGame: ObservableObject {
         guard color == currentPlayer,
               color == currentRollPlayer,
               eligiblePawns.contains(pawnId) else {
+            return false
+        }
+
+        // Ensure the player has remaining Mirchi moves
+        guard mirchiMovesRemaining[color, default: 0] > 0 else {
             return false
         }
         

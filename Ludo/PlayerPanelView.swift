@@ -61,14 +61,23 @@ struct PlayerPanelView: View {
 
                     // 3. Mirchi Arrow (only in Mirchi mode)
                     if game.gameMode == .mirchi {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.title)
-                            .foregroundColor(game.mirchiArrowActivated[color] == true ? color.toSwiftUIColor(for: color) : .white)
-                            .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
-                            .offset(x: -10)
-                            .onTapGesture {
-                                game.mirchiArrowActivated[color]?.toggle()
-                            }
+                        VStack(spacing: 4) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.title)
+                                .foregroundColor(game.mirchiMovesRemaining[color, default: 0] == 0 ? .gray : (game.mirchiArrowActivated[color] == true ? color.toSwiftUIColor(for: color) : .white))
+                                .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                                .onTapGesture {
+                                    // Only allow toggling if moves remain
+                                    if game.mirchiMovesRemaining[color, default: 0] > 0 {
+                                        game.mirchiArrowActivated[color]?.toggle()
+                                    }
+                                }
+                            // Placeholder count – will be wired to game logic in part 2
+                            Text("\(game.mirchiMovesRemaining[color, default: 0])")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.black)
+                        }
+                        .offset(x: -10)
                     }
 
                     // 4. Dice (only for current player, uses opacity to maintain layout)
