@@ -857,6 +857,8 @@ class LudoGame: ObservableObject {
                 default: bonus = 0   // Fourth or later
                 }
                 scores[color] = (scores[color] ?? 0) + bonus
+                // Notify UI overlay of bonus points for completing the game
+                NotificationCenter.default.post(name: .playerFinished, object: nil, userInfo: ["color": color, "bonus": bonus])
             }
 
             if haveAllOtherPlayersCompleted() {
@@ -889,4 +891,5 @@ extension Notification.Name {
     static let animatePawnFromHome = Notification.Name("AnimatePawnFromHome")
     static let animatePawnCapture = Notification.Name("AnimatePawnCapture")
     static let pawnReachedHome = Notification.Name("PawnReachedHome")
+    static let playerFinished = Notification.Name("PlayerFinished")
 } 

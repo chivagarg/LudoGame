@@ -42,8 +42,9 @@ struct StrokeText: View {
 struct ConfettiOverlay: View {
     @State private var confettiTrigger: Int = 0
     @State private var flashText: Bool = false
-    @State private var displayText: String = "+10"
+    @State private var displayText: String = ""
     @State private var textColor: Color = .orange
+    @State private var messageQueue: [(String, Color)] = []
 
     var body: some View {
         ZStack {
@@ -65,22 +66,54 @@ struct ConfettiOverlay: View {
 #endif
         .allowsHitTesting(false)
         .onReceive(NotificationCenter.default.publisher(for: .pawnReachedHome)) { notification in
-            confettiTrigger += 1
-            if let colorEnum = (notification.userInfo?["color"]) as? PlayerColor {
-                textColor = colorEnum.color
-            } else if let raw = (notification.userInfo?["color"]) as? String, let colorEnum = PlayerColor(rawValue: raw) {
-                textColor = colorEnum.color
-            } else {
-                textColor = .orange
+            enqueueMessage(basePoints: 10, notification: notification)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .playerFinished)) { notification in
+            if let bonus = notification.userInfo?["bonus"] as? Int {
+                enqueueMessage(basePoints: bonus, notification: notification)
             }
+        }
+    }
+
+    // MARK: - Helper Functions
+
+    private func enqueueMessage(basePoints points: Int, notification: Notification) {
+        // Determine color
+        var color: Color = .orange
+        if let colorEnum = (notification.userInfo?["color"]) as? PlayerColor {
+            color = colorEnum.color
+        } else if let raw = (notification.userInfo?["color"]) as? String,
+                  let colorEnum = PlayerColor(rawValue: raw) {
+            color = colorEnum.color
+        }
+
+        // Add message to queue
+        messageQueue.append(("+\(points)", color))
+
+        // If not currently showing text, show next
+        if !flashText {
+            showNextMessage()
+        }
+    }
+
+    private func showNextMessage() {
+        guard !messageQueue.isEmpty else { return }
+        let (msg, color) = messageQueue.removeFirst()
+        displayText = msg
+        textColor = color
+        confettiTrigger += 1
+
+        withAnimation(.easeInOut) {
+            flashText = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation(.easeInOut) {
-                flashText = true
+                flashText = false
             }
-            // hide after 2 sec
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                withAnimation(.easeInOut) {
-                    flashText = false
-                }
+            // After hide animation, show next if available
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.showNextMessage()
             }
         }
     }
