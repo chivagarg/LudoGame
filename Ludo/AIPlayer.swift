@@ -54,8 +54,9 @@ struct RationalMoveStrategy: AILogicStrategy {
 
         // --- Mirchi Mode: Tier 0.5 - Offensive Backward Capture ---
         if game.gameMode == .mirchi {
+            let movesLeft = game.mirchiMovesRemaining[player, default: 0]
             for pawnId in eligiblePawns {
-                if game.isValidBackwardMove(color: player, pawnId: pawnId) {
+                if movesLeft > 0 && game.isValidBackwardMove(color: player, pawnId: pawnId) {
                     if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
                        let positionIndex = pawn.positionIndex {
                         
@@ -124,6 +125,8 @@ struct RationalMoveStrategy: AILogicStrategy {
 
         // --- Mirchi Mode: Tier 3.5 - Defensive Backward Move to Safety ---
         if game.gameMode == .mirchi {
+            let movesLeft = game.mirchiMovesRemaining[player, default: 0]
+            guard movesLeft > 1 else { /* conserve last move(s) */ return nil }
             for pawnId in eligiblePawns {
                 if game.isValidBackwardMove(color: player, pawnId: pawnId) {
                     if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),

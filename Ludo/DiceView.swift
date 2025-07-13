@@ -4,10 +4,13 @@ import AVFoundation
 struct DiceView: View {
     let value: Int
     let isRolling: Bool
+    let shouldPulse: Bool   // new flag
     let onTap: () -> Void
     
     @State private var rotation: Double = 0
     @State private var scale: CGFloat = 1.0
+    // add pulse state
+    @State private var pulse = false
     
     var body: some View {
         ZStack {
@@ -56,6 +59,11 @@ struct DiceView: View {
             }
         }
         .frame(width: 60, height: 60)
+        // Pulsate when allowed to roll and not rolling
+        .scaleEffect(shouldPulse && !isRolling ? (pulse ? 1.15 : 1.0) : 1.0)
+        .onAppear { updatePulse() }
+        .onChange(of: shouldPulse) { _ in updatePulse() }
+        .onChange(of: isRolling) { _ in updatePulse() }
         .contentShape(Rectangle())  // Make the entire area tappable
         .onTapGesture {
             if !isRolling {
@@ -85,6 +93,19 @@ struct DiceView: View {
                    (row == 2 && col == 0) || (row == 2 && col == 2)
         default:
             return false
+        }
+    }
+
+    private func updatePulse() {
+        #if DEBUG
+        print("[DEBUG] DiceView updatePulse shouldPulse", shouldPulse, "isRolling", isRolling)
+        #endif
+        if shouldPulse && !isRolling {
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                pulse.toggle()
+            }
+        } else {
+            pulse = false
         }
     }
 }

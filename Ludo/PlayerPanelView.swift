@@ -81,9 +81,14 @@ struct PlayerPanelView: View {
                     }
 
                     // 4. Dice (only for current player, uses opacity to maintain layout)
+                    let canRoll = showDice && !isDiceRolling && !localDiceRolling && game.eligiblePawns.isEmpty && game.currentRollPlayer == nil && !game.isBusy && !game.aiControlledPlayers.contains(color)
+#if DEBUG
+                    let _ = { print("[DEBUG] canRoll for \(color.rawValue):", canRoll) }()
+#endif
                     DiceView(
                         value: diceValue,
                         isRolling: isDiceRolling || localDiceRolling,
+                        shouldPulse: canRoll,
                         onTap: {
                             // Disable tap for AI players
                             if !game.aiControlledPlayers.contains(color) {
@@ -91,6 +96,7 @@ struct PlayerPanelView: View {
                             }
                         }
                     )
+                    .id(canRoll)
                     .opacity(showDice ? 1.0 : 0.0)
                     .allowsHitTesting(showDice)
                 }
@@ -98,9 +104,16 @@ struct PlayerPanelView: View {
             }
         }
         .frame(height: 100)
+        // Base border for selected players
         .overlay(
             RoundedRectangle(cornerRadius: 20)
                 .stroke(game.selectedPlayers.contains(color) ? color.toSwiftUIColor(for: color) : Color.clear, lineWidth: 2)
+        )
+        // Additional halo to highlight current player
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(game.currentPlayer == color ? color.toSwiftUIColor(for: color) : Color.clear, lineWidth: 4)
+                .shadow(color: color.toSwiftUIColor(for: color).opacity(game.currentPlayer == color ? 0.7 : 0), radius: 6)
         )
         .shadow(color: .black.opacity(game.selectedPlayers.contains(color) ? 0.3 : 0), radius: 5, x: 0, y: 5)
         .onChange(of: game.rollID) { _ in
