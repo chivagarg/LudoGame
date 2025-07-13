@@ -31,6 +31,7 @@ struct LudoBoardView: View {
     
     // MARK: - Trail Animation State
     @State private var trailParticles: [TrailParticle] = []
+    @State private var particleTimer: Timer? = nil // Timer for particle aging
     
     private let pawnResizeFactor: CGFloat = 1.0
     private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.90 }
@@ -127,6 +128,7 @@ struct LudoBoardView: View {
                 createdAt: Date()
             )
             trailParticles.append(trailParticle)
+            startParticleAgingTimerIfNeeded() // Start timer when first particle appears
             
             pathAnimatingPawns[key] = (start: currentFrom, end: currentTo, progress: 0)
             
@@ -185,8 +187,10 @@ struct LudoBoardView: View {
     
     var body: some View {
         let _ = {
+            #if DEBUG
             Self.renderCount += 1
-            // print("LudoBoardView rendered \(Self.renderCount) times")
+            print("[DEBUG] LudoBoardView rendered", Self.renderCount)
+            #endif
         }()
 
         return GeometryReader { geometry in
@@ -240,8 +244,7 @@ struct LudoBoardView: View {
                 // Sync initial pawn count
                 previousPawnsAtHome = game.totalPawnsAtFinishingHome
                 
-                // Start particle aging timer
-                startParticleAgingTimer()
+                // No need to start particle timer here; it will start when particles are added
             }
             .onReceive(NotificationCenter.default.publisher(for: .animatePawnFromHome)) { notification in
                 guard let userInfo = notification.userInfo,
@@ -985,16 +988,29 @@ struct LudoBoardView: View {
         return reversedPathToStart + [homePosition]
     }
 
-    private func startParticleAgingTimer() {
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            // Age all particles
-            for i in trailParticles.indices {
-                trailParticles[i].age += 0.05 // Increase age by 0.05 each frame
-                trailParticles[i].opacity = 0.6 * (1.0 - trailParticles[i].age) // Fade from 0.6 to 0.0
+    // Start the particle timer only if needed
+    private func startParticleAgingTimerIfNeeded() {
+        if particleTimer == nil {
+            #if DEBUG
+            print("[DEBUG] Particle timer START")
+            #endif
+            particleTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+                // Age all particles
+                for i in trailParticles.indices {
+                    trailParticles[i].age += 0.05
+                    trailParticles[i].opacity = 0.6 * (1.0 - trailParticles[i].age)
+                }
+                // Remove fully faded particles
+                trailParticles.removeAll { $0.age >= 1.0 }
+                // Stop timer if no particles remain
+                if trailParticles.isEmpty {
+                    #if DEBUG
+                    print("[DEBUG] Particle timer STOP")
+                    #endif
+                    particleTimer?.invalidate()
+                    particleTimer = nil
+                }
             }
-            
-            // Remove fully faded particles
-            trailParticles.removeAll { $0.age >= 1.0 }
         }
     }
 
