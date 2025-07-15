@@ -838,8 +838,13 @@ class LudoGame: ObservableObject {
         // Add fixed points for reaching home
         scores[color] = (scores[color] ?? 0) + 10
 
-        // Notify UI for confetti / +10 animation
-        NotificationCenter.default.post(name: .pawnReachedHome, object: nil, userInfo: ["color": color])
+        // Check if this move completes the player's game
+        let completedNow = hasCompletedGame(color: color)
+
+        // Notify UI for confetti / +10 animation (include completion flag)
+        NotificationCenter.default.post(name: .pawnReachedHome,
+                                        object: nil,
+                                        userInfo: ["color": color, "completed": completedNow])
 
         // Track total pawns reaching home (maintained for potential external uses)
         totalPawnsAtFinishingHome += 1

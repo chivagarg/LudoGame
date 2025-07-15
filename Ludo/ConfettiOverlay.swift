@@ -40,11 +40,12 @@ struct StrokeText: View {
 
 
 struct ConfettiOverlay: View {
-    @State private var confettiTrigger: Int = 0
+    @State private var confettiTrigger: Int = 0            // regular +10 confetti
+    @State private var finishConfettiTrigger: Int = 0      // bigger fireworks for game completion
     @State private var flashText: Bool = false
     @State private var displayText: String = ""
     @State private var textColor: Color = .orange
-    @State private var messageQueue: [(String, Color)] = []
+    @State private var messageQueue: [(String, Color, Bool)] = [] // (text,color,shouldSmallConfetti)
 
     var body: some View {
         ZStack {
@@ -60,24 +61,41 @@ struct ConfettiOverlay: View {
             }
         }
 #if canImport(ConfettiSwiftUI)
+        // Standard confetti for each pawn reaching home
         .confettiCannon(trigger: $confettiTrigger,
                         num: 40,
                         colors: [.red, .green, .yellow, .blue])
+        // Extra-special fireworks when a player finishes the game
+        .confettiCannon(trigger: $finishConfettiTrigger,
+                        num: 60,
+                        confettis: [.shape(.circle), .shape(.triangle), .shape(.square), .shape(.roundedCross), .text("⭐️"), .text("🎉")],
+                        colors: [.yellow, .red, .green, .blue, .purple, .orange],
+                        confettiSize: 14,
+                        openingAngle: .degrees(0),
+                        closingAngle: .degrees(360),
+                        radius: 350,
+                        hapticFeedback: true)
 #endif
         .allowsHitTesting(false)
         .onReceive(NotificationCenter.default.publisher(for: .pawnReachedHome)) { notification in
-            enqueueMessage(basePoints: 10, notification: notification)
+            let completed = notification.userInfo?["completed"] as? Bool ?? false
+            let useSmall = !completed // small confetti only if not completed
+            enqueueMessage(basePoints: 10, notification: notification, smallConfetti: useSmall)
+            if completed {
+                finishConfettiTrigger += 1 // launch fireworks once
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .playerFinished)) { notification in
             if let bonus = notification.userInfo?["bonus"] as? Int {
-                enqueueMessage(basePoints: bonus, notification: notification)
+                 enqueueMessage(basePoints: bonus, notification: notification, smallConfetti: false)
+                 // Fireworks already triggered on pawnReachedHome when completed, so do not increment again
             }
         }
     }
 
     // MARK: - Helper Functions
 
-    private func enqueueMessage(basePoints points: Int, notification: Notification) {
+    private func enqueueMessage(basePoints points: Int, notification: Notification, smallConfetti: Bool = true) {
         // Determine color
         var color: Color = .orange
         if let colorEnum = (notification.userInfo?["color"]) as? PlayerColor {
@@ -88,7 +106,7 @@ struct ConfettiOverlay: View {
         }
 
         // Add message to queue
-        messageQueue.append(("+\(points)", color))
+        messageQueue.append(("+\(points)", color, smallConfetti))
 
         // If not currently showing text, show next
         if !flashText {
@@ -98,10 +116,12 @@ struct ConfettiOverlay: View {
 
     private func showNextMessage() {
         guard !messageQueue.isEmpty else { return }
-        let (msg, color) = messageQueue.removeFirst()
+        let (msg, color, smallConfetti) = messageQueue.removeFirst()
         displayText = msg
         textColor = color
-        confettiTrigger += 1
+        if smallConfetti {
+            confettiTrigger += 1  // regular burst per message
+        }
 
         withAnimation(.easeInOut) {
             flashText = true
