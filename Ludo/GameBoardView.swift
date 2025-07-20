@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GameBoardView: View {
     @EnvironmentObject var game: LudoGame
+    @State private var showPauseMenu: Bool = false
     
     var body: some View {
         ZStack {
@@ -18,6 +19,43 @@ struct GameBoardView: View {
                 }
             } else {
                 LudoBoardView(maximized: true)
+            }
+
+            // Pause button at top right
+            VStack {
+                HStack {
+                    Spacer()
+                    Button(action: { showPauseMenu = true }) {
+                        Image(systemName: "pause.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.black)
+                            .shadow(radius: 3)
+                    }
+                    .padding()
+                }
+                Spacer()
+            }
+
+            // Dimmed background and dialog
+            if showPauseMenu {
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture { showPauseMenu = false }
+
+                PauseDialogView(
+                    onResume: {
+                        showPauseMenu = false
+                    },
+                    onRestart: {
+                        showPauseMenu = false
+                        game.startGame(selectedPlayers: game.selectedPlayers, aiPlayers: game.aiControlledPlayers, mode: game.gameMode)
+                    },
+                    onExit: {
+                        showPauseMenu = false
+                        game.gameStarted = false
+                    }
+                )
+                .frame(width: 220)
             }
         }
     }

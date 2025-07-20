@@ -31,6 +31,7 @@
 		DA7944402E14C7E800EE49FC /* FollowPathEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */; };
 		DA7944452E2457B100EE49FC /* ConfettiOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA7944442E2457B100EE49FC /* ConfettiOverlay.swift */; };
 		DA7944482E245ADD00EE49FC /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = DA7944472E245ADD00EE49FC /* ConfettiSwiftUI */; };
+		DA79444C2E2CBB0E00EE49FC /* PauseDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79444B2E2CBB0E00EE49FC /* PauseDialogView.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
@@ -74,6 +75,7 @@
 		DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrailParticleView.swift; sourceTree = "<group>"; };
 		DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowPathEffect.swift; sourceTree = "<group>"; };
 		DA7944442E2457B100EE49FC /* ConfettiOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiOverlay.swift; sourceTree = "<group>"; };
+		DA79444B2E2CBB0E00EE49FC /* PauseDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PauseDialogView.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DA79444B2E2CBB0E00EE49FC /* PauseDialogView.swift */,
 				DA7944442E2457B100EE49FC /* ConfettiOverlay.swift */,
 				DA79443F2E14C7E800EE49FC /* FollowPathEffect.swift */,
 				DA79443D2E08C43C00EE49FC /* TrailParticleView.swift */,
@@ -285,6 +288,7 @@
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
 				DA7944322E04B69500EE49FC /* Extensions.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,
+				DA79444C2E2CBB0E00EE49FC /* PauseDialogView.swift in Sources */,
 				DA7944302E04B55000EE49FC /* PlayerPanelView.swift in Sources */,
 				DA7944242DFFB24000EE49FC /* GameLogger.swift in Sources */,
 				DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */,
