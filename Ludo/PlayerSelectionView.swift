@@ -58,18 +58,11 @@ struct PlayerSelectionView: View {
     
     private func playerRow(color: PlayerColor) -> some View {
         HStack {
-            // Player Pawn
-            Circle()
-                .fill(colorForPlayer(color))
-                .frame(width: 30, height: 30)
-                .overlay(
-                    Circle()
-                        .stroke(Color.white, lineWidth: 2)
-                )
-            
-            Text(color.rawValue.capitalized)
-                .font(.body)
-                .foregroundColor(colorForPlayer(color))
+            // Pawn image
+            Image("pawn_\(color.rawValue)_marble")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 40, height: 40)
             
             Spacer()
             

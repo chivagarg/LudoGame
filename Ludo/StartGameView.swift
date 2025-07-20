@@ -9,6 +9,8 @@ struct StartGameView: View {
 
     // Decorative dice for the header
     private let diceImages = ["die.face.1", "die.face.2", "die.face.3", "die.face.4", "die.face.5", "die.face.6"]
+
+    @State private var step: Int = 0 // 0 = mode select, 1 = setup players
     
     var body: some View {
         ZStack {
@@ -54,38 +56,22 @@ struct StartGameView: View {
                     .foregroundStyle(.blue)
                     .shadow(color: .blue.opacity(0.3), radius: 4, x: 0, y: 2)
 
-                // Glassmorphic card containing controls
-                VStack(spacing: 28) {
-                    SettingsTableView(isAdminMode: $isAdminMode)
-
-                    VStack {
-                        Text("Game Mode")
-                            .font(.headline)
-                            .foregroundColor(.blue)
-                        Picker("Game Mode", selection: $selectedMode) {
-                            ForEach(GameMode.allCases) { mode in
-                                Text(mode.rawValue).tag(mode)
+                Group {
+                    if step == 0 {
+                        VStack(spacing: 20) {
+                            ModeSelectionCard { mode in
+                                selectedMode = mode
+                                withAnimation { step = 1 }
                             }
+                            SettingsTableView(isAdminMode: $isAdminMode)
                         }
-                        .pickerStyle(.segmented)
+                    } else {
+                        PlayerSetupCard(isAdminMode: $isAdminMode,
+                                        selectedPlayers: $selectedPlayers,
+                                        aiPlayers: $aiPlayers,
+                                        onStart: onStartGame,
+                                        onBack: { withAnimation { step = 0 } })
                     }
-
-                    PlayerSelectionView(selectedPlayers: $selectedPlayers, aiPlayers: $aiPlayers)
-
-                    Button(action: onStartGame) {
-                        HStack {
-                            Image(systemName: "play.circle.fill")
-                            Text("Start Game")
-                        }
-                        .font(.title2)
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 12)
-                        .background(selectedPlayers.count < 2 ? Color.gray : Color.blue)
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                        .shadow(radius: 4)
-                    }
-                    .disabled(selectedPlayers.count < 2)
                 }
                 .padding(30)
                 .background(.ultraThinMaterial)
