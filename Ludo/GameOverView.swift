@@ -1,62 +1,154 @@
 import SwiftUI
+#if canImport(ConfettiSwiftUI)
+import ConfettiSwiftUI
+#endif
 
 struct GameOverView: View {
     @EnvironmentObject var game: LudoGame
     @Binding var selectedPlayers: Set<PlayerColor>
     
+    @State private var confettiTrigger: Int = 0
+    @State private var trophyBounce: Bool = false
+    @State private var animatedScores: [PlayerColor: Int] = [:]
+    
+    // Determine kill-bonus winners once
+    private var killBonusWinners: [PlayerColor] {
+        let maxKills = game.killCounts.values.max() ?? 0
+        return game.killCounts.filter { $0.value == maxKills && maxKills > 0 }.map { $0.key }
+    }
+    
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Game Over!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        let winner = game.finalRankings.first ?? .red
+        VStack(spacing: 24) {
+            // Winner section
+            VStack(spacing: 8) {
+                HStack(spacing: 12) {
+                    // Bouncing trophy
+                    Image(systemName: "trophy.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                        .foregroundColor(.yellow)
+                        .offset(y: trophyBounce ? -10 : 0)
+                        .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: trophyBounce)
+                    // Winning pawn image (marble style)
+                    Image("pawn_\(winner.rawValue)_marble")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                        .shadow(radius: 4)
+                }
+                Text("Winner!")
+                    .font(.system(size: 32, weight: .heavy))
+                    .foregroundColor(winner.color)
+            }
+            .padding(.top)
             
-            VStack(spacing: 16) {
+            // Scoreboard
+            VStack(spacing: 12) {
                 ForEach(Array(game.finalRankings.enumerated()), id: \.element) { index, color in
+                    let isKillBonus = killBonusWinners.contains(color)
+                    let finalScore = (game.scores[color] ?? 0) + (isKillBonus ? 5 : 0)
+                    let displayScore = animatedScores[color, default: finalScore]
                     HStack {
-                        Text("\(index + 1).")
+                        Text("\(index + 1)")
                             .font(.title2)
-                            .foregroundColor(.gray)
-                            .frame(width: 40, alignment: .leading)
+                            .frame(width: 30, alignment: .leading)
                         
-                        Text(color.rawValue.capitalized)
-                            .font(.title2)
-                            .foregroundColor(colorForPlayer(color))
-                        
+                        Image("pawn_\(color.rawValue)_marble")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
                         Spacer()
-                        
-                        Text("\(game.scores[color] ?? 0) pts")
+                        if isKillBonus {
+                            HStack(spacing: 4) {
+                                Text("TOP KILLS")
+                                    .font(.caption2)
+                                    .fontWeight(.heavy)
+                                    .foregroundColor(.red)
+                                    .rotationEffect(.degrees(-10))
+                                Image("skull")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 20, height: 20)
+                                Text("+5")
+                                    .foregroundColor(.black)
+                            }
+                            .padding(.trailing, 6)
+                        }
+                        Text("\(displayScore) pts")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(colorForPlayer(color))
+                            .foregroundColor(color.color)
                     }
                     .padding()
                     .background(Color.white)
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(color == winner ? color.color : Color.clear, lineWidth: 3)
+                    )
+                    .cornerRadius(12)
+                    .shadow(radius: 3)
                 }
             }
             .padding()
             
-            Button("Play Again") {
+            Button(action: {
                 game.startGame(selectedPlayers: selectedPlayers, aiPlayers: game.aiControlledPlayers, mode: game.gameMode)
+            }) {
+                Text("Play Again")
+                    .font(.title2)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
             }
-            .font(.title2)
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
         }
         .padding()
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(20)
+#if canImport(ConfettiSwiftUI)
+        .confettiCannon(trigger: $confettiTrigger,
+                        num: 100,
+                        colors: [.red, .green, .yellow, .blue, .purple, .orange],
+                        confettiSize: 12,
+                        repetitions: 3,
+                        repetitionInterval: 0.5)
+#endif
+        .onAppear {
+            setupAnimatedScores()
+            confettiTrigger += 1
+            trophyBounce = true
+            startKillBonusAnimation()
+        }
     }
     
-    private func colorForPlayer(_ color: PlayerColor) -> Color {
-        switch color {
-        case .red: return .red
-        case .green: return .green
-        case .yellow: return .yellow
-        case .blue: return .blue
+    // Initialize animated score dictionary with pre-bonus values
+    private func setupAnimatedScores() {
+        for color in game.finalRankings {
+            let base = game.scores[color] ?? 0
+            if killBonusWinners.contains(color) {
+                animatedScores[color] = max(0, base - 5)
+            } else {
+                animatedScores[color] = base
+            }
+        }
+    }
+
+    // Increment scores for winners one point at a time
+    private func startKillBonusAnimation() {
+        for color in killBonusWinners {
+            let target = (game.scores[color] ?? 0) // this already includes bonus
+            incrementScore(for: color, to: target)
+        }
+    }
+
+    private func incrementScore(for color: PlayerColor, to target: Int) {
+        guard var current = animatedScores[color], current < target else { return }
+        // Schedule increments
+        for step in 1...5 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(step) * 0.5) {
+                animatedScores[color, default: current] += 1
+            }
         }
     }
 } 
