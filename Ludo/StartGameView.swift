@@ -11,6 +11,7 @@ struct StartGameView: View {
     private let diceImages = ["die.face.1", "die.face.2", "die.face.3", "die.face.4", "die.face.5", "die.face.6"]
 
     @State private var step: Int = 0 // 0 = mode select, 1 = setup players
+    @State private var diceRoll: Bool = false
     
     var body: some View {
         ZStack {
@@ -49,6 +50,8 @@ struct StartGameView: View {
                         Image(systemName: img)
                             .font(.title2)
                             .foregroundColor(.blue)
+                            .rotationEffect(.degrees(diceRoll ? 360 : 0))
+                            .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: false), value: diceRoll)
                     }
                 }
                 Text("LUDO")
@@ -79,6 +82,7 @@ struct StartGameView: View {
                 .shadow(radius: 10)
             }
             .padding()
+            .onAppear { diceRoll = true }
         }
     }
 } 
