@@ -32,7 +32,7 @@ struct GameOverView: View {
                         .offset(y: trophyBounce ? -10 : 0)
                         .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: trophyBounce)
                     // Winning pawn image (marble style)
-                    Image("pawn_\(winner.rawValue)_marble")
+                    Image("pawn_\(winner.rawValue)_marble_filled")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80)
@@ -55,7 +55,7 @@ struct GameOverView: View {
                             .font(.title2)
                             .frame(width: 30, alignment: .leading)
                         
-                        Image("pawn_\(color.rawValue)_marble")
+                        Image("pawn_\(color.rawValue)_marble_filled")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 40, height: 40)

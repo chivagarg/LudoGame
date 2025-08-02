@@ -59,7 +59,7 @@ struct PlayerSelectionView: View {
     private func playerRow(color: PlayerColor) -> some View {
         HStack {
             // Pawn image
-            Image("pawn_\(color.rawValue)_marble")
+            Image("pawn_\(color.rawValue)_marble_filled")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 40, height: 40)

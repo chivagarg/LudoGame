@@ -16,11 +16,11 @@ struct PlayerSetupCard: View {
         VStack(spacing: 24) {
             // playful hop animation
             ZStack {
-                Image("pawn_blue_marble")
+                Image("pawn_blue_marble_filled")
                     .resizable().frame(width: 24, height: 24)
                     .offset(x: 40, y: blueOffsetY)
                     .opacity(blueGone ? 0 : 1)
-                Image("pawn_red_marble")
+                Image("pawn_red_marble_filled")
                     .resizable().frame(width: 24, height: 24)
                     .offset(x: redX, y: redY)
             }

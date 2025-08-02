@@ -25,7 +25,7 @@ struct PlayerPanelView: View {
                     ZStack(alignment: .bottomTrailing) {
                         // Avatar
                         ZStack {
-                            Image("pawn_\(color.rawValue)_marble")
+                            Image("pawn_\(color.rawValue)_marble_filled")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 80, height: 80)
@@ -63,9 +63,11 @@ struct PlayerPanelView: View {
                     if game.gameMode == .mirchi {
                         VStack(spacing: 4) {
                             Image(systemName: "arrow.down.circle.fill")
-                                .font(.title)
+                                .resizable()
+                                .frame(width: 44, height: 44) // Bigger icon for better visibility
                                 .foregroundColor(game.mirchiMovesRemaining[color, default: 0] == 0 ? .gray : (game.mirchiArrowActivated[color] == true ? color.toSwiftUIColor(for: color) : .white))
                                 .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                                .contentShape(Rectangle()) // Enlarged hit-testing area
                                 .onTapGesture {
                                     // Only allow toggling if moves remain
                                     if game.mirchiMovesRemaining[color, default: 0] > 0 {
