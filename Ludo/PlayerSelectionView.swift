@@ -100,12 +100,7 @@ struct PlayerSelectionView: View {
     }
     
     private func colorForPlayer(_ color: PlayerColor) -> Color {
-        switch color {
-        case .red: return .red
-        case .green: return .green
-        case .yellow: return .yellow
-        case .blue: return .blue
-        }
+        return color.primaryColor
     }
 }
 

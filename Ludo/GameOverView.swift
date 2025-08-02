@@ -65,7 +65,7 @@ struct GameOverView: View {
                                 Text("TOP KILLS")
                                     .font(.caption2)
                                     .fontWeight(.heavy)
-                                    .foregroundColor(.red)
+                                    .foregroundColor(PlayerColor.red.primaryColor)
                                     .rotationEffect(.degrees(-10))
                                 Image("skull")
                                     .resizable()
@@ -100,7 +100,7 @@ struct GameOverView: View {
                     .font(.title2)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color.blue)
+                    .background(PlayerColor.blue.primaryColor)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }

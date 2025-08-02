@@ -524,46 +524,46 @@ struct LudoBoardView: View {
                 if row < 6 && col < 6 {
                     if (row == 1 || row == 4) && (col == 1 || col == 4) {
                         Rectangle().fill(Color.white)
-                        Rectangle().fill(Color.red.opacity(0.3))
+                        Rectangle().fill(PlayerColor.red.secondaryColor)
                     } else {
-                        Rectangle().fill(Color.red.opacity(0.7))
+                        Rectangle().fill(PlayerColor.red.primaryColor)
                     }
                 // Green Home Area
                 } else if row < 6 && col > 8 {
                     if (row == 1 || row == 4) && (col == 10 || col == 13) {
                         Rectangle().fill(Color.white)
-                        Rectangle().fill(Color.green.opacity(0.3))
+                        Rectangle().fill(PlayerColor.green.secondaryColor)
                     } else {
-                        Rectangle().fill(Color.green.opacity(0.7))
+                        Rectangle().fill(PlayerColor.green.primaryColor)
                     }
                 // Blue Home Area
                 } else if row > 8 && col < 6 {
                     if (row == 10 || row == 13) && (col == 1 || col == 4) {
                         Rectangle().fill(Color.white)
-                        Rectangle().fill(Color.blue.opacity(0.3))
+                        Rectangle().fill(PlayerColor.blue.secondaryColor)
                     } else {
-                        Rectangle().fill(Color.blue.opacity(0.7))
+                        Rectangle().fill(PlayerColor.blue.primaryColor)
                     }
                 // Yellow Home Area
                 } else if row > 8 && col > 8 {
                     if (row == 10 || row == 13) && (col == 10 || col == 13) {
                         Rectangle().fill(Color.white)
-                        Rectangle().fill(Color.yellow.opacity(0.3))
+                        Rectangle().fill(PlayerColor.yellow.secondaryColor)
                     } else {
-                        Rectangle().fill(Color.yellow.opacity(0.7))
+                        Rectangle().fill(PlayerColor.yellow.primaryColor)
                     }
                 // Red Safe Zone
                 } else if row == 7 && (1...5).contains(col) {
-                    Rectangle().fill(Color.red.opacity(0.7))
+                    Rectangle().fill(PlayerColor.red.primaryColor)
                 // Green Safe Zone
                 } else if col == 7 && (1...5).contains(row) {
-                    Rectangle().fill(Color.green.opacity(0.7))
+                    Rectangle().fill(PlayerColor.green.primaryColor)
                 // Yellow Safe Zone
                 } else if row == 7 && (9...13).contains(col) {
-                    Rectangle().fill(Color.yellow.opacity(0.7))
+                    Rectangle().fill(PlayerColor.yellow.primaryColor)
                 // Blue Safe Zone
                 } else if col == 7 && (9...13).contains(row) {
-                    Rectangle().fill(Color.blue.opacity(0.7))
+                    Rectangle().fill(PlayerColor.blue.primaryColor)
                 } else {
                     // Path cells
                     Rectangle().fill(Color.white)
@@ -571,13 +571,13 @@ struct LudoBoardView: View {
                 
                 // Color-coded star spaces
                 if (row == 6 && col == 1) || (row == 2 && col == 6) {
-                    Rectangle().fill(Color.red.opacity(0.3))
+                    Rectangle().fill(PlayerColor.red.secondaryColor)
                 } else if (row == 1 && col == 8) || (row == 6 && col == 12) {
-                    Rectangle().fill(Color.green.opacity(0.3))
+                    Rectangle().fill(PlayerColor.green.secondaryColor)
                 } else if (row == 8 && col == 13) || (row == 12 && col == 8) {
-                    Rectangle().fill(Color.yellow.opacity(0.3))
+                    Rectangle().fill(PlayerColor.yellow.secondaryColor)
                 } else if (row == 13 && col == 6) || (row == 8 && col == 2) {
-                    Rectangle().fill(Color.blue.opacity(0.3))
+                    Rectangle().fill(PlayerColor.blue.secondaryColor)
                 }
                 
                 // Only draw stroke for cells outside the center 3x3 grid
@@ -599,7 +599,7 @@ struct LudoBoardView: View {
                 path.addLine(to: CGPoint(x: 0, y: largeCellSize))
                 path.closeSubpath()
             }
-            .fill(Color.red.opacity(0.7))
+            .fill(PlayerColor.red.primaryColor)
             
             // Yellow triangle
             Path { path in
@@ -608,7 +608,7 @@ struct LudoBoardView: View {
                 path.addLine(to: CGPoint(x: largeCellSize, y: largeCellSize)) 
                 path.closeSubpath()
             }
-            .fill(Color.yellow.opacity(0.7))
+            .fill(PlayerColor.yellow.primaryColor)
 
             // Green triangle
             Path { path in
@@ -617,7 +617,7 @@ struct LudoBoardView: View {
                 path.addLine(to: CGPoint(x: 0, y: 0)) 
                 path.closeSubpath()
             }
-            .fill(Color.green.opacity(0.7))
+            .fill(PlayerColor.green.primaryColor)
 
             // Blue triangle
             Path { path in
@@ -626,7 +626,7 @@ struct LudoBoardView: View {
                 path.addLine(to: CGPoint(x: largeCellSize, y: largeCellSize)) 
                 path.closeSubpath()
             }
-            .fill(Color.blue.opacity(0.7))
+            .fill(PlayerColor.blue.primaryColor)
             
             // Draw X using two diagonal lines across the entire 3x3 area
             Path { path in

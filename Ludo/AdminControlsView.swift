@@ -17,7 +17,7 @@ struct AdminControlsView: View {
                     }
                     .font(.title3)
                     .padding(8)
-                    .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : Color.green) : Color.gray)
+                    .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : PlayerColor.green.primaryColor) : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(8)
                     .disabled(!eligiblePawns.isEmpty)

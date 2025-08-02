@@ -32,11 +32,11 @@ struct SettingsTableView: View {
                 HStack {
                     Text("Admin Mode")
                         .font(.body)
-                        .foregroundColor(.red)
+                        .foregroundColor(PlayerColor.red.primaryColor)
                     Spacer()
                     Toggle("", isOn: $isAdminMode)
                         .labelsHidden()
-                        .tint(.red)
+                        .tint(PlayerColor.red.primaryColor)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 12)

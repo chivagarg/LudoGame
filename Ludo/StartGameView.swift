@@ -33,7 +33,7 @@ struct StartGameView: View {
                                 .font(.caption2)
                                 .fontWeight(.semibold)
                         }
-                        .foregroundColor(.red)
+                        .foregroundColor(PlayerColor.red.primaryColor)
                         .padding(10)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }

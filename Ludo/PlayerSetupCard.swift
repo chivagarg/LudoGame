@@ -40,7 +40,7 @@ struct PlayerSetupCard: View {
                     Label("Start", systemImage: "play.fill")
                         .font(.title3)
                         .padding(.horizontal, 32).padding(.vertical, 10)
-                        .background(selectedPlayers.count < 2 ? Color.gray : Color.green)
+                        .background(selectedPlayers.count < 2 ? Color.gray : PlayerColor.green.primaryColor)
                         .foregroundColor(.white)
                         .clipShape(Capsule())
                 }
