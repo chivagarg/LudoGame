@@ -46,7 +46,7 @@ struct PlayerPanelView: View {
 
                     // 2. Kill counts: skull icon with score underneath
                     VStack(spacing: 4) {
-                        Image("skull")
+                        Image("skull_cute")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 48, height: 48)

@@ -67,7 +67,7 @@ struct GameOverView: View {
                                     .fontWeight(.heavy)
                                     .foregroundColor(PlayerColor.red.primaryColor)
                                     .rotationEffect(.degrees(-10))
-                                Image("skull")
+                                Image("skull_cute")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: 20, height: 20)
