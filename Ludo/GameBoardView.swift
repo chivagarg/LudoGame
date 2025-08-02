@@ -28,9 +28,10 @@ struct GameBoardView: View {
                     Button(action: { showPauseMenu = true }) {
                         Image(systemName: "pause.circle.fill")
                             .font(.largeTitle)
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary) // Adaptive color
                             .shadow(radius: 3)
                     }
+                    .offset(y: -12) // Move slightly higher to avoid accidental taps
                     .padding()
                 }
                 Spacer()

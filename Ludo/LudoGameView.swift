@@ -31,6 +31,7 @@ struct LudoGameView: View {
             }
         }
         .padding()
+        .background(Color(.systemBackground)) // Ensure consistent background in both Light & Dark modes
         .environmentObject(game)
     }
 }
