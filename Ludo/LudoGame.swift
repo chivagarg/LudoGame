@@ -463,8 +463,9 @@ class LudoGame: ObservableObject {
         currentRollPlayer = nil
         isGameOver = false
         finalRankings = []
-        // Reset scores and home completion order
+        // Reset scores, kill counts, and home completion order
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
+        killCounts = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
