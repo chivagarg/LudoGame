@@ -61,20 +61,31 @@ struct PlayerPanelView: View {
 
                     // 3. Mirchi Arrow (only in Mirchi mode)
                     if game.gameMode == .mirchi {
+                        let isMirchiActive = game.mirchiArrowActivated[color] == true
+                        let hasMirchiMoves = game.mirchiMovesRemaining[color, default: 0] > 0
+
                         VStack(spacing: 4) {
-                            Image(systemName: "arrow.down.circle.fill")
-                                .resizable()
-                                .frame(width: 44, height: 44) // Bigger icon for better visibility
-                                .foregroundColor(game.mirchiMovesRemaining[color, default: 0] == 0 ? .gray : (game.mirchiArrowActivated[color] == true ? color.toSwiftUIColor(for: color) : .white))
-                                .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
-                                .contentShape(Rectangle()) // Enlarged hit-testing area
-                                .onTapGesture {
-                                    // Only allow toggling if moves remain
-                                    if game.mirchiMovesRemaining[color, default: 0] > 0 {
-                                        game.mirchiArrowActivated[color]?.toggle()
-                                    }
+                            Button(action: {
+                                if hasMirchiMoves {
+                                    game.mirchiArrowActivated[color]?.toggle()
+                                    // Provide haptic feedback for interaction
+                                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                                    generator.impactOccurred()
                                 }
-                            // Placeholder count – will be wired to game logic in part 2
+                            }) {
+                                Image("mirchi")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 56, height: 56)
+                                    .saturation(isMirchiActive ? 1.0 : 0.4) // Full color when active, less when not
+                                    .opacity(isMirchiActive ? 1.0 : 0.7)   // Fully opaque when active
+                                    .grayscale(hasMirchiMoves ? 0 : 1)       // Grayscale when no moves left
+                                    .shadow(color: .black.opacity(isMirchiActive ? 0.4 : 0.2), radius: isMirchiActive ? 5 : 2, x: 1, y: 1)
+                                    .scaleEffect(isMirchiActive ? 1.2 : 1.0) // Pop effect when active
+                                    .animation(.spring(response: 0.3, dampingFraction: 0.5), value: isMirchiActive)
+                            }
+                            .buttonStyle(PlainButtonStyle()) // Use PlainButtonStyle to avoid default button styling
+
                             Text("\(game.mirchiMovesRemaining[color, default: 0])")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
                                 .foregroundColor(.black)
