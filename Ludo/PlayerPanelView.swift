@@ -20,46 +20,41 @@ struct PlayerPanelView: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(color.toSwiftUIColor(for: color).opacity(0.5))
 
-                HStack(spacing: 6) {
-                    // 1. Avatar with Score Pill
-                    ZStack(alignment: .bottomTrailing) {
-                        // Avatar
-                        ZStack {
-                            Image("pawn_\(color.rawValue)_marble_filled")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 80, height: 80)
-                        }
-                        .frame(width: 100, height: 80)
-                        
-                        // Score Pill
-                        Text("\(game.scores[color] ?? 0)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(color.toSwiftUIColor(for: color))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 5)
-                            .background(Capsule().fill(Color.white))
-                            .offset(x: 8, y: 8)
-                    }
-                    .frame(width: 100, height: 100)
-                    .offset(x: -20, y: -5)
+                // CONSTANTS
+                let iconSize: CGFloat = 56
 
-                    // 2. Kill counts: skull icon with score underneath
+                HStack(spacing: 16) {
+                    // 1. Pawn & score
+                    VStack(spacing: 4) {
+                        Image("pawn_\(color.rawValue)_marble_filled")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: iconSize, height: iconSize)
+
+                        Text("\(game.scores[color] ?? 0)")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(color.toSwiftUIColor(for: color))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.white))
+                    }
+
+                    // 2. Skull & kills
                     VStack(spacing: 4) {
                         Image("skull_cute")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 48, height: 48)
+                            .frame(width: iconSize, height: iconSize)
+
                         Text("\(game.killCounts[color] ?? 0)")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.black)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 6)
                             .background(Capsule().fill(Color.white))
                     }
-                    .offset(x: -16)
 
-                    // 3. Mirchi Arrow (only in Mirchi mode)
+                    // 3. Mirchi (only in Mirchi mode)
                     if game.gameMode == .mirchi {
                         let isMirchiActive = game.mirchiArrowActivated[color] == true
                         let hasMirchiMoves = game.mirchiMovesRemaining[color, default: 0] > 0
@@ -68,30 +63,34 @@ struct PlayerPanelView: View {
                             Button(action: {
                                 if hasMirchiMoves {
                                     game.mirchiArrowActivated[color]?.toggle()
-                                    // Provide haptic feedback for interaction
-                                    let generator = UIImpactFeedbackGenerator(style: .medium)
-                                    generator.impactOccurred()
+                                    // Haptic
+                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                 }
                             }) {
                                 Image("mirchi")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(width: 56, height: 56)
-                                    .saturation(isMirchiActive ? 1.0 : 0.4) // Full color when active, less when not
-                                    .opacity(isMirchiActive ? 1.0 : 0.7)   // Fully opaque when active
-                                    .grayscale(hasMirchiMoves ? 0 : 1)       // Grayscale when no moves left
+                                    .frame(width: iconSize, height: iconSize)
+                                    .saturation(isMirchiActive ? 1.0 : 0.4)
+                                    .opacity(isMirchiActive ? 1.0 : 0.7)
+                                    .grayscale(hasMirchiMoves ? 0 : 1)
                                     .shadow(color: .black.opacity(isMirchiActive ? 0.4 : 0.2), radius: isMirchiActive ? 5 : 2, x: 1, y: 1)
-                                    .scaleEffect(isMirchiActive ? 1.2 : 1.0) // Pop effect when active
-                                    .animation(.spring(response: 0.3, dampingFraction: 0.5), value: isMirchiActive)
+                                    .scaleEffect(isMirchiActive ? 1.15 : 1.0)
+                                    .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isMirchiActive)
                             }
-                            .buttonStyle(PlainButtonStyle()) // Use PlainButtonStyle to avoid default button styling
+                            .buttonStyle(PlainButtonStyle())
 
                             Text("\(game.mirchiMovesRemaining[color, default: 0])")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundColor(.black)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.white))
                         }
-                        .offset(x: -10)
                     }
+
+                    // Spacer before dice
+                    Spacer(minLength: 12)
 
                     // 4. Dice (only for current player, uses opacity to maintain layout)
                     let canRoll = showDice && !isDiceRolling && !localDiceRolling && game.eligiblePawns.isEmpty && game.currentRollPlayer == nil && !game.isBusy && !game.aiControlledPlayers.contains(color)
@@ -112,8 +111,9 @@ struct PlayerPanelView: View {
                     .id(canRoll)
                     .opacity(showDice ? 1.0 : 0.0)
                     .allowsHitTesting(showDice)
+                    .frame(width: 72, height: 72)
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 12)
             }
         }
         .frame(height: 100)
