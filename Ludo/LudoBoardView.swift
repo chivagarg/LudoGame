@@ -416,21 +416,27 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     private func boardGridView(boardSize: CGFloat, cellSize: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            ForEach(0..<gridSize, id: \.self) { row in
-                HStack(spacing: 0) {
-                    ForEach(0..<gridSize, id: \.self) { col in
-                        let pawns = self.pawnsInCell(row: row, col: col)
-                        BoardCellView(
-                            pawnsInCell: pawns,
-                            parent: self,
-                            row: row,
-                            col: col,
-                            cellSize: cellSize,
-                            currentPlayer: game.currentPlayer,
-                            eligiblePawns: game.eligiblePawns
-                        )
-                        .equatable()
+        ZStack {
+            // Draw the center piece in the background of the whole board
+            renderCenterCell(row: 7, col: 7, cellSize: cellSize)
+                .position(x: boardSize / 2, y: boardSize / 2)
+
+            VStack(spacing: 0) {
+                ForEach(0..<gridSize, id: \.self) { row in
+                    HStack(spacing: 0) {
+                        ForEach(0..<gridSize, id: \.self) { col in
+                            let pawns = self.pawnsInCell(row: row, col: col)
+                            BoardCellView(
+                                pawnsInCell: pawns,
+                                parent: self,
+                                row: row,
+                                col: col,
+                                cellSize: cellSize,
+                                currentPlayer: game.currentPlayer,
+                                eligiblePawns: game.eligiblePawns
+                            )
+                            .equatable()
+                        }
                     }
                 }
             }
@@ -515,10 +521,18 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     private func cellBackground(row: Int, col: Int, cellSize: CGFloat) -> some View {
-        if row == 7 && col == 7 {
-            renderCenterCell(row: row, col: col, cellSize: cellSize)
-        } else if (6...8).contains(row) && (6...8).contains(col) {
-            EmptyView()
+        if (6...8).contains(row) && (6...8).contains(col) {
+            // This area is now drawn by renderCenterCell in the background
+            // We just need to color the individual finish cells correctly.
+            switch (row, col) {
+            case (6, 7): Rectangle().fill(PlayerColor.green.primaryColor) // Green finish
+            case (7, 6): Rectangle().fill(PlayerColor.red.primaryColor)   // Red finish
+            case (7, 8): Rectangle().fill(PlayerColor.yellow.primaryColor)// Yellow finish
+            case (8, 7): Rectangle().fill(PlayerColor.blue.primaryColor)  // Blue finish
+            default:
+                // For the very center (7,7) or other empty cells in the 3x3 grid
+                EmptyView()
+            }
         } else {
             ZStack {
                 if row < 6 && col < 6 {
