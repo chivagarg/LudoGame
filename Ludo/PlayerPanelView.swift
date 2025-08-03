@@ -89,9 +89,6 @@ struct PlayerPanelView: View {
                         }
                     }
 
-                    // Spacer before dice
-                    Spacer(minLength: 12)
-
                     // 4. Dice (only for current player, uses opacity to maintain layout)
                     let canRoll = showDice && !isDiceRolling && !localDiceRolling && game.eligiblePawns.isEmpty && game.currentRollPlayer == nil && !game.isBusy && !game.aiControlledPlayers.contains(color)
 #if DEBUG
