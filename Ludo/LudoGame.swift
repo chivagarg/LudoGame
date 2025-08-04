@@ -527,7 +527,7 @@ class LudoGame: ObservableObject {
             let isPawnReachingHome = newIndex == currentPath.count - 1
 
             if isPawnMovingToAnotherSpotOnPath {
-                shouldGetAnotherRoll = movePawnToAnotherSpotOnPath(color: color, pawnIndex: pawnIndex, currentPath: currentPath, newIndex: newIndex)
+                shouldGetAnotherRoll = movePawnToAnotherSpotOnPath(color: color, pawnIndex: pawnIndex, currentPath: currentPath, newIndex: newIndex, backward: backward)
 
                 // Decrement Mirchi moves if this was a backward move
                 if backward {
@@ -790,7 +790,7 @@ class LudoGame: ObservableObject {
         return pawnIndex
     }
 
-    private func movePawnToAnotherSpotOnPath(color: PlayerColor, pawnIndex: Int, currentPath: [Position], newIndex: Int) -> Bool {
+    private func movePawnToAnotherSpotOnPath(color: PlayerColor, pawnIndex: Int, currentPath: [Position], newIndex: Int, backward: Bool) -> Bool {
         var shouldGetAnotherRoll = false
         
         // First check if the new position would result in a capture
@@ -812,11 +812,15 @@ class LudoGame: ObservableObject {
                     
                     if otherPosition == newPosition {
                         // Capture the pawn - Post notification to animate it
-                        NotificationCenter.default.post(
-                            name: .animatePawnCapture,
-                            object: nil,
-                            userInfo: ["color": otherColor, "pawnId": otherPawn.id]
-                        )
+                        NotificationCenter.default.post(name: .animatePawnCapture,
+                                                        object: nil,
+                                                        userInfo: ["color": otherColor, "pawnId": otherPawn.id])
+                        if backward {
+                            GameLogger.shared.log("🌶️ DEBUG: Posting mirchiBackwardCapture notification", level: .debug)
+                            NotificationCenter.default.post(name: .mirchiBackwardCapture,
+                                                            object: nil,
+                                                            userInfo: nil)
+                        }
                         shouldGetAnotherRoll = true
                         // Add points for capture
                         scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
@@ -898,4 +902,5 @@ extension Notification.Name {
     static let animatePawnCapture = Notification.Name("AnimatePawnCapture")
     static let pawnReachedHome = Notification.Name("PawnReachedHome")
     static let playerFinished = Notification.Name("PlayerFinished")
+    static let mirchiBackwardCapture = Notification.Name("MirchiBackwardCapture")
 } 

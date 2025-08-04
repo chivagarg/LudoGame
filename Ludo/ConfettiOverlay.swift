@@ -42,6 +42,7 @@ struct StrokeText: View {
 struct ConfettiOverlay: View {
     @State private var confettiTrigger: Int = 0            // regular +10 confetti
     @State private var finishConfettiTrigger: Int = 0      // bigger fireworks for game completion
+    @State private var mirchiConfettiTrigger: Int = 0      // chile confetti when backward capture
     @State private var flashText: Bool = false
     @State private var displayText: String = ""
     @State private var textColor: Color = .orange
@@ -60,6 +61,7 @@ struct ConfettiOverlay: View {
                     .transition(.scale)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
 #if canImport(ConfettiSwiftUI)
         // Standard confetti for each pawn reaching home
         .confettiCannon(trigger: $confettiTrigger,
@@ -75,6 +77,15 @@ struct ConfettiOverlay: View {
                         closingAngle: .degrees(360),
                         radius: 350,
                         hapticFeedback: true)
+        // Mirchi confetti for backward captures
+        .confettiCannon(trigger: $mirchiConfettiTrigger,
+                        num: 45,
+                        confettis: [.text("🌶️")],
+                        colors: [.red, .orange],
+                        confettiSize: 20,
+                        openingAngle: .degrees(0),
+                        closingAngle: .degrees(360),
+                        radius: 300)
 #endif
         .allowsHitTesting(false)
         .onReceive(NotificationCenter.default.publisher(for: .pawnReachedHome)) { notification in
@@ -90,6 +101,10 @@ struct ConfettiOverlay: View {
                  enqueueMessage(basePoints: bonus, notification: notification, smallConfetti: false)
                  // Fireworks already triggered on pawnReachedHome when completed, so do not increment again
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .mirchiBackwardCapture)) { _ in
+            GameLogger.shared.log("🌶️ DEBUG: ConfettiOverlay received mirchiBackwardCapture", level: .debug)
+            mirchiConfettiTrigger += 1
         }
     }
 
