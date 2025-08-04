@@ -34,7 +34,7 @@ struct PlayerPanelView: View {
                         Text("\(game.scores[color] ?? 0)")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(color.toSwiftUIColor(for: color))
-                            .padding(.horizontal, 16)
+                            .frame(minWidth: 60)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(Color.white))
                     }
@@ -49,7 +49,7 @@ struct PlayerPanelView: View {
                         Text("\(game.killCounts[color] ?? 0)")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.black)
-                            .padding(.horizontal, 16)
+                            .frame(minWidth: 60)
                             .padding(.vertical, 6)
                             .background(Capsule().fill(Color.white))
                     }
@@ -80,10 +80,10 @@ struct PlayerPanelView: View {
                             }
                             .buttonStyle(PlainButtonStyle())
 
-                            Text("\(game.mirchiMovesRemaining[color, default: 0])")
+                            Text("\(game.mirchiMovesRemaining[color, default: 0])/5")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundColor(.black)
-                                .padding(.horizontal, 16)
+                                .frame(minWidth: 60)
                                 .padding(.vertical, 6)
                                 .background(Capsule().fill(Color.white))
                         }

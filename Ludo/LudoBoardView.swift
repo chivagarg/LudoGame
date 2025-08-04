@@ -537,32 +537,44 @@ struct LudoBoardView: View {
             ZStack {
                 if row < 6 && col < 6 {
                     if (row == 1 || row == 4) && (col == 1 || col == 4) {
-                        Rectangle().fill(Color.white)
-                        Rectangle().fill(PlayerColor.red.secondaryColor)
+                        // White background
+                        Rectangle().fill(PlayerColor.red.primaryColor)
+                        // Circular starting pad instead of square
+                        Circle()
+                            .fill(PlayerColor.red.secondaryColor)
+                            .padding(cellSize * 0.01)
                     } else {
                         Rectangle().fill(PlayerColor.red.primaryColor)
                     }
                 // Green Home Area
                 } else if row < 6 && col > 8 {
                     if (row == 1 || row == 4) && (col == 10 || col == 13) {
-                        Rectangle().fill(Color.white)
-                        Rectangle().fill(PlayerColor.green.secondaryColor)
+                        // Primary background
+                        Rectangle().fill(PlayerColor.green.primaryColor)
+                        // Circular starting pad
+                        Circle()
+                            .fill(PlayerColor.green.secondaryColor)
+                            .padding(cellSize * 0.01)
                     } else {
                         Rectangle().fill(PlayerColor.green.primaryColor)
                     }
                 // Blue Home Area
                 } else if row > 8 && col < 6 {
                     if (row == 10 || row == 13) && (col == 1 || col == 4) {
-                        Rectangle().fill(Color.white)
-                        Rectangle().fill(PlayerColor.blue.secondaryColor)
+                        Rectangle().fill(PlayerColor.blue.primaryColor)
+                        Circle()
+                            .fill(PlayerColor.blue.secondaryColor)
+                            .padding(cellSize * 0.01)
                     } else {
                         Rectangle().fill(PlayerColor.blue.primaryColor)
                     }
                 // Yellow Home Area
                 } else if row > 8 && col > 8 {
                     if (row == 10 || row == 13) && (col == 10 || col == 13) {
-                        Rectangle().fill(Color.white)
-                        Rectangle().fill(PlayerColor.yellow.secondaryColor)
+                        Rectangle().fill(PlayerColor.yellow.primaryColor)
+                        Circle()
+                            .fill(PlayerColor.yellow.secondaryColor)
+                            .padding(cellSize * 0.01)
                     } else {
                         Rectangle().fill(PlayerColor.yellow.primaryColor)
                     }
@@ -594,8 +606,9 @@ struct LudoBoardView: View {
                     Rectangle().fill(PlayerColor.blue.secondaryColor)
                 }
                 
-                // Only draw stroke for cells outside the center 3x3 grid
-                if !(6...8).contains(row) || !(6...8).contains(col) {
+                // Draw the thin grid stroke except inside any 6×6 home area
+                let isHomeCell = (row < 6 && col < 6) || (row < 6 && col > 8) || (row > 8 && col < 6) || (row > 8 && col > 8)
+                if (!(6...8).contains(row) || !(6...8).contains(col)) && !isHomeCell {
                     Rectangle().stroke(Color.black, lineWidth: 0.5)
                 }
             }
