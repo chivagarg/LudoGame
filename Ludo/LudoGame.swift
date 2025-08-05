@@ -36,6 +36,13 @@ class LudoGame: ObservableObject {
     // Track number of pawns each player has captured
     @Published var killCounts: [PlayerColor: Int] = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
 
+    // Track if first blood has happened
+    private var firstKillDone: Bool = false
+    @Published var firstKillPlayer: PlayerColor? = nil
+
+    // History of dice rolls per player (in order). Can be used for stats like killing spree/unluckiest player.
+    @Published var diceRollHistory: [PlayerColor: [Int]] = [.red: [], .green: [], .yellow: [], .blue: []]
+
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
 
@@ -214,6 +221,8 @@ class LudoGame: ObservableObject {
         }
         
         diceValue = getDiceRoll()
+        // Track roll history
+        diceRollHistory[currentPlayer, default: []].append(diceValue)
 
         rollID += 1 // Increment the roll ID to ensure UI updates
         GameLogger.shared.log("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
@@ -471,6 +480,11 @@ class LudoGame: ObservableObject {
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
         // Reset Mirchi move counts for selected players
         mirchiMovesRemaining = Dictionary(uniqueKeysWithValues: selectedPlayers.map { ($0, 5) })
+
+        // Reset first blood tracking and dice history
+        firstKillDone = false
+        firstKillPlayer = nil
+        diceRollHistory = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, []) })
 
         // Initialize pawns for all players, but only selected ones will be visible/used
         var allPawns: [PlayerColor: [PawnState]] = [:]
@@ -826,6 +840,17 @@ class LudoGame: ObservableObject {
                         scores[color] = (scores[color] ?? 0) + GameConstants.capturePoints
                         // Increment kill count for capturing player
                         killCounts[color] = (killCounts[color] ?? 0) + 1
+
+                        // First blood bonus
+                        if !firstKillDone {
+                            firstKillDone = true
+                            firstKillPlayer = color
+                            scores[color] = (scores[color] ?? 0) + 3
+                            GameLogger.shared.log("💀 FIRST BLOOD! +3", level: .info)
+                            NotificationCenter.default.post(name: .firstBlood,
+                                                            object: nil,
+                                                            userInfo: ["color": color.rawValue])
+                        }
                     }
                 }
             }
@@ -903,4 +928,5 @@ extension Notification.Name {
     static let pawnReachedHome = Notification.Name("PawnReachedHome")
     static let playerFinished = Notification.Name("PlayerFinished")
     static let mirchiBackwardCapture = Notification.Name("MirchiBackwardCapture")
+    static let firstBlood = Notification.Name("FirstBlood")
 } 

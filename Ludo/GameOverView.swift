@@ -48,7 +48,8 @@ struct GameOverView: View {
             VStack(spacing: 12) {
                 ForEach(Array(game.finalRankings.enumerated()), id: \.element) { index, color in
                     let isKillBonus = killBonusWinners.contains(color)
-                    let finalScore = (game.scores[color] ?? 0) + (isKillBonus ? 5 : 0)
+                    let isFirstKill = (game.firstKillPlayer == color)
+                    let finalScore = (game.scores[color] ?? 0)
                     let displayScore = animatedScores[color, default: finalScore]
                     HStack {
                         Text("\(index + 1)")
@@ -60,21 +61,13 @@ struct GameOverView: View {
                             .scaledToFit()
                             .frame(width: 40, height: 40)
                         Spacer()
-                        if isKillBonus {
-                            HStack(spacing: 4) {
-                                Text("TOP KILLS")
-                                    .font(.caption2)
-                                    .fontWeight(.heavy)
-                                    .foregroundColor(PlayerColor.red.primaryColor)
-                                    .rotationEffect(.degrees(-10))
-                                Image("skull_cute")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 20, height: 20)
-                                Text("+5")
-                                    .foregroundColor(.black)
+                        HStack(spacing:4) {
+                            if isKillBonus {
+                                badgeView(label: "TOP KILLS", icon: "skull_cute", bonus: "+5", color: .red)
                             }
-                            .padding(.trailing, 6)
+                            if isFirstKill {
+                                badgeView(label: "FIRST KILL", icon: "skull_cute", bonus: "+3", color: .black)
+                            }
                         }
                         Text("\(displayScore) pts")
                             .font(.title2)
@@ -150,5 +143,23 @@ struct GameOverView: View {
                 animatedScores[color, default: current] += 1
             }
         }
+    }
+
+    @ViewBuilder
+    private func badgeView(label: String, icon: String, bonus: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.caption2)
+                .fontWeight(.heavy)
+                .foregroundColor(color)
+                .rotationEffect(.degrees(-10))
+            Image(icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 18, height: 18)
+            Text(bonus)
+                .foregroundColor(.black)
+        }
+        .padding(.trailing,6)
     }
 } 

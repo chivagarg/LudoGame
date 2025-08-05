@@ -43,16 +43,20 @@ struct ConfettiOverlay: View {
     @State private var confettiTrigger: Int = 0            // regular +10 confetti
     @State private var finishConfettiTrigger: Int = 0      // bigger fireworks for game completion
     @State private var mirchiConfettiTrigger: Int = 0      // chile confetti when backward capture
+    @State private var firstBloodConfettiTrigger: Int = 0   // skull confetti for first blood
+    @State private var confettiQueue: [() -> Void] = []
+    @State private var confettiActive: Bool = false
     @State private var flashText: Bool = false
     @State private var displayText: String = ""
     @State private var textColor: Color = .orange
+    @State private var textSize: CGFloat = 60
     @State private var messageQueue: [(String, Color, Bool)] = [] // (text,color,shouldSmallConfetti)
 
     var body: some View {
         ZStack {
             if flashText {
                 StrokeText(text: displayText,
-                           size: 60,
+                           size: textSize,
                            weight: .heavy,
                            strokeColor: .white,
                            textColor: textColor,
@@ -86,6 +90,15 @@ struct ConfettiOverlay: View {
                         openingAngle: .degrees(0),
                         closingAngle: .degrees(360),
                         radius: 300)
+        // First blood skull confetti
+        .confettiCannon(trigger: $firstBloodConfettiTrigger,
+                        num: 50,
+                        confettis: [.text("💀")],
+                        colors: [.black, .gray],
+                        confettiSize: 28,
+                        openingAngle: .degrees(0),
+                        closingAngle: .degrees(360),
+                        radius: 300)
 #endif
         .allowsHitTesting(false)
         .onReceive(NotificationCenter.default.publisher(for: .pawnReachedHome)) { notification in
@@ -102,9 +115,22 @@ struct ConfettiOverlay: View {
                  // Fireworks already triggered on pawnReachedHome when completed, so do not increment again
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .firstBlood)) { notification in
+            GameLogger.shared.log("💀 DEBUG: ConfettiOverlay queued first blood", level: .debug)
+            enqueueConfetti { firstBloodConfettiTrigger += 1 }
+
+            // Custom "First Kill +3" message
+            var color: Color = .orange
+            if let raw = notification.userInfo?["color"] as? String,
+               let colorEnum = PlayerColor(rawValue: raw) {
+                color = colorEnum.color
+            }
+            messageQueue.append(("FIRST KILL +3", color, false))
+            if !flashText { showNextMessage() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .mirchiBackwardCapture)) { _ in
             GameLogger.shared.log("🌶️ DEBUG: ConfettiOverlay received mirchiBackwardCapture", level: .debug)
-            mirchiConfettiTrigger += 1
+            enqueueConfetti { mirchiConfettiTrigger += 1 }
         }
     }
 
@@ -134,6 +160,7 @@ struct ConfettiOverlay: View {
         let (msg, color, smallConfetti) = messageQueue.removeFirst()
         displayText = msg
         textColor = color
+        textSize = msg.hasPrefix("FIRST KILL") ? 40 : 60
         if smallConfetti {
             confettiTrigger += 1  // regular burst per message
         }
@@ -150,6 +177,25 @@ struct ConfettiOverlay: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self.showNextMessage()
             }
+        }
+    }
+
+    // MARK: - Confetti Queue Helper
+
+    private func enqueueConfetti(action: @escaping () -> Void) {
+        confettiQueue.append(action)
+        triggerNextConfettiIfNeeded()
+    }
+
+    private func triggerNextConfettiIfNeeded() {
+        guard !confettiActive, !confettiQueue.isEmpty else { return }
+        confettiActive = true
+        let action = confettiQueue.removeFirst()
+        action()
+        // Assume confetti lasts ~2s
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            confettiActive = false
+            triggerNextConfettiIfNeeded()
         }
     }
 } 
