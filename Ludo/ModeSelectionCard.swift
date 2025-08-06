@@ -25,8 +25,8 @@ struct ModeSelectionCard: View {
                 .blur(radius: 12)
 
             HStack(spacing: 24) {
-            modePanel(title: "Classic", subtitle: "Standard rules", color: .blue, mode: .classic)
-            modePanel(title: "Mirchi", subtitle: "Backward moves!", color: .orange, mode: .mirchi)
+            modePanel(title: "Classic", subtitle: "Standard rules", color: PlayerColor.green.secondaryColor.opacity(0.6), mode: .classic)
+            modePanel(title: "Mirchi", subtitle: "Backward moves!", color: PlayerColor.red.primaryColor.opacity(0.6), mode: .mirchi)
             }
         }
         .onAppear { withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) { bubbleAnimation.toggle() } }
@@ -43,22 +43,41 @@ struct ModeSelectionCard: View {
                 }
             })
         Button(action: { onSelect(mode) }) {
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
+                // Icon
+                if mode == .classic {
+                    Image("pawn_green_marble_filled")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50, height: 50)
+                        .shadow(radius: 2)
+                } else {
+                    Image("mirchi")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 50, height: 50)
+                        .shadow(radius: 2)
+                }
+
+                // Title
                 Text(title)
-                    .font(.title2).bold()
-                    .foregroundColor(color)
+                    .font(.title3).bold()
+                    .foregroundColor(.black)
+                // Subtitle
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.caption2)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.black.opacity(0.7))
             }
-            .frame(width: 120, height: 120)
+            .padding(20)
+            .frame(width: 230, height: 260)
             .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(0.9))
+                RoundedRectangle(cornerRadius: 30)
+                    .fill(color)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(color, lineWidth: 3)
+                RoundedRectangle(cornerRadius: 30)
+                    .stroke(color, lineWidth: 6)
             )
         }
         .buttonStyle(PlainButtonStyle())

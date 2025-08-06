@@ -15,12 +15,25 @@ struct StartGameView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [Color(red:0.96, green:0.98, blue:1.0), Color(red:0.85, green:0.93, blue:1.0)]),
-                startPoint: .top,
-                endPoint: .bottom)
-                .ignoresSafeArea()
+            // Colorful animated bubbles backdrop
+            GeometryReader { geo in
+                ZStack {
+                    ForEach(0..<12, id: \ .self) { i in
+                        let colors: [Color] = [PlayerColor.red.primaryColor.opacity(0.25),
+                                               PlayerColor.green.primaryColor.opacity(0.25),
+                                               PlayerColor.yellow.primaryColor.opacity(0.25),
+                                               PlayerColor.blue.primaryColor.opacity(0.25)]
+                        let size = CGFloat(Int.random(in: 140...260))
+                        Circle()
+                            .fill(colors[i % colors.count])
+                            .frame(width: size, height: size)
+                            .position(x: CGFloat.random(in: 0...geo.size.width),
+                                      y: CGFloat.random(in: 0...geo.size.height))
+                            .animation(.easeInOut(duration: Double.random(in: 6...10)).repeatForever(autoreverses: true), value: diceRoll)
+                    }
+                }
+            }
+            .ignoresSafeArea()
 
             // Exit button
             VStack {
@@ -44,29 +57,57 @@ struct StartGameView: View {
             }
 
             VStack(spacing: 24) {
-                // Header with title & dice
-                HStack(spacing: 8) {
-                    ForEach(diceImages.shuffled().prefix(3), id: \ .self) { img in
-                        Image(systemName: img)
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                            .rotationEffect(.degrees(diceRoll ? 360 : 0))
-                            .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: false), value: diceRoll)
+                // Spinning dice row
+                HStack(spacing: 20) {
+                    let palette: [Color] = [.red, .green, .yellow, .blue]
+                    ForEach(0..<diceImages.count, id: \ .self) { idx in
+                        Image(systemName: diceImages[idx])
+                            .font(.system(size: 48))
+                            .foregroundColor(palette[idx % palette.count])
                     }
                 }
-                Text("LUDO")
-                    .font(.system(size: 48, weight: .heavy))
-                    .foregroundStyle(.blue)
-                    .shadow(color: .blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                // Colorful title
+                HStack(spacing: 0) {
+                    let title = Array("LUDO MIRCHI")
+                    let palette: [Color] = [.red, .green, .yellow, .blue]
+                    ForEach(title.indices, id: \ .self) { idx in
+                        let ch = String(title[idx])
+                        ZStack {
+                            // 4-way outline
+                            Text(ch)
+                                .font(.system(size: 72, weight: .heavy))
+                                .foregroundColor(.black)
+                                .offset(x: 2, y: 2)
+                            Text(ch)
+                                .font(.system(size: 72, weight: .heavy))
+                                .foregroundColor(.black)
+                                .offset(x: -2, y: -2)
+                            Text(ch)
+                                .font(.system(size: 72, weight: .heavy))
+                                .foregroundColor(.black)
+                                .offset(x: -2, y: 2)
+                            Text(ch)
+                                .font(.system(size: 72, weight: .heavy))
+                                .foregroundColor(.black)
+                                .offset(x: 2, y: -2)
+                            // center fill
+                            Text(ch)
+                                .font(.system(size: 72, weight: .heavy))
+                                .foregroundColor(palette[idx % palette.count])
+                        }
+                    }
+                }
 
                 Group {
                     if step == 0 {
-                        VStack(spacing: 20) {
+                        VStack(spacing: 30) {
                             ModeSelectionCard { mode in
                                 selectedMode = mode
                                 withAnimation { step = 1 }
                             }
+#if DEBUG
                             SettingsTableView(isAdminMode: $isAdminMode)
+#endif
                         }
                     } else {
                         PlayerSetupCard(isAdminMode: $isAdminMode,
@@ -76,10 +117,7 @@ struct StartGameView: View {
                                         onBack: { withAnimation { step = 0 } })
                     }
                 }
-                .padding(30)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-                .shadow(radius: 10)
+                .padding(10)
             }
             .padding()
             .onAppear { diceRoll = true }
