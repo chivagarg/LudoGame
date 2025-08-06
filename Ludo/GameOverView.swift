@@ -16,9 +16,31 @@ struct GameOverView: View {
         let maxKills = game.killCounts.values.max() ?? 0
         return game.killCounts.filter { $0.value == maxKills && maxKills > 0 }.map { $0.key }
     }
+
+    // Average roll per player (one decimal)
+    private var averageRolls: [PlayerColor: Double] {
+        Dictionary(uniqueKeysWithValues: game.diceRollHistory.map { (key, rolls) in
+            guard !rolls.isEmpty else { return (key, 0.0) }
+            let avg = Double(rolls.reduce(0,+)) / Double(rolls.count)
+            return (key, avg)
+        })
+    }
+
+    // Players with lowest average roll (unluckiest)
+    private var unluckyWinners: [PlayerColor] {
+        let valid = averageRolls.filter { $0.value > 0 }
+        let minAvg = valid.values.min() ?? 0
+        return valid.filter { abs($0.value - minAvg) < 0.0001 }.map { $0.key }
+    }
     
     var body: some View {
         let winner = game.finalRankings.first ?? .red
+
+        let _ = {
+            GameLogger.shared.log("🎲 AVERAGE ROLLS: \(averageRolls)", level: .debug)
+            GameLogger.shared.log("🎲 UNLUCKY WINNERS: \(unluckyWinners)", level: .debug)
+        }()
+
         VStack(spacing: 24) {
             // Winner section
             VStack(spacing: 8) {
@@ -49,17 +71,25 @@ struct GameOverView: View {
                 ForEach(Array(game.finalRankings.enumerated()), id: \.element) { index, color in
                     let isKillBonus = killBonusWinners.contains(color)
                     let isFirstKill = (game.firstKillPlayer == color)
-                    let finalScore = (game.scores[color] ?? 0)
+                    let isUnlucky = unluckyWinners.contains(color)
+                    let finalScore = (game.scores[color] ?? 0) // bonuses will be animated in
                     let displayScore = animatedScores[color, default: finalScore]
                     HStack {
                         Text("\(index + 1)")
                             .font(.title2)
                             .frame(width: 30, alignment: .leading)
                         
-                        Image("pawn_\(color.rawValue)_marble_filled")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 40, height: 40)
+                        VStack(spacing:2) {
+                            Image("pawn_\(color.rawValue)_marble_filled")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 40, height: 40)
+                            Text("Avg Roll: \(averageRolls[color] ?? 0, specifier: "%.1f")")
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                                .foregroundColor(color.color)
+                        }
+                        .frame(minWidth: 80, alignment: .leading)
                         Spacer()
                         HStack(spacing:4) {
                             if isKillBonus {
@@ -67,6 +97,9 @@ struct GameOverView: View {
                             }
                             if isFirstKill {
                                 badgeView(label: "FIRST KILL", icon: "skull_cute", bonus: "+3", color: .black)
+                            }
+                            if isUnlucky {
+                                badgeView(label: "UNLUCKIEST", icon: "skull_cute", bonus: "+5", color: .blue)
                             }
                         }
                         Text("\(displayScore) pts")
@@ -119,18 +152,19 @@ struct GameOverView: View {
     private func setupAnimatedScores() {
         for color in game.finalRankings {
             let base = game.scores[color] ?? 0
-            if killBonusWinners.contains(color) {
-                animatedScores[color] = max(0, base - 5)
-            } else {
-                animatedScores[color] = base
-            }
+            animatedScores[color] = base  // start without bonuses; we will animate them in
         }
     }
 
     // Increment scores for winners one point at a time
     private func startKillBonusAnimation() {
-        for color in killBonusWinners {
-            let target = (game.scores[color] ?? 0) // this already includes bonus
+        let allBonusPlayers = Set(killBonusWinners).union(unluckyWinners)
+        for color in allBonusPlayers {
+            let base = game.scores[color] ?? 0
+            var bonus = 0
+            if killBonusWinners.contains(color) { bonus += 5 }
+            if unluckyWinners.contains(color) { bonus += 5 }
+            let target = base + bonus
             incrementScore(for: color, to: target)
         }
     }
@@ -146,14 +180,14 @@ struct GameOverView: View {
     }
 
     @ViewBuilder
-    private func badgeView(label: String, icon: String, bonus: String, color: Color) -> some View {
+    private func badgeView(label: String, icon: String, bonus: String, color: Color, system: Bool = false) -> some View {
         HStack(spacing: 4) {
             Text(label)
                 .font(.caption2)
                 .fontWeight(.heavy)
                 .foregroundColor(color)
                 .rotationEffect(.degrees(-10))
-            Image(icon)
+            (system ? Image(systemName: icon) : Image(icon))
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)

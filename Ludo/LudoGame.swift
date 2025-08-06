@@ -222,7 +222,11 @@ class LudoGame: ObservableObject {
         
         diceValue = getDiceRoll()
         // Track roll history
-        diceRollHistory[currentPlayer, default: []].append(diceValue)
+        var rolls = diceRollHistory[currentPlayer] ?? []
+        rolls.append(diceValue)
+        diceRollHistory[currentPlayer] = rolls
+
+        GameLogger.shared.log("🎲 ROLL HISTORY for \(currentPlayer.rawValue): \(rolls)", level: .debug)
 
         rollID += 1 // Increment the roll ID to ensure UI updates
         GameLogger.shared.log("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
@@ -332,8 +336,14 @@ class LudoGame: ObservableObject {
         
         // Set the specified dice value
         diceValue = value
+
+        // Record in history for stats
+        var rolls = diceRollHistory[currentPlayer] ?? []
+        rolls.append(value)
+        diceRollHistory[currentPlayer] = rolls
+
         rollID += 1 // Increment the roll ID to ensure UI updates
-        GameLogger.shared.log("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID))")
+        GameLogger.shared.log("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID)). History: \(rolls)")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
         // Mark eligible pawns based on the roll
