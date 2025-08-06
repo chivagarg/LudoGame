@@ -49,28 +49,28 @@ struct ModeSelectionCard: View {
                     Image("pawn_green_marble_filled")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 50, height: 50)
-                        .shadow(radius: 2)
+                        .frame(width: 100, height: 100)
+                        .shadow(radius: 4)
                 } else {
                     Image("mirchi")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 50, height: 50)
-                        .shadow(radius: 2)
+                        .frame(width: 100, height: 100)
+                        .shadow(radius: 4)
                 }
 
                 // Title
                 Text(title)
-                    .font(.title3).bold()
+                    .font(.system(size: 34, weight: .heavy))
                     .foregroundColor(.black)
                 // Subtitle
                 Text(subtitle)
-                    .font(.caption2)
+                    .font(.body)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.black.opacity(0.7))
             }
-            .padding(20)
-            .frame(width: 230, height: 260)
+            .padding(24)
+            .frame(width: 280, height: 320)
             .background(
                 RoundedRectangle(cornerRadius: 30)
                     .fill(color)
