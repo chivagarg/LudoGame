@@ -12,6 +12,8 @@ public class SoundManager {
         static let capture = "capture.wav"
         static let victory = "victory.wav"
         static let dice = "dice.wav"
+        static let evilLaugh = "evillaugh.wav"
+        static let yeah = "yeah.wav"
     }
     
     private var audioPlayers: [String: AVAudioPlayer] = [:]
@@ -24,6 +26,8 @@ public class SoundManager {
         preloadSound(named: SoundFiles.capture)
         preloadSound(named: SoundFiles.victory)
         preloadSound(named: SoundFiles.dice)
+        preloadSound(named: SoundFiles.evilLaugh)
+        preloadSound(named: SoundFiles.yeah)
     }
     
     private func preloadSound(named filename: String) {
@@ -87,5 +91,14 @@ public class SoundManager {
     
     public func playPawnLeaveHomeSound() {
         playSound(SoundFiles.leaveHome)
+    }
+
+    // Custom new sounds
+    public func playEvilLaugh() {
+        playSound(SoundFiles.evilLaugh)
+    }
+
+    public func playYeah() {
+        playSound(SoundFiles.yeah)
     }
 } 

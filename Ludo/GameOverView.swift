@@ -145,6 +145,7 @@ struct GameOverView: View {
             confettiTrigger += 1
             trophyBounce = true
             startKillBonusAnimation()
+            SoundManager.shared.playYeah()
         }
     }
     

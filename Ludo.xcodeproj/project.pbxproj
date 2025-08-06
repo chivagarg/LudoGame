@@ -34,6 +34,8 @@
 		DA79444C2E2CBB0E00EE49FC /* PauseDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79444B2E2CBB0E00EE49FC /* PauseDialogView.swift */; };
 		DA79444F2E2D661600EE49FC /* ModeSelectionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79444D2E2D661600EE49FC /* ModeSelectionCard.swift */; };
 		DA7944502E2D661600EE49FC /* PlayerSetupCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79444E2E2D661600EE49FC /* PlayerSetupCard.swift */; };
+		DAE12AB02E43478F00862C75 /* evillaugh.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAE12AAF2E43478E00862C75 /* evillaugh.wav */; };
+		DAE12AB22E4347E600862C75 /* yeah.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAE12AB12E4347E600862C75 /* yeah.wav */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
@@ -80,6 +82,8 @@
 		DA79444B2E2CBB0E00EE49FC /* PauseDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PauseDialogView.swift; sourceTree = "<group>"; };
 		DA79444D2E2D661600EE49FC /* ModeSelectionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSelectionCard.swift; sourceTree = "<group>"; };
 		DA79444E2E2D661600EE49FC /* PlayerSetupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSetupCard.swift; sourceTree = "<group>"; };
+		DAE12AAF2E43478E00862C75 /* evillaugh.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = evillaugh.wav; sourceTree = "<group>"; };
+		DAE12AB12E4347E600862C75 /* yeah.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = yeah.wav; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -124,6 +128,8 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DAE12AB12E4347E600862C75 /* yeah.wav */,
+				DAE12AAF2E43478E00862C75 /* evillaugh.wav */,
 				DA79444D2E2D661600EE49FC /* ModeSelectionCard.swift */,
 				DA79444E2E2D661600EE49FC /* PlayerSetupCard.swift */,
 				DA79444B2E2CBB0E00EE49FC /* PauseDialogView.swift */,
@@ -259,9 +265,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */,
+				DAE12AB02E43478F00862C75 /* evillaugh.wav in Resources */,
 				DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */,
 				DA79441C2DFF7CBD00EE49FC /* boing.mp3 in Resources */,
 				DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */,
+				DAE12AB22E4347E600862C75 /* yeah.wav in Resources */,
 				DA7944262E03D27200EE49FC /* Assets.xcassets in Resources */,
 				DAFC6FD52DEA05DC00073666 /* dice.wav in Resources */,
 				DA7944392E0750EE00EE49FC /* hop.wav in Resources */,

@@ -117,6 +117,7 @@ struct ConfettiOverlay: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .firstBlood)) { notification in
             GameLogger.shared.log("💀 DEBUG: ConfettiOverlay queued first blood", level: .debug)
+            SoundManager.shared.playEvilLaugh()
             enqueueConfetti { firstBloodConfettiTrigger += 1 }
 
             // Custom "First Kill +3" message
