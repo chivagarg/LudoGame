@@ -141,6 +141,7 @@ struct GameOverView: View {
                         repetitionInterval: 0.5)
 #endif
         .onAppear {
+            applyBonusesOnce()
             setupAnimatedScores()
             confettiTrigger += 1
             trophyBounce = true
@@ -148,12 +149,35 @@ struct GameOverView: View {
             SoundManager.shared.playYeah()
         }
     }
-    
+
+    // MARK: - Bonus application
+    @State private var didApplyBonuses: Bool = false
+
+    private func applyBonusesOnce() {
+        guard !didApplyBonuses else { return }
+        didApplyBonuses = true
+
+        // Persist bonuses into game.scores
+        for c in killBonusWinners { game.scores[c, default:0] += 5 }
+        for c in unluckyWinners { game.scores[c, default:0] += 5 }
+
+        // Recompute rankings based on updated scores
+        game.finalRankings = game.scores.keys.sorted { (game.scores[$0] ?? 0) > (game.scores[$1] ?? 0) }
+    }
+
     // Initialize animated score dictionary with pre-bonus values
     private func setupAnimatedScores() {
         for color in game.finalRankings {
             let base = game.scores[color] ?? 0
-            animatedScores[color] = base  // start without bonuses; we will animate them in
+            var start = base
+            var bonus = 0
+            if killBonusWinners.contains(color) { bonus += 5 }
+            if unluckyWinners.contains(color) { bonus += 5 }
+            start -= bonus
+
+            GameLogger.shared.log("🏁 Setup animated score for \(color.rawValue). base=\(base) bonus=\(bonus) start=\(start)", level: .debug)
+
+            animatedScores[color] = max(0,start)
         }
     }
 
@@ -161,11 +185,7 @@ struct GameOverView: View {
     private func startKillBonusAnimation() {
         let allBonusPlayers = Set(killBonusWinners).union(unluckyWinners)
         for color in allBonusPlayers {
-            let base = game.scores[color] ?? 0
-            var bonus = 0
-            if killBonusWinners.contains(color) { bonus += 5 }
-            if unluckyWinners.contains(color) { bonus += 5 }
-            let target = base + bonus
+            let target = game.scores[color] ?? 0
             incrementScore(for: color, to: target)
         }
     }
