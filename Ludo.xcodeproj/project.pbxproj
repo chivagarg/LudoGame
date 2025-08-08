@@ -36,6 +36,7 @@
 		DA7944502E2D661600EE49FC /* PlayerSetupCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79444E2E2D661600EE49FC /* PlayerSetupCard.swift */; };
 		DAE12AB02E43478F00862C75 /* evillaugh.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAE12AAF2E43478E00862C75 /* evillaugh.wav */; };
 		DAE12AB22E4347E600862C75 /* yeah.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAE12AB12E4347E600862C75 /* yeah.wav */; };
+		DAE12AB42E45ED7900862C75 /* BubbleBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE12AB32E45ED7900862C75 /* BubbleBackground.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
@@ -84,6 +85,7 @@
 		DA79444E2E2D661600EE49FC /* PlayerSetupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSetupCard.swift; sourceTree = "<group>"; };
 		DAE12AAF2E43478E00862C75 /* evillaugh.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = evillaugh.wav; sourceTree = "<group>"; };
 		DAE12AB12E4347E600862C75 /* yeah.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = yeah.wav; sourceTree = "<group>"; };
+		DAE12AB32E45ED7900862C75 /* BubbleBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BubbleBackground.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -128,6 +130,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DAE12AB32E45ED7900862C75 /* BubbleBackground.swift */,
 				DAE12AB12E4347E600862C75 /* yeah.wav */,
 				DAE12AAF2E43478E00862C75 /* evillaugh.wav */,
 				DA79444D2E2D661600EE49FC /* ModeSelectionCard.swift */,
@@ -293,6 +296,7 @@
 			files = (
 				DA79441E2DFF817E00EE49FC /* AIPlayer.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */,
+				DAE12AB42E45ED7900862C75 /* BubbleBackground.swift in Sources */,
 				DA7944452E2457B100EE49FC /* ConfettiOverlay.swift in Sources */,
 				DA7944402E14C7E800EE49FC /* FollowPathEffect.swift in Sources */,
 				DA79440C2DFA861D00EE49FC /* DiceView.swift in Sources */,

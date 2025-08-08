@@ -33,6 +33,8 @@ struct GameOverView: View {
         return valid.filter { abs($0.value - minAvg) < 0.0001 }.map { $0.key }
     }
     
+    @State private var bubbles = false
+
     var body: some View {
         let winner = game.finalRankings.first ?? .red
 
@@ -41,7 +43,59 @@ struct GameOverView: View {
             GameLogger.shared.log("🎲 UNLUCKY WINNERS: \(unluckyWinners)", level: .debug)
         }()
 
-        VStack(spacing: 24) {
+        ZStack {
+            BubbleBackground(animate: $bubbles)
+
+            VStack(spacing: 30) {
+                // Rainbow headline
+                HStack(spacing: 0) {
+                    let title = Array("GAME OVER")
+                    let palette: [Color] = [.red, .green, .yellow, .blue]
+                    ForEach(title.indices, id: \ .self) { idx in
+                        let ch = String(title[idx])
+                        ZStack {
+                            // outline
+                            let outlineOffsets = [(-3,-3),(3,3),(-3,3),(3,-3)]
+                            ForEach(0..<outlineOffsets.count, id: \ .self) { k in
+                                let off = outlineOffsets[k]
+                                Text(ch)
+                                    .font(.system(size: 60, weight: .heavy))
+                                    .foregroundColor(.black)
+                                    .offset(x: CGFloat(off.0), y: CGFloat(off.1))
+                            }
+                            Text(ch).font(.system(size: 60, weight: .heavy)).foregroundColor(palette[idx % palette.count])
+                        }
+                    }
+                }
+
+                // Existing content
+                content
+            }
+        }
+        .padding()
+#if canImport(ConfettiSwiftUI)
+        .confettiCannon(trigger: $confettiTrigger,
+                        num: 100,
+                        colors: [.red, .green, .yellow, .blue, .purple, .orange],
+                        confettiSize: 12,
+                        repetitions: 3,
+                        repetitionInterval: 0.5)
+#endif
+        .onAppear {
+            bubbles = true
+            applyBonusesOnce()
+            setupAnimatedScores()
+            confettiTrigger += 1
+            trophyBounce = true
+            startKillBonusAnimation()
+            SoundManager.shared.playYeah()
+        }
+    }
+
+    // Extract existing main VStack into computed property for clarity
+    private var content: some View {
+        let winner = game.finalRankings.first ?? .red
+        return VStack(spacing: 24) {
             // Winner section
             VStack(spacing: 8) {
                 HStack(spacing: 12) {
@@ -130,23 +184,6 @@ struct GameOverView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
-        }
-        .padding()
-#if canImport(ConfettiSwiftUI)
-        .confettiCannon(trigger: $confettiTrigger,
-                        num: 100,
-                        colors: [.red, .green, .yellow, .blue, .purple, .orange],
-                        confettiSize: 12,
-                        repetitions: 3,
-                        repetitionInterval: 0.5)
-#endif
-        .onAppear {
-            applyBonusesOnce()
-            setupAnimatedScores()
-            confettiTrigger += 1
-            trophyBounce = true
-            startKillBonusAnimation()
-            SoundManager.shared.playYeah()
         }
     }
 
