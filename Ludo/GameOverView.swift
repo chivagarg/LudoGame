@@ -35,6 +35,15 @@ struct GameOverView: View {
     
     @State private var bubbles = false
 
+    // Bonus celebration queue
+    @State private var bonusQueue: [(PlayerColor, String, String)] = [] // (color,label,points)
+    @State private var currentBonus: (PlayerColor, String, String)? = nil
+    @State private var showBonus: Bool = false
+
+    // Confetti triggers for bonus celebration
+    @State private var skullBonusConfetti: Int = 0
+    @State private var unluckyConfetti: Int = 0
+
     var body: some View {
         let winner = game.finalRankings.first ?? .red
 
@@ -71,6 +80,24 @@ struct GameOverView: View {
                 // Existing content
                 content
             }
+
+            // Bonus celebration overlay
+            if let bonus = currentBonus, showBonus {
+                HStack(spacing: 12) {
+                    Image("pawn_\(bonus.0.rawValue)_marble_filled")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                    Text("\(bonus.1) \(bonus.2)")
+                        .font(.system(size: 40, weight: .heavy))
+                        .foregroundColor(.white)
+                        .shadow(radius: 4)
+                }
+                .padding(20)
+                .background(Color.black.opacity(0.7))
+                .cornerRadius(20)
+                .transition(.scale)
+            }
         }
         .padding()
 #if canImport(ConfettiSwiftUI)
@@ -81,6 +108,20 @@ struct GameOverView: View {
                         repetitions: 3,
                         repetitionInterval: 0.5)
 #endif
+        // Bonus skull confetti
+        .confettiCannon(trigger: $skullBonusConfetti,
+                        num: 40,
+                        confettis: [.text("💀")],
+                        colors: [.black],
+                        confettiSize: 20,
+                        radius: 250)
+        // Unlucky confetti (stars)
+        .confettiCannon(trigger: $unluckyConfetti,
+                        num: 40,
+                        confettis: [.text("⭐️")],
+                        colors: [.yellow, .orange],
+                        confettiSize: 18,
+                        radius: 250)
         .onAppear {
             bubbles = true
             applyBonusesOnce()
@@ -89,6 +130,13 @@ struct GameOverView: View {
             trophyBounce = true
             startKillBonusAnimation()
             SoundManager.shared.playYeah()
+
+            // Build bonus queue
+            var queue: [(PlayerColor,String,String)] = []
+            for c in unluckyWinners { queue.append((c, "UNLUCKIEST", "+5")) }
+            for c in killBonusWinners { queue.append((c, "TOP KILLS", "+5")) }
+            bonusQueue = queue
+            showNextBonus()
         }
     }
 
@@ -253,5 +301,22 @@ struct GameOverView: View {
                 .foregroundColor(.black)
         }
         .padding(.trailing,6)
+    }
+
+    // MARK: Bonus overlay sequence
+    private func showNextBonus() {
+        guard !showBonus, !bonusQueue.isEmpty else { return }
+        currentBonus = bonusQueue.removeFirst()
+        // Trigger confetti based on type
+        if currentBonus?.1 == "TOP KILLS" {
+            skullBonusConfetti += 1
+        } else if currentBonus?.1 == "UNLUCKIEST" {
+            unluckyConfetti += 1
+        }
+        withAnimation { showBonus = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation { showBonus = false }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showNextBonus() }
+        }
     }
 } 
