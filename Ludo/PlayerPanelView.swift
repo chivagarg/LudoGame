@@ -24,91 +24,172 @@ struct PlayerPanelView: View {
                 let iconSize: CGFloat = 56
 
                 HStack(spacing: 16) {
-                    // 1. Pawn & score
-                    VStack(spacing: 4) {
-                        Image("pawn_\(color.rawValue)_marble_filled")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: iconSize, height: iconSize)
-
-                        Text("\(game.scores[color] ?? 0)")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(color.toSwiftUIColor(for: color))
-                            .frame(minWidth: 60)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.white))
-                    }
-
-                    // 2. Skull & kills
-                    VStack(spacing: 4) {
-                        Image("skull_cute")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: iconSize, height: iconSize)
-
-                        Text("\(game.killCounts[color] ?? 0)")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.black)
-                            .frame(minWidth: 60)
-                            .padding(.vertical, 6)
-                            .background(Capsule().fill(Color.white))
-                    }
-
-                    // 3. Mirchi (only in Mirchi mode)
-                    if game.gameMode == .mirchi {
-                        let isMirchiActive = game.mirchiArrowActivated[color] == true
-                        let hasMirchiMoves = game.mirchiMovesRemaining[color, default: 0] > 0
-
-                        VStack(spacing: 4) {
-                            Button(action: {
-                                if hasMirchiMoves {
-                                    game.mirchiArrowActivated[color]?.toggle()
-                                    // Haptic
-                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    let canRoll = showDice && !isDiceRolling && !localDiceRolling && game.eligiblePawns.isEmpty && game.currentRollPlayer == nil && !game.isBusy && !game.aiControlledPlayers.contains(color)
+                    if color == .red || color == .green {
+                        // 1. Dice
+                        DiceView(
+                            value: diceValue,
+                            isRolling: isDiceRolling || localDiceRolling,
+                            shouldPulse: canRoll,
+                            onTap: {
+                                // Disable tap for AI players
+                                if !game.aiControlledPlayers.contains(color) {
+                                    onDiceTap()
                                 }
-                            }) {
-                                Image("mirchi")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: iconSize, height: iconSize)
-                                    .saturation(isMirchiActive ? 1.0 : 0.4)
-                                    .opacity(isMirchiActive ? 1.0 : 0.7)
-                                    .grayscale(hasMirchiMoves ? 0 : 1)
-                                    .shadow(color: .black.opacity(isMirchiActive ? 0.4 : 0.2), radius: isMirchiActive ? 5 : 2, x: 1, y: 1)
-                                    .scaleEffect(isMirchiActive ? 1.15 : 1.0)
-                                    .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isMirchiActive)
                             }
-                            .buttonStyle(PlainButtonStyle())
+                        )
+                        .id(canRoll)
+                        .opacity(showDice ? 1.0 : 0.0)
+                        .allowsHitTesting(showDice)
+                        .frame(width: 72, height: 72)
 
-                            Text("\(game.mirchiMovesRemaining[color, default: 0])/5")
+                        // 2. Mirchi (only in Mirchi mode)
+                        if game.gameMode == .mirchi {
+                            let isMirchiActive = game.mirchiArrowActivated[color] == true
+                            let hasMirchiMoves = game.mirchiMovesRemaining[color, default: 0] > 0
+
+                            VStack(spacing: 4) {
+                                Button(action: {
+                                    if hasMirchiMoves {
+                                        game.mirchiArrowActivated[color]?.toggle()
+                                        // Haptic
+                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                    }
+                                }) {
+                                    Image("mirchi")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: iconSize, height: iconSize)
+                                        .saturation(isMirchiActive ? 1.0 : 0.4)
+                                        .opacity(isMirchiActive ? 1.0 : 0.7)
+                                        .grayscale(hasMirchiMoves ? 0 : 1)
+                                        .shadow(color: .black.opacity(isMirchiActive ? 0.4 : 0.2), radius: isMirchiActive ? 5 : 2, x: 1, y: 1)
+                                        .scaleEffect(isMirchiActive ? 1.15 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isMirchiActive)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+
+                                Text("\(game.mirchiMovesRemaining[color, default: 0])/5")
+                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    .foregroundColor(.black)
+                                    .frame(minWidth: 60)
+                                    .padding(.vertical, 6)
+                                    .background(Capsule().fill(Color.white))
+                            }
+                        }
+
+                        // 3. Skull & kills
+                        VStack(spacing: 4) {
+                            Image("skull_cute")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: iconSize, height: iconSize)
+
+                            Text("\(game.killCounts[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundColor(.black)
                                 .frame(minWidth: 60)
                                 .padding(.vertical, 6)
                                 .background(Capsule().fill(Color.white))
                         }
-                    }
 
-                    // 4. Dice (only for current player, uses opacity to maintain layout)
-                    let canRoll = showDice && !isDiceRolling && !localDiceRolling && game.eligiblePawns.isEmpty && game.currentRollPlayer == nil && !game.isBusy && !game.aiControlledPlayers.contains(color)
-#if DEBUG
-                    let _ = { print("[DEBUG] canRoll for \(color.rawValue):", canRoll) }()
-#endif
-                    DiceView(
-                        value: diceValue,
-                        isRolling: isDiceRolling || localDiceRolling,
-                        shouldPulse: canRoll,
-                        onTap: {
-                            // Disable tap for AI players
-                            if !game.aiControlledPlayers.contains(color) {
-                                onDiceTap()
+                        // 4. Pawn & score
+                        VStack(spacing: 4) {
+                            Image("pawn_\(color.rawValue)_marble_filled")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: iconSize, height: iconSize)
+
+                            Text("\(game.scores[color] ?? 0)")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(color.toSwiftUIColor(for: color))
+                                .frame(minWidth: 60)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.white))
+                        }
+                    } else {
+                        // 1. Pawn & score
+                        VStack(spacing: 4) {
+                            Image("pawn_\(color.rawValue)_marble_filled")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: iconSize, height: iconSize)
+
+                            Text("\(game.scores[color] ?? 0)")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(color.toSwiftUIColor(for: color))
+                                .frame(minWidth: 60)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.white))
+                        }
+
+                        // 2. Skull & kills
+                        VStack(spacing: 4) {
+                            Image("skull_cute")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: iconSize, height: iconSize)
+
+                            Text("\(game.killCounts[color] ?? 0)")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.black)
+                                .frame(minWidth: 60)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(Color.white))
+                        }
+
+                        // 3. Mirchi (only in Mirchi mode)
+                        if game.gameMode == .mirchi {
+                            let isMirchiActive = game.mirchiArrowActivated[color] == true
+                            let hasMirchiMoves = game.mirchiMovesRemaining[color, default: 0] > 0
+
+                            VStack(spacing: 4) {
+                                Button(action: {
+                                    if hasMirchiMoves {
+                                        game.mirchiArrowActivated[color]?.toggle()
+                                        // Haptic
+                                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                    }
+                                }) {
+                                    Image("mirchi")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: iconSize, height: iconSize)
+                                        .saturation(isMirchiActive ? 1.0 : 0.4)
+                                        .opacity(isMirchiActive ? 1.0 : 0.7)
+                                        .grayscale(hasMirchiMoves ? 0 : 1)
+                                        .shadow(color: .black.opacity(isMirchiActive ? 0.4 : 0.2), radius: isMirchiActive ? 5 : 2, x: 1, y: 1)
+                                        .scaleEffect(isMirchiActive ? 1.15 : 1.0)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isMirchiActive)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+
+                                Text("\(game.mirchiMovesRemaining[color, default: 0])/5")
+                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    .foregroundColor(.black)
+                                    .frame(minWidth: 60)
+                                    .padding(.vertical, 6)
+                                    .background(Capsule().fill(Color.white))
                             }
                         }
-                    )
-                    .id(canRoll)
-                    .opacity(showDice ? 1.0 : 0.0)
-                    .allowsHitTesting(showDice)
-                    .frame(width: 72, height: 72)
+
+                        // 4. Dice
+                        DiceView(
+                            value: diceValue,
+                            isRolling: isDiceRolling || localDiceRolling,
+                            shouldPulse: canRoll,
+                            onTap: {
+                                // Disable tap for AI players
+                                if !game.aiControlledPlayers.contains(color) {
+                                    onDiceTap()
+                                }
+                            }
+                        )
+                        .id(canRoll)
+                        .opacity(showDice ? 1.0 : 0.0)
+                        .allowsHitTesting(showDice)
+                        .frame(width: 72, height: 72)
+                    }
                 }
                 .padding(.horizontal, 12)
             }
