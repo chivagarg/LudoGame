@@ -60,6 +60,7 @@ struct PlayerPanelView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: iconSize, height: iconSize)
+                                        .scaleEffect(1.25)
                                         .saturation(isMirchiActive ? 1.0 : 0.4)
                                         .opacity(isMirchiActive ? 1.0 : 0.7)
                                         .grayscale(hasMirchiMoves ? 0 : 1)
@@ -95,7 +96,7 @@ struct PlayerPanelView: View {
 
                         // 4. Pawn & score
                         VStack(spacing: 4) {
-                            Image("pawn_\(color.rawValue)_marble_filled")
+                            Image(game.selectedAvatar(for: color))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: iconSize, height: iconSize)
@@ -110,7 +111,7 @@ struct PlayerPanelView: View {
                     } else {
                         // 1. Pawn & score
                         VStack(spacing: 4) {
-                            Image("pawn_\(color.rawValue)_marble_filled")
+                            Image(game.selectedAvatar(for: color))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: iconSize, height: iconSize)
@@ -155,6 +156,7 @@ struct PlayerPanelView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: iconSize, height: iconSize)
+                                        .scaleEffect(1.25)
                                         .saturation(isMirchiActive ? 1.0 : 0.4)
                                         .opacity(isMirchiActive ? 1.0 : 0.7)
                                         .grayscale(hasMirchiMoves ? 0 : 1)

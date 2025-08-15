@@ -177,7 +177,17 @@ class LudoGame: ObservableObject {
     ]
 
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
+    
+    @Published var selectedAvatars: [PlayerColor: String] = [
+        .red: "pawn_red_marble_filled",
+        .green: "pawn_green_marble_filled",
+        .blue: "pawn_blue_marble_filled",
+        .yellow: "pawn_yellow_marble_filled"
+    ]
 
+    func selectedAvatar(for color: PlayerColor) -> String {
+        return selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
+    }
     
     private func getDiceRoll() -> Int {
         // Only consider pawns that are not finished
@@ -455,6 +465,9 @@ class LudoGame: ObservableObject {
         self.selectedPlayers = selectedPlayers
         self.aiControlledPlayers = aiPlayers
         
+        // Ensure selected avatars are initialized correctly
+        self.selectedAvatars = selectedAvatars
+
         // Randomly assign a strategy to each AI player
         self.aiStrategies = [:]
         var isFirstAI = false

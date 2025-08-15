@@ -3,11 +3,13 @@ import SwiftUI
 struct PlayerSelectionView: View {
     @Binding var selectedPlayers: Set<PlayerColor>
     @Binding var aiPlayers: Set<PlayerColor>
+    @Binding var selectedAvatars: [PlayerColor: String]
     
     var body: some View {
         VStack(spacing: 0) {
             headerView
             playerSelectionTable
+            avatarSelectionPanel
         }
         .padding()
         .background(Color.white)
@@ -56,13 +58,29 @@ struct PlayerSelectionView: View {
         }
     }
     
+    private func avatarOptions(for color: PlayerColor) -> [String] {
+        switch color {
+        case .red:
+            return ["pawn_mirchi", "pawn_red_marble_filled"]
+        case .green:
+            return ["pawn_mango_green", "pawn_green_marble_filled"]
+        case .blue:
+            return ["pawn_blue_marble_filled"]
+        case .yellow:
+            return ["pawn_mango", "pawn_yellow_marble_filled"]
+        }
+    }
+    
     private func playerRow(color: PlayerColor) -> some View {
         HStack {
             // Pawn image
-            Image("pawn_\(color.rawValue)_marble_filled")
+            Image(selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 40, height: 40)
+                .onTapGesture {
+                    showAvatarSelection(for: color)
+                }
             
             Spacer()
             
@@ -102,8 +120,40 @@ struct PlayerSelectionView: View {
     private func colorForPlayer(_ color: PlayerColor) -> Color {
         return color.primaryColor
     }
+    
+    @State private var showingAvatarSelection: PlayerColor? = nil
+
+    private func showAvatarSelection(for color: PlayerColor) {
+        showingAvatarSelection = color
+    }
+
+    private var avatarSelectionPanel: some View {
+        if let color = showingAvatarSelection {
+            AnyView(
+                VStack {
+                    ForEach(avatarOptions(for: color), id: \.self) { avatar in
+                        Button(action: {
+                            selectedAvatars[color] = avatar
+                            showingAvatarSelection = nil
+                        }) {
+                            Image(avatar)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 40, height: 40)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color.white)
+                .cornerRadius(10)
+                .shadow(radius: 5)
+            )
+        } else {
+            AnyView(EmptyView())
+        }
+    }
 }
 
 #Preview {
-    PlayerSelectionView(selectedPlayers: .constant(Set(PlayerColor.allCases)), aiPlayers: .constant([]))
+    PlayerSelectionView(selectedPlayers: .constant(Set(PlayerColor.allCases)), aiPlayers: .constant([]), selectedAvatars: .constant([:]))
 } 

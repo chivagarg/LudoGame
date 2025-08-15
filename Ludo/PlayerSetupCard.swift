@@ -7,10 +7,18 @@ struct PlayerSetupCard: View {
     var onStart: () -> Void
     var onBack: () -> Void
 
+    @EnvironmentObject var game: LudoGame
+
     @State private var redX: CGFloat = 0
     @State private var redY: CGFloat = 0
     @State private var blueOffsetY: CGFloat = 0
     @State private var blueGone: Bool = false
+    @State private var selectedAvatars: [PlayerColor: String] = [
+        .red: "pawn_red_marble_filled",
+        .green: "pawn_green_marble_filled",
+        .blue: "pawn_blue_marble_filled",
+        .yellow: "pawn_yellow_marble_filled"
+    ]
 
     var body: some View {
         VStack(spacing: 24) {
@@ -25,7 +33,7 @@ struct PlayerSetupCard: View {
                     .offset(x: redX, y: redY)
             }
             .frame(height: 40)
-            PlayerSelectionView(selectedPlayers: $selectedPlayers, aiPlayers: $aiPlayers)
+            PlayerSelectionView(selectedPlayers: $selectedPlayers, aiPlayers: $aiPlayers, selectedAvatars: $selectedAvatars)
 
             HStack {
                 Button(action: onBack) {
@@ -36,7 +44,12 @@ struct PlayerSetupCard: View {
 
                 Spacer()
 
-                Button(action: onStart) {
+                Button(action: {
+                    // Update the LudoGame instance with the selected avatars
+                    game.selectedAvatars = selectedAvatars
+                    // Call the onStart closure to start the game
+                    onStart()
+                }) {
                     Label("Start", systemImage: "play.fill")
                         .font(.title3)
                         .padding(.horizontal, 32).padding(.vertical, 10)

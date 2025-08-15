@@ -84,7 +84,7 @@ struct GameOverView: View {
             // Bonus celebration overlay
             if let bonus = currentBonus, showBonus {
                 HStack(spacing: 12) {
-                    Image("pawn_\(bonus.0.rawValue)_marble_filled")
+                    Image(game.selectedAvatar(for: bonus.0))
                         .resizable()
                         .scaledToFit()
                         .frame(width: 60, height: 60)
@@ -156,7 +156,7 @@ struct GameOverView: View {
                         .offset(y: trophyBounce ? -10 : 0)
                         .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: trophyBounce)
                     // Winning pawn image (marble style)
-                    Image("pawn_\(winner.rawValue)_marble_filled")
+                    Image(game.selectedAvatar(for: winner))
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80)
@@ -182,7 +182,7 @@ struct GameOverView: View {
                             .frame(width: 30, alignment: .leading)
                         
                         VStack(spacing:2) {
-                            Image("pawn_\(color.rawValue)_marble_filled")
+                            Image(game.selectedAvatar(for: color))
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 40, height: 40)
