@@ -47,6 +47,7 @@ struct RandomMoveStrategy: AILogicStrategy {
 struct RationalMoveStrategy: AILogicStrategy {
     
     func selectPawnMovementStrategy(from eligiblePawns: Set<Int>, for player: PlayerColor, in game: LudoGame) -> AIPlayerMove? {
+        GameLogger.shared.log("🤖 [AI RATIONAL] \(player.rawValue) is thinking. Eligible pawns: \(eligiblePawns)", level: .debug)
         guard !eligiblePawns.isEmpty else { return nil }
         
         let currentPath = game.path(for: player)
@@ -64,7 +65,7 @@ struct RationalMoveStrategy: AILogicStrategy {
                         let destination = currentPath[destinationIndex]
                         
                         if !game.isSafePosition(destination) && isOpponentAt(position: destination, in: game, excluding: player) {
-                            print("🤖 [AI RATIONAL] Found backward capture! Moving pawn \(pawnId).")
+                            GameLogger.shared.log("🤖 [AI RATIONAL] Found backward capture! Moving pawn \(pawnId).")
                             return (pawnId: pawnId, moveBackwards: true)
                         }
                     }
@@ -82,7 +83,7 @@ struct RationalMoveStrategy: AILogicStrategy {
                     let destination = currentPath[destinationIndex]
                     
                     if !game.isSafePosition(destination) && isOpponentAt(position: destination, in: game, excluding: player) {
-                        print("🤖 [AI RATIONAL] Found forward capture! Moving pawn \(pawnId).")
+                        GameLogger.shared.log("🤖 [AI RATIONAL] Found forward capture! Moving pawn \(pawnId).")
                         return (pawnId: pawnId, moveBackwards: false)
                     }
                 }
@@ -106,7 +107,7 @@ struct RationalMoveStrategy: AILogicStrategy {
                 return posA < posB
             }
             if let pawnId = pawnToMove {
-                print("🤖 [AI RATIONAL] Found pawn(s) at risk. Moving the most advanced one: pawn \(pawnId).")
+                GameLogger.shared.log("🤖 [AI RATIONAL] Found pawn(s) at risk. Moving the most advanced one: pawn \(pawnId).")
                 return (pawnId: pawnId, moveBackwards: false)
             }
         }
@@ -118,7 +119,7 @@ struct RationalMoveStrategy: AILogicStrategy {
             }
             
             if let pawnToMove = homePawnId {
-                print("🤖 [AI RATIONAL] Rolled a 6. Prioritizing moving pawn \(pawnToMove) from home.")
+                GameLogger.shared.log("🤖 [AI RATIONAL] Rolled a 6. Prioritizing moving pawn \(pawnToMove) from home.")
                 return (pawnId: pawnToMove, moveBackwards: false)
             }
         }
@@ -126,15 +127,17 @@ struct RationalMoveStrategy: AILogicStrategy {
         // --- Mirchi Mode: Tier 3.5 - Defensive Backward Move to Safety ---
         if game.gameMode == .mirchi {
             let movesLeft = game.mirchiMovesRemaining[player, default: 0]
-            guard movesLeft > 1 else { /* conserve last move(s) */ return nil }
-            for pawnId in eligiblePawns {
-                if game.isValidBackwardMove(color: player, pawnId: pawnId) {
-                    if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-                       let positionIndex = pawn.positionIndex {
-                        let destinationIndex = positionIndex - game.diceValue
-                        if game.isSafePosition(currentPath[destinationIndex]) {
-                            print("🤖 [AI RATIONAL] Found backward move to safety. Moving pawn \(pawnId).")
-                            return (pawnId: pawnId, moveBackwards: true)
+            // Only attempt this strategy if we have a comfortable number of backward moves
+            if movesLeft > 1 {
+                for pawnId in eligiblePawns {
+                    if game.isValidBackwardMove(color: player, pawnId: pawnId) {
+                        if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
+                           let positionIndex = pawn.positionIndex {
+                            let destinationIndex = positionIndex - game.diceValue
+                            if game.isSafePosition(currentPath[destinationIndex]) {
+                                GameLogger.shared.log("🤖 [AI RATIONAL] Found backward move to safety. Moving pawn \(pawnId).")
+                                return (pawnId: pawnId, moveBackwards: true)
+                            }
                         }
                     }
                 }
@@ -148,7 +151,7 @@ struct RationalMoveStrategy: AILogicStrategy {
                 
                 let destinationIndex = positionIndex + game.diceValue
                 if destinationIndex < currentPath.count && game.isSafePosition(currentPath[destinationIndex]) {
-                    print("🤖 [AI RATIONAL] Found forward move to a safe space. Moving pawn \(pawnId).")
+                    GameLogger.shared.log("🤖 [AI RATIONAL] Found forward move to a safe space. Moving pawn \(pawnId).")
                     return (pawnId: pawnId, moveBackwards: false)
                 }
             }
@@ -161,10 +164,16 @@ struct RationalMoveStrategy: AILogicStrategy {
             return posA < posB
         }
         if let pawnId = pawnToMove {
-            print("🤖 [AI RATIONAL] No optimal move found. Moving most advanced pawn: \(pawnId).")
+            GameLogger.shared.log("🤖 [AI RATIONAL] No optimal move found. Moving most advanced pawn: \(pawnId).")
             return (pawnId: pawnId, moveBackwards: false)
         }
         
+        // --- Final Safety Net: If all else fails, pick a random eligible pawn ---
+        if let randomPawn = eligiblePawns.randomElement() {
+            GameLogger.shared.log("🤖 [AI RATIONAL] CRITICAL FALLBACK. Moving random pawn: \(randomPawn).")
+            return (pawnId: randomPawn, moveBackwards: false)
+        }
+
         return nil
     }
 }
@@ -174,6 +183,7 @@ struct RationalMoveStrategy: AILogicStrategy {
 struct AggressiveMoveStrategy: AILogicStrategy {
 
     func selectPawnMovementStrategy(from eligiblePawns: Set<Int>, for player: PlayerColor, in game: LudoGame) -> AIPlayerMove? {
+        GameLogger.shared.log("🤖 [AI BERSERKER] \(player.rawValue) is thinking. Eligible pawns: \(eligiblePawns)", level: .debug)
         guard !eligiblePawns.isEmpty else { return nil }
         
         let currentPath = game.path(for: player)
@@ -189,7 +199,7 @@ struct AggressiveMoveStrategy: AILogicStrategy {
                 if forwardDestIndex < currentPath.count {
                     let destination = currentPath[forwardDestIndex]
                     if !game.isSafePosition(destination) && isOpponentAt(position: destination, in: game, excluding: player) {
-                        print("🤖 [AI BERSERKER] Found forward capture! Moving pawn \(pawnId).")
+                        GameLogger.shared.log("🤖 [AI BERSERKER] Found forward capture! Moving pawn \(pawnId).")
                         return (pawnId: pawnId, moveBackwards: false)
                     }
                 }
@@ -199,7 +209,7 @@ struct AggressiveMoveStrategy: AILogicStrategy {
                     let backwardDestIndex = positionIndex - game.diceValue
                     let destination = currentPath[backwardDestIndex]
                     if !game.isSafePosition(destination) && isOpponentAt(position: destination, in: game, excluding: player) {
-                        print("🤖 [AI BERSERKER] Found backward capture! Moving pawn \(pawnId).")
+                        GameLogger.shared.log("🤖 [AI BERSERKER] Found backward capture! Moving pawn \(pawnId).")
                         return (pawnId: pawnId, moveBackwards: true)
                     }
                 }
@@ -213,7 +223,7 @@ struct AggressiveMoveStrategy: AILogicStrategy {
             }
             if !homePawns.isEmpty {
                 if Double.random(in: 0.0..<1.0) < 0.6 {
-                    print("🤖 [AI BERSERKER] Rolled a 6, probabilistic choice to move pawn from home.")
+                    GameLogger.shared.log("🤖 [AI BERSERKER] Rolled a 6, probabilistic choice to move pawn from home.")
                     return (pawnId: homePawns.first!, moveBackwards: false)
                 }
             }
@@ -248,7 +258,7 @@ struct AggressiveMoveStrategy: AILogicStrategy {
 
         if !chaseCandidates.isEmpty {
             if let bestChaseMove = chaseCandidates.min(by: { $0.minDistance < $1.minDistance })?.pawnId {
-                 print("🤖 [AI BERSERKER] No capture found. Chasing with pawn \(bestChaseMove) to get closer.")
+                 GameLogger.shared.log("🤖 [AI BERSERKER] No capture found. Chasing with pawn \(bestChaseMove) to get closer.")
                 return (pawnId: bestChaseMove, moveBackwards: false)
             }
         }
@@ -261,7 +271,7 @@ struct AggressiveMoveStrategy: AILogicStrategy {
                        let positionIndex = pawn.positionIndex {
                         let destinationIndex = positionIndex - game.diceValue
                         if game.isSafePosition(currentPath[destinationIndex]) {
-                            print("🤖 [AI BERSERKER] No chase possible. Retreating pawn \(pawnId) to safety.")
+                            GameLogger.shared.log("🤖 [AI BERSERKER] No chase possible. Retreating pawn \(pawnId) to safety.")
                             return (pawnId: pawnId, moveBackwards: true)
                         }
                     }
@@ -276,9 +286,16 @@ struct AggressiveMoveStrategy: AILogicStrategy {
             return posA < posB
         }
         if let pawnId = fallbackMove {
-            print("🤖 [AI BERSERKER] No other move possible. Making fallback move with pawn \(pawnId).")
+            GameLogger.shared.log("🤖 [AI BERSERKER] No other move possible. Making fallback move with pawn \(pawnId).")
             return (pawnId: pawnId, moveBackwards: false)
         }
+
+        // --- Final Safety Net: If all else fails, pick a random eligible pawn ---
+        if let randomPawn = eligiblePawns.randomElement() {
+            GameLogger.shared.log("🤖 [AI BERSERKER] CRITICAL FALLBACK. Moving random pawn: \(randomPawn).")
+            return (pawnId: randomPawn, moveBackwards: false)
+        }
+
         return nil
     }
 

@@ -60,7 +60,6 @@ struct PlayerPanelView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: iconSize, height: iconSize)
-                                        .scaleEffect(1.25)
                                         .saturation(isMirchiActive ? 1.0 : 0.4)
                                         .opacity(isMirchiActive ? 1.0 : 0.7)
                                         .grayscale(hasMirchiMoves ? 0 : 1)
@@ -96,10 +95,12 @@ struct PlayerPanelView: View {
 
                         // 4. Pawn & score
                         VStack(spacing: 4) {
-                            Image(game.selectedAvatar(for: color))
+                            let avatarName = game.selectedAvatar(for: color)
+                            Image(avatarName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: iconSize, height: iconSize)
+                                .scaleEffect(avatarName == "pawn_mirchi" ? 1.25 : 1.0)
 
                             Text("\(game.scores[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -111,10 +112,12 @@ struct PlayerPanelView: View {
                     } else {
                         // 1. Pawn & score
                         VStack(spacing: 4) {
-                            Image(game.selectedAvatar(for: color))
+                            let avatarName = game.selectedAvatar(for: color)
+                            Image(avatarName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: iconSize, height: iconSize)
+                                .scaleEffect(avatarName == "pawn_mirchi" ? 1.25 : 1.0)
 
                             Text("\(game.scores[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -156,7 +159,6 @@ struct PlayerPanelView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: iconSize, height: iconSize)
-                                        .scaleEffect(1.25)
                                         .saturation(isMirchiActive ? 1.0 : 0.4)
                                         .opacity(isMirchiActive ? 1.0 : 0.7)
                                         .grayscale(hasMirchiMoves ? 0 : 1)
