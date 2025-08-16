@@ -34,8 +34,19 @@ struct PlayerSelectionView: View {
                 self.anchorFrames = anchors
             }
         }
+        .onAppear {
+            resetPlayerSelection()
+        }
     }
     
+    private func resetPlayerSelection() {
+        selectedPlayers = Set(PlayerColor.allCases)
+        aiPlayers.removeAll()
+        selectedAvatars = PlayerColor.allCases.reduce(into: [:]) { result, color in
+            result[color] = "pawn_\(color.rawValue)_marble_filled"
+        }
+    }
+
     private var playerSelectionTable: some View {
         VStack(spacing: 0) {
             ForEach(Array(PlayerColor.allCases.enumerated()), id: \.element) { index, color in
