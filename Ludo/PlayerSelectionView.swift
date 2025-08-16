@@ -38,7 +38,18 @@ struct PlayerSelectionView: View {
     
     private var playerSelectionTable: some View {
         VStack(spacing: 0) {
-            playerRows
+            ForEach(Array(PlayerColor.allCases.enumerated()), id: \.element) { index, color in
+                PlayerRowView(
+                    color: color,
+                    playerIndex: index + 1,
+                    selectedPlayers: $selectedPlayers,
+                    aiPlayers: $aiPlayers,
+                    selectedAvatars: $selectedAvatars,
+                    popoverTarget: $popoverTarget,
+                    anchorFrames: $anchorFrames,
+                    colorForPlayer: colorForPlayer
+                )
+            }
         }
         .background(Color.gray.opacity(0.1))
         .cornerRadius(10)
@@ -46,12 +57,6 @@ struct PlayerSelectionView: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
-    }
-    
-    private var playerRows: some View {
-        ForEach(Array(PlayerColor.allCases.enumerated()), id: \.element) { index, color in
-            playerRow(color: color, playerIndex: index + 1)
-        }
     }
     
     private func avatarOptions(for color: PlayerColor) -> [String] {
@@ -70,12 +75,30 @@ struct PlayerSelectionView: View {
         return options
     }
     
-    private func playerRow(color: PlayerColor, playerIndex: Int) -> some View {
+    private func colorForPlayer(_ color: PlayerColor) -> Color {
+        return color.primaryColor
+    }
+}
+
+fileprivate struct PlayerRowView: View {
+    let color: PlayerColor
+    let playerIndex: Int
+    @Binding var selectedPlayers: Set<PlayerColor>
+    @Binding var aiPlayers: Set<PlayerColor>
+    @Binding var selectedAvatars: [PlayerColor: String]
+    @Binding var popoverTarget: (color: PlayerColor, anchor: CGRect)?
+    @Binding var anchorFrames: [PlayerColor: CGRect]
+    let colorForPlayer: (PlayerColor) -> Color
+
+    var body: some View {
+        let isEnabled = selectedPlayers.contains(color)
+        let isAI = aiPlayers.contains(color)
+        
         HStack {
-            Text("Player \(playerIndex)")
+            Text(isAI ? "AI Bot" : "Player \(playerIndex)")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(color.primaryColor)
+                .foregroundColor(isEnabled ? color.primaryColor : .gray)
 
             Spacer()
 
@@ -94,43 +117,8 @@ struct PlayerSelectionView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(Color.white)
-    }
-    
-    private func colorForPlayer(_ color: PlayerColor) -> Color {
-        return color.primaryColor
-    }
-    
-    @State private var showingAvatarSelection: PlayerColor? = nil
-
-    private func showAvatarSelection(for color: PlayerColor) {
-        showingAvatarSelection = color
-    }
-
-    private var avatarSelectionPanel: some View {
-        if let color = showingAvatarSelection {
-            AnyView(
-                VStack {
-                    ForEach(avatarOptions(for: color), id: \.self) { avatar in
-                        Button(action: {
-                            selectedAvatars[color] = avatar
-                            showingAvatarSelection = nil
-                        }) {
-                            Image(avatar)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 40, height: 40)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(10)
-                .shadow(radius: 5)
-            )
-        } else {
-            AnyView(EmptyView())
-        }
+        .background(isEnabled ? Color.white : Color(UIColor.systemGray5))
+        .opacity(isEnabled ? 1.0 : 0.7)
     }
 }
 
