@@ -21,9 +21,7 @@ struct PlayerSelectionView: View {
 
         ZStack {
             VStack(spacing: 0) {
-                headerView
                 playerSelectionTable
-                avatarSelectionPanel
             }
             .coordinateSpace(name: "PlayerSelectionView")
             .padding()
@@ -38,16 +36,8 @@ struct PlayerSelectionView: View {
         }
     }
     
-    private var headerView: some View {
-        Text("Select Players")
-            .font(.headline)
-            .foregroundColor(.blue)
-            .padding(.bottom, 8)
-    }
-    
     private var playerSelectionTable: some View {
         VStack(spacing: 0) {
-            tableHeader
             playerRows
         }
         .background(Color.gray.opacity(0.1))
@@ -58,23 +48,9 @@ struct PlayerSelectionView: View {
         )
     }
     
-    private var tableHeader: some View {
-        HStack {
-            Text("Player")
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Include")
-                .fontWeight(.bold)
-            Text("AI")
-                .fontWeight(.bold)
-                .frame(width: 50)
-        }
-        .padding(.horizontal)
-    }
-    
     private var playerRows: some View {
-        ForEach(PlayerColor.allCases, id: \.self) { color in
-            playerRow(color: color)
+        ForEach(Array(PlayerColor.allCases.enumerated()), id: \.element) { index, color in
+            playerRow(color: color, playerIndex: index + 1)
         }
     }
     
@@ -94,12 +70,19 @@ struct PlayerSelectionView: View {
         return options
     }
     
-    private func playerRow(color: PlayerColor) -> some View {
+    private func playerRow(color: PlayerColor, playerIndex: Int) -> some View {
         HStack {
+            Text("Player \(playerIndex)")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(color.primaryColor)
+
+            Spacer()
+
             // Pawn image with GeometryReader to find its position
             let avatarName = selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
             AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(color))
-                .frame(width: 40, height: 40)
+                .frame(width: 60, height: 60)
                 .background(GeometryReader { geo in
                     Color.clear.preference(key: PopoverPreferenceKey.self, value: [color: geo.frame(in: .named("PlayerSelectionView"))])
                 })
@@ -108,36 +91,6 @@ struct PlayerSelectionView: View {
                         self.popoverTarget = (color, anchor)
                     }
                 }
-            
-            Spacer()
-            
-            Toggle("", isOn: Binding(
-                get: { selectedPlayers.contains(color) },
-                set: { isSelected in
-                    if isSelected {
-                        selectedPlayers.insert(color)
-                    } else {
-                        selectedPlayers.remove(color)
-                        aiPlayers.remove(color)
-                    }
-                }
-            ))
-            .labelsHidden()
-            .tint(colorForPlayer(color))
-            
-            Toggle("", isOn: Binding(
-                get: { aiPlayers.contains(color) },
-                set: { isAI in
-                    if isAI {
-                        aiPlayers.insert(color)
-                    } else {
-                        aiPlayers.remove(color)
-                    }
-                }
-            ))
-            .labelsHidden()
-            .frame(width: 50)
-            .disabled(!selectedPlayers.contains(color))
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
@@ -241,7 +194,7 @@ fileprivate struct AvatarHorizontalPopover: View {
                     HStack(spacing: 15) {
                         ForEach(options, id: \.self) { avatarName in
                             AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(target.color))
-                                .frame(width: 40, height: 40)
+                                .frame(width: 50, height: 50)
                                 .onTapGesture {
                                     if avatarName == "unselect" {
                                         selectedPlayers.remove(target.color)
