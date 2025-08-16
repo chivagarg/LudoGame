@@ -12,6 +12,7 @@ struct PlayerSelectionView: View {
     var body: some View {
         let popoverOverlay = AvatarHorizontalPopover(
             target: $popoverTarget,
+            selectedPlayers: $selectedPlayers,
             selectedAvatars: $selectedAvatars,
             aiPlayers: $aiPlayers,
             avatarOptions: avatarOptions,
@@ -78,16 +79,19 @@ struct PlayerSelectionView: View {
     }
     
     private func avatarOptions(for color: PlayerColor) -> [String] {
+        var options: [String] = []
         switch color {
         case .red:
-            return ["pawn_mirchi", "pawn_red_marble_filled", "avatar_alien"]
+            options = ["pawn_mirchi", "pawn_red_marble_filled", "avatar_alien"]
         case .green:
-            return ["pawn_mango_green", "pawn_green_marble_filled", "avatar_alien"]
+            options = ["pawn_mango_green", "pawn_green_marble_filled", "avatar_alien"]
         case .blue:
-            return ["pawn_blue_marble_filled", "avatar_alien"]
+            options = ["pawn_blue_marble_filled", "avatar_alien"]
         case .yellow:
-            return ["pawn_mango", "pawn_yellow_marble_filled", "avatar_alien"]
+            options = ["pawn_mango", "pawn_yellow_marble_filled", "avatar_alien"]
         }
+        options.append("unselect")
+        return options
     }
     
     private func playerRow(color: PlayerColor) -> some View {
@@ -202,6 +206,10 @@ public struct AvatarIcon: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .foregroundColor(playerColor)
+        } else if avatarName == "unselect" {
+            Image(avatarName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
         } else {
             Image(avatarName)
                 .resizable()
@@ -213,6 +221,7 @@ public struct AvatarIcon: View {
 // The new horizontal popover view
 fileprivate struct AvatarHorizontalPopover: View {
     @Binding var target: (color: PlayerColor, anchor: CGRect)?
+    @Binding var selectedPlayers: Set<PlayerColor>
     @Binding var selectedAvatars: [PlayerColor: String]
     @Binding var aiPlayers: Set<PlayerColor>
     
@@ -234,12 +243,18 @@ fileprivate struct AvatarHorizontalPopover: View {
                             AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(target.color))
                                 .frame(width: 40, height: 40)
                                 .onTapGesture {
-                                    if avatarName == "avatar_alien" {
-                                        aiPlayers.insert(target.color)
-                                    } else {
+                                    if avatarName == "unselect" {
+                                        selectedPlayers.remove(target.color)
                                         aiPlayers.remove(target.color)
+                                    } else if avatarName == "avatar_alien" {
+                                        selectedPlayers.insert(target.color)
+                                        aiPlayers.insert(target.color)
+                                        selectedAvatars[target.color] = avatarName
+                                    } else {
+                                        selectedPlayers.insert(target.color)
+                                        aiPlayers.remove(target.color)
+                                        selectedAvatars[target.color] = avatarName
                                     }
-                                    selectedAvatars[target.color] = avatarName
                                     self.target = nil // Dismiss
                                 }
                         }
