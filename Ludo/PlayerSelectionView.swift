@@ -5,17 +5,34 @@ struct PlayerSelectionView: View {
     @Binding var aiPlayers: Set<PlayerColor>
     @Binding var selectedAvatars: [PlayerColor: String]
     
+    // State for the popover
+    @State private var popoverTarget: (color: PlayerColor, anchor: CGRect)? = nil
+    @State private var anchorFrames: [PlayerColor: CGRect] = [:]
+
     var body: some View {
-        VStack(spacing: 0) {
-            headerView
-            playerSelectionTable
-            avatarSelectionPanel
+        let popoverOverlay = AvatarHorizontalPopover(
+            target: $popoverTarget,
+            selectedAvatars: $selectedAvatars,
+            avatarOptions: avatarOptions
+        )
+
+        ZStack {
+            VStack(spacing: 0) {
+                headerView
+                playerSelectionTable
+                avatarSelectionPanel
+            }
+            .coordinateSpace(name: "PlayerSelectionView")
+            .padding()
+            .background(Color.white)
+            .cornerRadius(15)
+            .shadow(radius: 2)
+            .frame(width: 300)
+            .overlay(popoverOverlay)
+            .onPreferenceChange(PopoverPreferenceKey.self) { anchors in
+                self.anchorFrames = anchors
+            }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(15)
-        .shadow(radius: 2)
-        .frame(width: 300)
     }
     
     private var headerView: some View {
@@ -73,13 +90,18 @@ struct PlayerSelectionView: View {
     
     private func playerRow(color: PlayerColor) -> some View {
         HStack {
-            // Pawn image
+            // Pawn image with GeometryReader to find its position
             Image(selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 40, height: 40)
+                .background(GeometryReader { geo in
+                    Color.clear.preference(key: PopoverPreferenceKey.self, value: [color: geo.frame(in: .named("PlayerSelectionView"))])
+                })
                 .onTapGesture {
-                    showAvatarSelection(for: color)
+                    if let anchor = self.anchorFrames[color] {
+                        self.popoverTarget = (color, anchor)
+                    }
                 }
             
             Spacer()
@@ -153,6 +175,72 @@ struct PlayerSelectionView: View {
         }
     }
 }
+
+// Preference key to communicate pawn view frames up the hierarchy
+fileprivate struct PopoverPreferenceKey: PreferenceKey {
+    typealias Value = [PlayerColor: CGRect]
+    static var defaultValue: Value = [:]
+    static func reduce(value: inout Value, nextValue: () -> Value) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
+
+// The new horizontal popover view
+fileprivate struct AvatarHorizontalPopover: View {
+    @Binding var target: (color: PlayerColor, anchor: CGRect)?
+    @Binding var selectedAvatars: [PlayerColor: String]
+    
+    let avatarOptions: (PlayerColor) -> [String]
+    
+    var body: some View {
+        if let target = target {
+            let options = avatarOptions(target.color)
+            ZStack {
+                // Background dismiss layer
+                Color.black.opacity(0.01)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture { self.target = nil }
+                
+                VStack(spacing: 0) {
+                    HStack(spacing: 15) {
+                        ForEach(options, id: \.self) { avatarName in
+                            Image(avatarName)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 40, height: 40)
+                                .onTapGesture {
+                                    selectedAvatars[target.color] = avatarName
+                                    self.target = nil // Dismiss
+                                }
+                        }
+                    }
+                    .padding()
+                    .background(Color.black.opacity(0.8))
+                    .cornerRadius(12)
+                    
+                    // Chevron pointing down
+                    Chevron()
+                        .fill(Color.black.opacity(0.8))
+                        .frame(width: 20, height: 10)
+                }
+                .position(x: target.anchor.midX, y: target.anchor.minY - 40) // Adjusted y-offset for horizontal layout
+            }
+        }
+    }
+}
+
+// Custom shape for the chevron
+fileprivate struct Chevron: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.closeSubpath()
+        return path
+    }
+}
+
 
 #Preview {
     PlayerSelectionView(selectedPlayers: .constant(Set(PlayerColor.allCases)), aiPlayers: .constant([]), selectedAvatars: .constant([:]))
