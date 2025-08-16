@@ -16,7 +16,8 @@ struct PlayerSelectionView: View {
             selectedAvatars: $selectedAvatars,
             aiPlayers: $aiPlayers,
             avatarOptions: avatarOptions,
-            colorForPlayer: colorForPlayer
+            colorForPlayer: colorForPlayer,
+            isPawnLocked: isPawnLocked
         )
 
         ZStack {
@@ -84,6 +85,11 @@ struct PlayerSelectionView: View {
         }
         options.append("unselect")
         return options
+    }
+
+    private func isPawnLocked(_ pawnName: String) -> Bool {
+        let specialPawns = ["pawn_mirchi", "pawn_mango_green", "pawn_mango"]
+        return specialPawns.contains(pawnName)
     }
     
     private func colorForPlayer(_ color: PlayerColor) -> Color {
@@ -179,6 +185,7 @@ fileprivate struct AvatarHorizontalPopover: View {
     
     let avatarOptions: (PlayerColor) -> [String]
     let colorForPlayer: (PlayerColor) -> Color
+    let isPawnLocked: (String) -> Bool
     
     var body: some View {
         if let target = target {
@@ -192,23 +199,37 @@ fileprivate struct AvatarHorizontalPopover: View {
                 VStack(spacing: 0) {
                     HStack(spacing: 15) {
                         ForEach(options, id: \.self) { avatarName in
-                            AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(target.color))
-                                .frame(width: 50, height: 50)
-                                .onTapGesture {
-                                    if avatarName == "unselect" {
-                                        selectedPlayers.remove(target.color)
-                                        aiPlayers.remove(target.color)
-                                    } else if avatarName == "avatar_alien" {
-                                        selectedPlayers.insert(target.color)
-                                        aiPlayers.insert(target.color)
-                                        selectedAvatars[target.color] = avatarName
-                                    } else {
-                                        selectedPlayers.insert(target.color)
-                                        aiPlayers.remove(target.color)
-                                        selectedAvatars[target.color] = avatarName
-                                    }
-                                    self.target = nil // Dismiss
+                            let locked = isPawnLocked(avatarName)
+                            ZStack {
+                                AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(target.color))
+                                    .grayscale(locked ? 1.0 : 0.0)
+                                    .opacity(locked ? 0.5 : 1.0)
+
+                                if locked {
+                                    Image(systemName: "lock.fill")
+                                        .foregroundColor(.white)
+                                        .font(.title)
+                                        .shadow(radius: 2)
                                 }
+                            }
+                            .frame(width: 50, height: 50)
+                            .onTapGesture {
+                                guard !locked else { return }
+                                
+                                if avatarName == "unselect" {
+                                    selectedPlayers.remove(target.color)
+                                    aiPlayers.remove(target.color)
+                                } else if avatarName == "avatar_alien" {
+                                    selectedPlayers.insert(target.color)
+                                    aiPlayers.insert(target.color)
+                                    selectedAvatars[target.color] = avatarName
+                                } else {
+                                    selectedPlayers.insert(target.color)
+                                    aiPlayers.remove(target.color)
+                                    selectedAvatars[target.color] = avatarName
+                                }
+                                self.target = nil // Dismiss
+                            }
                         }
                     }
                     .padding()

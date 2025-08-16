@@ -123,6 +123,7 @@ struct GameOverView: View {
                         confettiSize: 18,
                         radius: 250)
         .onAppear {
+            GameStats.incrementGameCompletionCount()
             bubbles = true
             applyBonusesOnce()
             setupAnimatedScores()

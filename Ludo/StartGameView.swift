@@ -105,6 +105,7 @@ struct StartGameView: View {
                                 selectedMode = mode
                                 withAnimation { step = 1 }
                             }
+                            ProgressGaugeView(currentValue: GameStats.getGameCompletionCount(), maxValue: 10)
 #if DEBUG
                             SettingsTableView(isAdminMode: $isAdminMode)
 #endif
