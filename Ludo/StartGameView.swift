@@ -105,7 +105,9 @@ struct StartGameView: View {
                                 selectedMode = mode
                                 withAnimation { step = 1 }
                             }
-                            ProgressGaugeView(currentValue: GameStats.getGameCompletionCount(), maxValue: 10)
+                            let progress = UnlockManager.getCurrentProgress()
+                            let nextUnlock = UnlockManager.getNextUnlockablePawn()
+                            ProgressGaugeView(currentValue: progress.current, maxValue: progress.max, nextUnlockablePawn: nextUnlock)
 #if DEBUG
                             SettingsTableView(isAdminMode: $isAdminMode)
 #endif

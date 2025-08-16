@@ -124,6 +124,7 @@ struct GameOverView: View {
                         radius: 250)
         .onAppear {
             GameStats.incrementGameCompletionCount()
+            UnlockManager.checkForUnlocks()
             bubbles = true
             applyBonusesOnce()
             setupAnimatedScores()

@@ -40,6 +40,7 @@
 		DAE12AB82E513BCF00862C75 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE12AB72E513BCF00862C75 /* SplashScreenView.swift */; };
 		DAE12ABB2E5144CC00862C75 /* ProgressGaugeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE12ABA2E5144CC00862C75 /* ProgressGaugeView.swift */; };
 		DAE12ABC2E5144CC00862C75 /* GameStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE12AB92E5144CC00862C75 /* GameStats.swift */; };
+		DAE12ABE2E514E5D00862C75 /* UnlockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE12ABD2E514E5D00862C75 /* UnlockManager.swift */; };
 		DAFC6FD12DEA05DC00073666 /* capture.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCB2DEA05DC00073666 /* capture.wav */; };
 		DAFC6FD22DEA05DC00073666 /* victory.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FD02DEA05DC00073666 /* victory.wav */; };
 		DAFC6FD42DEA05DC00073666 /* swish.wav in Resources */ = {isa = PBXBuildFile; fileRef = DAFC6FCF2DEA05DC00073666 /* swish.wav */; };
@@ -92,6 +93,7 @@
 		DAE12AB72E513BCF00862C75 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		DAE12AB92E5144CC00862C75 /* GameStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStats.swift; sourceTree = "<group>"; };
 		DAE12ABA2E5144CC00862C75 /* ProgressGaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressGaugeView.swift; sourceTree = "<group>"; };
+		DAE12ABD2E514E5D00862C75 /* UnlockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockManager.swift; sourceTree = "<group>"; };
 		DAFC6F762DDA980A00073666 /* LudoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LudoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAFC6FCB2DEA05DC00073666 /* capture.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = capture.wav; sourceTree = "<group>"; };
 		DAFC6FCC2DEA05DC00073666 /* dice.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = dice.wav; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				DAE12ABD2E514E5D00862C75 /* UnlockManager.swift */,
 				DAE12AB92E5144CC00862C75 /* GameStats.swift */,
 				DAE12ABA2E5144CC00862C75 /* ProgressGaugeView.swift */,
 				DAE12AB72E513BCF00862C75 /* SplashScreenView.swift */,
@@ -330,6 +333,7 @@
 				DA7944102DFA879D00EE49FC /* AdminControlsView.swift in Sources */,
 				DA7944182DFA8E8000EE49FC /* GameBoardView.swift in Sources */,
 				DA7944142DFA8C7B00EE49FC /* LudoBoardView.swift in Sources */,
+				DAE12ABE2E514E5D00862C75 /* UnlockManager.swift in Sources */,
 				DA79440E2DFA871F00EE49FC /* SettingsTableView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

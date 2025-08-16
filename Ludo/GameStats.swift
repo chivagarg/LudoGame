@@ -11,4 +11,8 @@ struct GameStats {
     static func getGameCompletionCount() -> Int {
         return UserDefaults.standard.integer(forKey: gameCompletionCountKey)
     }
+
+    static func setGameCompletionCount(_ count: Int) {
+        UserDefaults.standard.set(count, forKey: gameCompletionCountKey)
+    }
 }

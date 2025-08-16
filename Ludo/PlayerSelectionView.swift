@@ -16,8 +16,7 @@ struct PlayerSelectionView: View {
             selectedAvatars: $selectedAvatars,
             aiPlayers: $aiPlayers,
             avatarOptions: avatarOptions,
-            colorForPlayer: colorForPlayer,
-            isPawnLocked: isPawnLocked
+            colorForPlayer: colorForPlayer
         )
 
         ZStack {
@@ -85,11 +84,6 @@ struct PlayerSelectionView: View {
         }
         options.append("unselect")
         return options
-    }
-
-    private func isPawnLocked(_ pawnName: String) -> Bool {
-        let specialPawns = ["pawn_mirchi", "pawn_mango_green", "pawn_mango"]
-        return specialPawns.contains(pawnName)
     }
     
     private func colorForPlayer(_ color: PlayerColor) -> Color {
@@ -185,7 +179,6 @@ fileprivate struct AvatarHorizontalPopover: View {
     
     let avatarOptions: (PlayerColor) -> [String]
     let colorForPlayer: (PlayerColor) -> Color
-    let isPawnLocked: (String) -> Bool
     
     var body: some View {
         if let target = target {
@@ -199,7 +192,7 @@ fileprivate struct AvatarHorizontalPopover: View {
                 VStack(spacing: 0) {
                     HStack(spacing: 15) {
                         ForEach(options, id: \.self) { avatarName in
-                            let locked = isPawnLocked(avatarName)
+                            let locked = UnlockManager.isPawnLocked(avatarName)
                             ZStack {
                                 AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(target.color))
                                     .grayscale(locked ? 1.0 : 0.0)
