@@ -13,7 +13,9 @@ struct PlayerSelectionView: View {
         let popoverOverlay = AvatarHorizontalPopover(
             target: $popoverTarget,
             selectedAvatars: $selectedAvatars,
-            avatarOptions: avatarOptions
+            aiPlayers: $aiPlayers,
+            avatarOptions: avatarOptions,
+            colorForPlayer: colorForPlayer
         )
 
         ZStack {
@@ -78,22 +80,21 @@ struct PlayerSelectionView: View {
     private func avatarOptions(for color: PlayerColor) -> [String] {
         switch color {
         case .red:
-            return ["pawn_mirchi", "pawn_red_marble_filled"]
+            return ["pawn_mirchi", "pawn_red_marble_filled", "avatar_alien"]
         case .green:
-            return ["pawn_mango_green", "pawn_green_marble_filled"]
+            return ["pawn_mango_green", "pawn_green_marble_filled", "avatar_alien"]
         case .blue:
-            return ["pawn_blue_marble_filled"]
+            return ["pawn_blue_marble_filled", "avatar_alien"]
         case .yellow:
-            return ["pawn_mango", "pawn_yellow_marble_filled"]
+            return ["pawn_mango", "pawn_yellow_marble_filled", "avatar_alien"]
         }
     }
     
     private func playerRow(color: PlayerColor) -> some View {
         HStack {
             // Pawn image with GeometryReader to find its position
-            Image(selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
+            let avatarName = selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
+            AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(color))
                 .frame(width: 40, height: 40)
                 .background(GeometryReader { geo in
                     Color.clear.preference(key: PopoverPreferenceKey.self, value: [color: geo.frame(in: .named("PlayerSelectionView"))])
@@ -185,12 +186,38 @@ fileprivate struct PopoverPreferenceKey: PreferenceKey {
     }
 }
 
+public struct AvatarIcon: View {
+    let avatarName: String
+    let playerColor: Color
+
+    public init(avatarName: String, playerColor: Color) {
+        self.avatarName = avatarName
+        self.playerColor = playerColor
+    }
+
+    public var body: some View {
+        if avatarName == "avatar_alien" {
+            Image(avatarName)
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .foregroundColor(playerColor)
+        } else {
+            Image(avatarName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+}
+
 // The new horizontal popover view
 fileprivate struct AvatarHorizontalPopover: View {
     @Binding var target: (color: PlayerColor, anchor: CGRect)?
     @Binding var selectedAvatars: [PlayerColor: String]
+    @Binding var aiPlayers: Set<PlayerColor>
     
     let avatarOptions: (PlayerColor) -> [String]
+    let colorForPlayer: (PlayerColor) -> Color
     
     var body: some View {
         if let target = target {
@@ -204,11 +231,14 @@ fileprivate struct AvatarHorizontalPopover: View {
                 VStack(spacing: 0) {
                     HStack(spacing: 15) {
                         ForEach(options, id: \.self) { avatarName in
-                            Image(avatarName)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
+                            AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(target.color))
                                 .frame(width: 40, height: 40)
                                 .onTapGesture {
+                                    if avatarName == "avatar_alien" {
+                                        aiPlayers.insert(target.color)
+                                    } else {
+                                        aiPlayers.remove(target.color)
+                                    }
                                     selectedAvatars[target.color] = avatarName
                                     self.target = nil // Dismiss
                                 }
@@ -223,7 +253,7 @@ fileprivate struct AvatarHorizontalPopover: View {
                         .fill(Color.black.opacity(0.8))
                         .frame(width: 20, height: 10)
                 }
-                .position(x: target.anchor.midX, y: target.anchor.minY - 40) // Adjusted y-offset for horizontal layout
+                .position(x: target.anchor.midX + 20, y: target.anchor.minY - 40)
             }
         }
     }

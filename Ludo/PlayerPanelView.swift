@@ -96,9 +96,7 @@ struct PlayerPanelView: View {
                         // 4. Pawn & score
                         VStack(spacing: 4) {
                             let avatarName = game.selectedAvatar(for: color)
-                            Image(avatarName)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
+                            AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                                 .frame(width: iconSize, height: iconSize)
                                 .scaleEffect(avatarName == "pawn_mirchi" ? 1.25 : 1.0)
 
@@ -113,9 +111,7 @@ struct PlayerPanelView: View {
                         // 1. Pawn & score
                         VStack(spacing: 4) {
                             let avatarName = game.selectedAvatar(for: color)
-                            Image(avatarName)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
+                            AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                                 .frame(width: iconSize, height: iconSize)
                                 .scaleEffect(avatarName == "pawn_mirchi" ? 1.25 : 1.0)
 

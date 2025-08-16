@@ -17,10 +17,7 @@ struct PawnView: View {
         let isMango = avatarName.contains("mango")
         let isMirchi = avatarName.contains("mirchi")
 
-        Image(avatarName)
-            .renderingMode(.original)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
+        AvatarIcon(avatarName: avatarName, playerColor: pawn.color.primaryColor)
             .frame(width: size, height: size)
             .scaleEffect(isMirchi ? 1.25 : 1.0)
             .offset(x: isMango ? size * 0.1 : 0, y: isMango ? -size * 0.15 : 0)
