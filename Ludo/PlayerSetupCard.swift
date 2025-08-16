@@ -13,6 +13,8 @@ struct PlayerSetupCard: View {
     @State private var redY: CGFloat = 0
     @State private var blueOffsetY: CGFloat = 0
     @State private var blueGone: Bool = false
+    @State private var attackingPawn: String = "pawn_red_marble_filled"
+    @State private var kickedPawn: String = "pawn_blue_marble_filled"
     @State private var selectedAvatars: [PlayerColor: String] = [
         .red: "pawn_red_marble_filled",
         .green: "pawn_green_marble_filled",
@@ -24,15 +26,15 @@ struct PlayerSetupCard: View {
         VStack(spacing: 24) {
             // playful hop animation
             ZStack {
-                Image("pawn_blue_marble_filled")
-                    .resizable().frame(width: 24, height: 24)
-                    .offset(x: 40, y: blueOffsetY)
+                Image(kickedPawn)
+                    .resizable().frame(width: 48, height: 48) // Increased size
+                    .offset(x: 60, y: blueOffsetY) // Increased distance
                     .opacity(blueGone ? 0 : 1)
-                Image("pawn_red_marble_filled")
-                    .resizable().frame(width: 24, height: 24)
+                Image(attackingPawn)
+                    .resizable().frame(width: 48, height: 48) // Increased size
                     .offset(x: redX, y: redY)
             }
-            .frame(height: 40)
+            .frame(height: 60) // Increased frame height
             PlayerSelectionView(selectedPlayers: $selectedPlayers, aiPlayers: $aiPlayers, selectedAvatars: $selectedAvatars)
 
             HStack {
@@ -88,7 +90,24 @@ struct PlayerSetupCard: View {
                     blueOffsetY = -40
                     blueGone = true
                 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    resetAnimation()
+                }
             }
         }
+    }
+
+    private func resetAnimation() {
+        redX = 0
+        blueOffsetY = 0
+        blueGone = false
+        randomizePawns()
+        startHopAnimation()
+    }
+
+    private func randomizePawns() {
+        let pawnColors = ["pawn_red_marble_filled", "pawn_green_marble_filled", "pawn_blue_marble_filled", "pawn_yellow_marble_filled"]
+        attackingPawn = pawnColors.randomElement() ?? "pawn_red_marble_filled"
+        kickedPawn = pawnColors.filter { $0 != attackingPawn }.randomElement() ?? "pawn_blue_marble_filled"
     }
 } 
