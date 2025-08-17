@@ -25,8 +25,14 @@ struct PlayerSelectionView: View {
             }
             .coordinateSpace(name: "PlayerSelectionView")
             .padding()
-            .background(Color.white)
-            .cornerRadius(15)
+            .background(
+                RoundedRectangle(cornerRadius: 30)
+                    .fill(Color.white)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 30)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 6)
+            )
             .shadow(radius: 2)
             .frame(width: 300)
             .overlay(popoverOverlay)
@@ -62,12 +68,6 @@ struct PlayerSelectionView: View {
                 )
             }
         }
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-        )
     }
     
     private func avatarOptions(for color: PlayerColor) -> [String] {
@@ -136,7 +136,6 @@ fileprivate struct PlayerRowView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(isEnabled ? Color.white : Color(UIColor.systemGray5))
         .opacity(isEnabled ? 1.0 : 0.7)
     }
 }
