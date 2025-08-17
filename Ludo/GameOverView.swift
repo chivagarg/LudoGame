@@ -43,6 +43,11 @@ struct GameOverView: View {
     // Confetti triggers for bonus celebration
     @State private var skullBonusConfetti: Int = 0
     @State private var unluckyConfetti: Int = 0
+    @State private var unlockedPawnConfetti: Int = 0
+    
+    // Unlock celebration
+    @State private var newlyUnlockedPawn: String? = nil
+    @State private var showUnlockCelebration: Bool = false
 
     var body: some View {
         let winner = game.finalRankings.first ?? .red
@@ -98,6 +103,25 @@ struct GameOverView: View {
                 .cornerRadius(20)
                 .transition(.scale)
             }
+            
+            // Unlock celebration overlay
+            if let pawn = newlyUnlockedPawn, showUnlockCelebration {
+                VStack {
+                    Text("UNLOCKED!!")
+                        .font(.system(size: 60, weight: .heavy))
+                        .foregroundColor(.yellow)
+                        .shadow(radius: 5)
+                    Image(pawn)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 150, height: 150)
+                        .shadow(radius: 5)
+                }
+                .padding(30)
+                .background(Color.black.opacity(0.8))
+                .cornerRadius(25)
+                .transition(.scale.animation(.spring(response: 0.4, dampingFraction: 0.6)))
+            }
         }
         .padding()
 #if canImport(ConfettiSwiftUI)
@@ -122,9 +146,19 @@ struct GameOverView: View {
                         colors: [.yellow, .orange],
                         confettiSize: 18,
                         radius: 250)
+        // Unlocked confetti (stars)
+        .confettiCannon(trigger: $unlockedPawnConfetti,
+                        num: 80,
+                        confettis: [.text("🌟")],
+                        colors: [.yellow, .white, .orange],
+                        confettiSize: 24,
+                        radius: 400)
         .onAppear {
             GameStats.incrementGameCompletionCount()
-            UnlockManager.checkForUnlocks()
+            let unlocked = UnlockManager.checkForUnlocks()
+            if let firstUnlocked = unlocked.first {
+                self.newlyUnlockedPawn = firstUnlocked
+            }
             bubbles = true
             applyBonusesOnce()
             setupAnimatedScores()
@@ -307,7 +341,13 @@ struct GameOverView: View {
 
     // MARK: Bonus overlay sequence
     private func showNextBonus() {
-        guard !showBonus, !bonusQueue.isEmpty else { return }
+        guard !showBonus, !bonusQueue.isEmpty else {
+            // All bonuses shown, check for unlocks
+            if newlyUnlockedPawn != nil {
+                startUnlockCelebration()
+            }
+            return
+        }
         currentBonus = bonusQueue.removeFirst()
         // Trigger confetti based on type
         if currentBonus?.1 == "TOP KILLS" {
@@ -319,6 +359,21 @@ struct GameOverView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             withAnimation { showBonus = false }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showNextBonus() }
+        }
+    }
+    
+    private func startUnlockCelebration() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            unlockedPawnConfetti += 1
+            withAnimation {
+                showUnlockCelebration = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                withAnimation {
+                    showUnlockCelebration = false
+                }
+            }
         }
     }
 } 

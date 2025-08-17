@@ -37,18 +37,22 @@ struct UnlockManager {
         return nil
     }
 
-    static func checkForUnlocks() {
+    static func checkForUnlocks() -> [String] {
         let totalGamesCompleted = GameStats.getGameCompletionCount()
         let unlockedCount = getUnlockedPawns().count
         let expectedUnlockedCount = totalGamesCompleted / gamesPerUnlock
+        var newlyUnlocked: [String] = []
 
         if expectedUnlockedCount > unlockedCount {
             for i in unlockedCount..<expectedUnlockedCount {
                 if i < unlockProgression.count {
-                    unlockPawn(unlockProgression[i])
+                    let pawnToUnlock = unlockProgression[i]
+                    unlockPawn(pawnToUnlock)
+                    newlyUnlocked.append(pawnToUnlock)
                 }
             }
         }
+        return newlyUnlocked
     }
 
     static func getCurrentProgress() -> (current: Int, max: Int) {
