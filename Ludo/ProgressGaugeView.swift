@@ -4,7 +4,8 @@ struct ProgressGaugeView: View {
     let currentValue: Int
     let maxValue: Int
     let nextUnlockablePawn: String?
-    private let gridSize: CGFloat = 40
+    private let gridSize: CGFloat = 50
+    private let rewardGridSize: CGFloat = 60
 
     var body: some View {
         HStack(spacing: 2) {
@@ -27,19 +28,12 @@ struct ProgressGaugeView: View {
             }
             
             // Final reward cell
-            ZStack {
-                Rectangle()
-                    .fill(PlayerColor.yellow.primaryColor.opacity(0.6))
-                    .frame(width: gridSize, height: gridSize)
-                    .border(Color.white.opacity(0.8), width: 2)
-                
-                if let pawn = nextUnlockablePawn {
-                    Image(pawn)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: gridSize * 0.8, height: gridSize * 0.8)
-                        .shadow(radius: 3)
-                }
+            if let pawn = nextUnlockablePawn {
+                Image(pawn)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: rewardGridSize * 0.8, height: rewardGridSize * 0.8)
+                    .shadow(radius: 3)
             }
         }
     }
