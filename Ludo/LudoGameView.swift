@@ -25,7 +25,9 @@ struct LudoGameView: View {
                     }
                 )
             } else if game.isGameOver {
-                GameOverView(selectedPlayers: $selectedPlayers)
+                GameOverView(selectedPlayers: $selectedPlayers, onExitGame: {
+                    game.resetGame()
+                })
             } else {
                 GameBoardView()
             }

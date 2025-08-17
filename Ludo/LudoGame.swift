@@ -943,6 +943,12 @@ class LudoGame: ObservableObject {
             }
         }.map { $0.id })
     }
+    
+    func resetGame() {
+        gameStarted = false
+        isGameOver = false
+        // Reset other game-specific states as needed
+    }
 }
 
 extension Notification.Name {

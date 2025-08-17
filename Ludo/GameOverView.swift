@@ -6,6 +6,7 @@ import ConfettiSwiftUI
 struct GameOverView: View {
     @EnvironmentObject var game: LudoGame
     @Binding var selectedPlayers: Set<PlayerColor>
+    var onExitGame: () -> Void
     
     @State private var confettiTrigger: Int = 0
     @State private var trophyBounce: Bool = false
@@ -265,6 +266,16 @@ struct GameOverView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .background(PlayerColor.blue.primaryColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            
+            Button(action: onExitGame) {
+                Text("Exit Game")
+                    .font(.title2)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
