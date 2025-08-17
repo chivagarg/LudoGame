@@ -115,11 +115,19 @@ fileprivate struct PlayerRowView: View {
 
             // Pawn image with GeometryReader to find its position
             let avatarName = selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
-            AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(color))
-                .frame(width: 60, height: 60)
-                .background(GeometryReader { geo in
-                    Color.clear.preference(key: PopoverPreferenceKey.self, value: [color: geo.frame(in: .named("PlayerSelectionView"))])
-                })
+            ZStack(alignment: .bottomTrailing) {
+                AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(color))
+                
+                Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(color.primaryColor)
+                    .background(Circle().fill(Color.white).scaleEffect(1.2))
+                    .shadow(radius: 2)
+            }
+            .frame(width: 60, height: 60)
+            .background(GeometryReader { geo in
+                Color.clear.preference(key: PopoverPreferenceKey.self, value: [color: geo.frame(in: .named("PlayerSelectionView"))])
+            })
                 .onTapGesture {
                     if let anchor = self.anchorFrames[color] {
                         self.popoverTarget = (color, anchor)
