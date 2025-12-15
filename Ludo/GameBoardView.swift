@@ -56,7 +56,7 @@ struct GameBoardView: View {
                         game.gameStarted = false
                     }
                 )
-                .frame(width: 220)
+                .frame(width: 360)
             }
         }
     }
