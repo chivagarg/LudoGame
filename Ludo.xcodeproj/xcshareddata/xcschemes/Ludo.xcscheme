@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1A1A1A1A1A1A1A1A1A1A1A25"
-               BuildableName = "Ludo.app"
+               BuildableName = "Ludo Mirchi.app"
                BlueprintName = "Ludo"
                ReferencedContainer = "container:Ludo.xcodeproj">
             </BuildableReference>
@@ -58,7 +58,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A1A1A1A1A1A1A1A1A1A1A25"
-            BuildableName = "Ludo.app"
+            BuildableName = "Ludo Mirchi.app"
             BlueprintName = "Ludo"
             ReferencedContainer = "container:Ludo.xcodeproj">
          </BuildableReference>
@@ -75,7 +75,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1A1A1A1A1A1A1A1A1A1A1A25"
-            BuildableName = "Ludo.app"
+            BuildableName = "Ludo Mirchi.app"
             BlueprintName = "Ludo"
             ReferencedContainer = "container:Ludo.xcodeproj">
          </BuildableReference>
