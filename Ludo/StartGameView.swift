@@ -7,123 +7,119 @@ struct StartGameView: View {
     @Binding var selectedMode: GameMode
     let onStartGame: () -> Void
 
-    // Decorative dice for the header
-    private let diceImages = ["die.face.1", "die.face.2", "die.face.3", "die.face.4", "die.face.5", "die.face.6"]
-
+    // Decorative dice for the header - REMOVED
+    
     @State private var step: Int = 0 // 0 = mode select, 1 = setup players
-    @State private var diceRoll: Bool = false
+    @State private var showSettings: Bool = false
     
     var body: some View {
         ZStack {
-            // Colorful animated bubbles backdrop
-            GeometryReader { geo in
-                ZStack {
-                    ForEach(0..<12, id: \ .self) { i in
-                        let colors: [Color] = [PlayerColor.red.primaryColor.opacity(0.25),
-                                               PlayerColor.green.primaryColor.opacity(0.25),
-                                               PlayerColor.yellow.primaryColor.opacity(0.25),
-                                               PlayerColor.blue.primaryColor.opacity(0.25)]
-                        let size = CGFloat(Int.random(in: 140...260))
-                        Circle()
-                            .fill(colors[i % colors.count])
-                            .frame(width: size, height: size)
-                            .position(x: CGFloat.random(in: 0...geo.size.width),
-                                      y: CGFloat.random(in: 0...geo.size.height))
-                            .animation(.easeInOut(duration: Double.random(in: 6...10)).repeatForever(autoreverses: true), value: diceRoll)
-                    }
-                }
-            }
-            .ignoresSafeArea()
-
-            // Exit button
-            VStack {
-                HStack {
-                    Button(action: { exit(0) }) {
-                        VStack(spacing: 2) {
-                            Image(systemName: "door.left.hand.open")
-                                .font(.largeTitle)
-                            Text("Exit")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(PlayerColor.red.primaryColor)
-                        .padding(10)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
-                    .padding([.top, .leading], 16)
-                    Spacer()
-                }
-                Spacer()
-            }
-
-            VStack(spacing: 24) {
-                // Spinning dice row
-                HStack(spacing: 20) {
-                    let palette: [Color] = [.red, .green, .yellow, .blue]
-                    ForEach(0..<diceImages.count, id: \ .self) { idx in
-                        Image(systemName: diceImages[idx])
-                            .font(.system(size: 48))
-                            .foregroundColor(palette[idx % palette.count])
-                    }
-                }
-                // Colorful title
-                HStack(spacing: 0) {
-                    let title = Array("LUDO MIRCHI")
-                    let palette: [Color] = [.red, .green, .yellow, .blue]
-                    ForEach(title.indices, id: \ .self) { idx in
-                        let ch = String(title[idx])
-                        ZStack {
-                            // 4-way outline
-                            Text(ch)
-                                .font(.system(size: 72, weight: .heavy))
-                                .foregroundColor(.black)
-                                .offset(x: 2, y: 2)
-                            Text(ch)
-                                .font(.system(size: 72, weight: .heavy))
-                                .foregroundColor(.black)
-                                .offset(x: -2, y: -2)
-                            Text(ch)
-                                .font(.system(size: 72, weight: .heavy))
-                                .foregroundColor(.black)
-                                .offset(x: -2, y: 2)
-                            Text(ch)
-                                .font(.system(size: 72, weight: .heavy))
-                                .foregroundColor(.black)
-                                .offset(x: 2, y: -2)
-                            // center fill
-                            Text(ch)
-                                .font(.system(size: 72, weight: .heavy))
-                                .foregroundColor(palette[idx % palette.count])
-                        }
-                    }
-                }
-
-                Group {
-                    if step == 0 {
-                        VStack(spacing: 30) {
-                            ModeSelectionCard { mode in
-                                selectedMode = mode
-                                withAnimation { step = 1 }
+            // Light purple background for the border
+            Color(red: 249/255, green: 247/255, blue: 252/255).ignoresSafeArea()
+            
+            if step == 0 {
+                VStack {
+                    // Top Bar
+                    HStack {
+                        // Exit button
+                        Button(action: { exit(0) }) {
+                            VStack(spacing: 2) {
+                                Image(systemName: "door.left.hand.open")
+                                    .font(.largeTitle)
+                                    Text("Exit")
+                                        .font(.caption2)
+                                        .fontWeight(.semibold)
                             }
-                            let progress = UnlockManager.getCurrentProgress()
-                            let nextUnlock = UnlockManager.getNextUnlockablePawn()
-                            ProgressGaugeView(currentValue: progress.current, maxValue: progress.max, nextUnlockablePawn: nextUnlock)
-#if DEBUG
-                            SettingsTableView(isAdminMode: $isAdminMode)
-#endif
+                            .foregroundColor(PlayerColor.red.primaryColor)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
-                    } else {
-                        PlayerSetupCard(isAdminMode: $isAdminMode,
-                                        selectedPlayers: $selectedPlayers,
-                                        aiPlayers: $aiPlayers,
-                                        onStart: onStartGame,
-                                        onBack: { withAnimation { step = 0 } })
+                        
+                        Spacer()
+                        
+                        // Settings button
+                        Button(action: { showSettings = true }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray)
+                                .padding(10)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    
+                    Spacer()
+                    
+                    // Homepage Image with Overlay
+                    Image("homepage-v0")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .overlay(
+                            HStack {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("It's time to play")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.black)
+                                    
+                                    Text("Ludo Mirchi!")
+                                        .font(.system(size: 60, weight: .black))
+                                        .foregroundColor(.black)
+                                    
+                                    Text("Get 5 mirchis to hop backwards.\nCatch your opponents before\nthey catch you.")
+                                        .font(.body)
+                                        .foregroundColor(.black.opacity(0.7))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .padding(.bottom, 16)
+                                    
+                                    Button(action: {
+                                        selectedMode = .mirchi
+                                        withAnimation { step = 1 }
+                                    }) {
+                                        Text("Play now!")
+                                            .font(.headline)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 14)
+                                            .padding(.horizontal, 32)
+                                            .background(Color(red: 0x92/255, green: 0x5F/255, blue: 0xF0/255))
+                                            .cornerRadius(12)
+                                    }
+                                }
+                                .padding(.leading, 60) // Adjust based on image content layout
+                                .padding(.vertical)
+                                
+                                Spacer() // Push content to left
+                            }
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.horizontal)
+                    
+                    // Progress Gauge
+                    let progress = UnlockManager.getCurrentProgress()
+                    let nextUnlock = UnlockManager.getNextUnlockablePawn()
+                    ProgressGaugeView(currentValue: progress.current, maxValue: progress.max, nextUnlockablePawn: nextUnlock)
+                        .padding(.bottom, 20)
+                        .padding(.horizontal)
                 }
-                .padding(10)
+                .transition(.opacity)
+            } else {
+                PlayerSetupCard(isAdminMode: $isAdminMode,
+                                selectedPlayers: $selectedPlayers,
+                                aiPlayers: $aiPlayers,
+                                onStart: onStartGame,
+                                onBack: { withAnimation { step = 0 } })
+                .transition(.opacity)
             }
-            .padding()
-            .onAppear { diceRoll = true }
+        }
+        .sheet(isPresented: $showSettings) {
+            if #available(iOS 16.0, *) {
+                SettingsTableView(isAdminMode: $isAdminMode)
+                    .presentationDetents([.medium])
+            } else {
+                SettingsTableView(isAdminMode: $isAdminMode)
+            }
         }
     }
 } 

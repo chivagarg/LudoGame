@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct LudoApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var isShowingSplash = true
 
     var body: some Scene {
@@ -24,5 +25,11 @@ struct LudoApp: App {
                 LudoGameView()
             }
         }
+    }
+}
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        return [.portrait, .portraitUpsideDown]
     }
 } 
