@@ -86,6 +86,20 @@ struct StartGameView: View {
                                             .background(Color(red: 0x92/255, green: 0x5F/255, blue: 0xF0/255))
                                             .cornerRadius(12)
                                     }
+                                    
+                                    Button(action: {
+                                        selectedMode = .mirchi
+                                        withAnimation { step = 2 }
+                                    }) {
+                                        Text("Let's play v2")
+                                            .font(.headline)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 14)
+                                            .padding(.horizontal, 32)
+                                            .background(Color(red: 0x92/255, green: 0x5F/255, blue: 0xF0/255))
+                                            .cornerRadius(12)
+                                    }
                                 }
                                 .padding(.leading, 60) // Adjust based on image content layout
                                 .padding(.vertical)
@@ -104,12 +118,19 @@ struct StartGameView: View {
                         .padding(.horizontal)
                 }
                 .transition(.opacity)
-            } else {
+            } else if step == 1 {
                 PlayerSetupCard(isAdminMode: $isAdminMode,
                                 selectedPlayers: $selectedPlayers,
                                 aiPlayers: $aiPlayers,
                                 onStart: onStartGame,
                                 onBack: { withAnimation { step = 0 } })
+                .transition(.opacity)
+            } else if step == 2 {
+                PlayerSelectionViewV2(isAdminMode: $isAdminMode,
+                                      selectedPlayers: $selectedPlayers,
+                                      aiPlayers: $aiPlayers,
+                                      onStart: onStartGame,
+                                      onBack: { withAnimation { step = 0 } })
                 .transition(.opacity)
             }
         }

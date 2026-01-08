@@ -10,6 +10,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1B /* LudoApp.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */; };
+		58ED41672F0FA69F009414F6 /* PlayerSelectionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */; };
 		DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */; };
 		DA471F622DF407C300955EC1 /* PawnState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA471F612DF407C300955EC1 /* PawnState.swift */; };
 		DA79440C2DFA861D00EE49FC /* DiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79440B2DFA861D00EE49FC /* DiceView.swift */; };
@@ -64,6 +65,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGameView.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGame.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A20 /* Ludo Mirchi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Ludo Mirchi.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewV2.swift; sourceTree = "<group>"; };
 		DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionView.swift; sourceTree = "<group>"; };
 		DA471F612DF407C300955EC1 /* PawnState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PawnState.swift; sourceTree = "<group>"; };
 		DA79440B2DFA861D00EE49FC /* DiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceView.swift; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */,
 				DAE12ABD2E514E5D00862C75 /* UnlockManager.swift */,
 				DAE12AB92E5144CC00862C75 /* GameStats.swift */,
 				DAE12ABA2E5144CC00862C75 /* ProgressGaugeView.swift */,
@@ -334,6 +337,7 @@
 				DA7944182DFA8E8000EE49FC /* GameBoardView.swift in Sources */,
 				DA7944142DFA8C7B00EE49FC /* LudoBoardView.swift in Sources */,
 				DAE12ABE2E514E5D00862C75 /* UnlockManager.swift in Sources */,
+				58ED41672F0FA69F009414F6 /* PlayerSelectionViewV2.swift in Sources */,
 				DA79440E2DFA871F00EE49FC /* SettingsTableView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
