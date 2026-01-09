@@ -73,32 +73,14 @@ struct StartGameView: View {
                                         .fixedSize(horizontal: false, vertical: true)
                                         .padding(.bottom, 16)
                                     
-                                    Button(action: {
+                                    MirchiPrimaryButton(title: "Play now!") {
                                         selectedMode = .mirchi
                                         withAnimation { step = 1 }
-                                    }) {
-                                        Text("Play now!")
-                                            .font(.headline)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                            .padding(.vertical, 14)
-                                            .padding(.horizontal, 32)
-                                            .background(Color(red: 0x92/255, green: 0x5F/255, blue: 0xF0/255))
-                                            .cornerRadius(12)
                                     }
                                     
-                                    Button(action: {
+                                    MirchiPrimaryButton(title: "Let's play v2") {
                                         selectedMode = .mirchi
                                         withAnimation { step = 2 }
-                                    }) {
-                                        Text("Let's play v2")
-                                            .font(.headline)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                            .padding(.vertical, 14)
-                                            .padding(.horizontal, 32)
-                                            .background(Color(red: 0x92/255, green: 0x5F/255, blue: 0xF0/255))
-                                            .cornerRadius(12)
                                     }
                                 }
                                 .padding(.leading, 60) // Adjust based on image content layout

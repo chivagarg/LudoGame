@@ -238,6 +238,14 @@ struct PlayerSelectionViewV2: View {
                         .cornerRadius(20)
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                         .frame(height: 280) // Fixed height for Pawn Selection
+                        
+                        MirchiPrimaryButton(title: "Start game") {
+                            // Sync bindings based on the current rows.
+                            let active = Set(activeColors)
+                            selectedPlayers = active
+                            aiPlayers = Set(activeColors.filter { isRobot[$0] ?? false })
+                            onStart()
+                        }
                     }
                     .onChange(of: playerCount) { _ in
                         // If the selected row disappears (e.g. switching to 2 players), pick the first active row.
