@@ -45,7 +45,7 @@ struct PlayerSelectionViewV2: View {
 
             // Content - Modal Style
             GeometryReader { geo in
-                HStack(alignment: .top, spacing: 20) {
+                HStack(alignment: .center, spacing: 20) {
                     // Left Column: Game Options + Pawn Selection
                     VStack(spacing: 20) {
                         // Section 1: Game Options Card
@@ -79,34 +79,32 @@ struct PlayerSelectionViewV2: View {
                                 .fontWeight(.semibold)
                                 .foregroundColor(.black)
                             
-                            // Player Rows (Scrollable if needed, or fixed)
-                            ScrollView {
-                                VStack(spacing: 12) {
-                                    ForEach(activeColors, id: \.self) { color in
-                                        HStack {
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .fill(color.primaryColor)
-                                                .frame(width: 40, height: 40)
-                                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.1), lineWidth: 1))
-                                            
-                                            TextField("Player", text: Binding(
-                                                get: { playerNames[color] ?? "Player" },
-                                                set: { playerNames[color] = $0 }
-                                            ))
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 8)
-                                            .background(Color.white)
-                                            .cornerRadius(8)
-                                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.2), lineWidth: 1))
-                                            .foregroundColor(.black)
-                                            
-                                            Toggle("Robot", isOn: Binding(
-                                                get: { isRobot[color] ?? false },
-                                                set: { isRobot[color] = $0 }
-                                            ))
-                                            .labelsHidden()
-                                            .toggleStyle(SwitchToggleStyle(tint: .purple))
-                                        }
+                            // Player Rows
+                            VStack(spacing: 12) {
+                                ForEach(activeColors, id: \.self) { color in
+                                    HStack {
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(color.primaryColor)
+                                            .frame(width: 40, height: 40)
+                                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                        
+                                        TextField("Player", text: Binding(
+                                            get: { playerNames[color] ?? "Player" },
+                                            set: { playerNames[color] = $0 }
+                                        ))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(Color.white)
+                                        .cornerRadius(8)
+                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.2), lineWidth: 1))
+                                        .foregroundColor(.black)
+                                        
+                                        Toggle("Robot", isOn: Binding(
+                                            get: { isRobot[color] ?? false },
+                                            set: { isRobot[color] = $0 }
+                                        ))
+                                        .labelsHidden()
+                                        .toggleStyle(SwitchToggleStyle(tint: .purple))
                                     }
                                 }
                             }
@@ -115,7 +113,6 @@ struct PlayerSelectionViewV2: View {
                         .background(Color.white)
                         .cornerRadius(20)
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        .frame(maxHeight: .infinity) // Fill available space in column
                         
                         // Section 2: Pawn Selection Card
                         VStack(alignment: .leading, spacing: 16) {
@@ -158,13 +155,13 @@ struct PlayerSelectionViewV2: View {
                             .padding(40)
                             .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                     }
-                    .frame(maxHeight: .infinity) // Fill height
+                    .frame(maxHeight: .infinity) // Fill height of the HStack (determined by Left Column)
                     .background(Color.white.opacity(0.2)) // Optional styling
                     .cornerRadius(20)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
                 .padding(40) // Whitespace around the modal content
-                .frame(width: geo.size.width * 0.9, height: geo.size.height * 0.5) // 50% height, centered
+                .frame(width: geo.size.width * 0.9) // 90% width, flexible height
                 .position(x: geo.size.width / 2, y: geo.size.height / 2) // Explicit centering
             }
             .ignoresSafeArea()
