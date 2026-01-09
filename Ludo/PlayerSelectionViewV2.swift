@@ -1,12 +1,5 @@
 import SwiftUI
 
-struct HeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
 struct PlayerSelectionViewV2: View {
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
@@ -17,7 +10,6 @@ struct PlayerSelectionViewV2: View {
     @State private var playerCount: Int = 2
     @State private var playerNames: [PlayerColor: String] = [:]
     @State private var isRobot: [PlayerColor: Bool] = [:]
-    @State private var leftColumnHeight: CGFloat = 0
     
     var activeColors: [PlayerColor] {
         switch playerCount {
@@ -152,9 +144,6 @@ struct PlayerSelectionViewV2: View {
                         .frame(height: 280) // Fixed height for Pawn Selection
                     }
                     .frame(width: geo.size.width * 0.45) // 45% width for Left Column
-                    .background(GeometryReader { g in
-                        Color.clear.preference(key: HeightPreferenceKey.self, value: g.size.height)
-                    })
                     
                     // Right Column (Section 3): Large Pawn Display
                     ZStack {
@@ -164,10 +153,7 @@ struct PlayerSelectionViewV2: View {
                             .padding(40)
                             .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                     }
-                    .frame(height: leftColumnHeight > 0 ? leftColumnHeight : nil) // Match height of Left Column
-                }
-                .onPreferenceChange(HeightPreferenceKey.self) { h in
-                    leftColumnHeight = h
+                    .frame(maxHeight: .infinity)
                 }
                 .padding(40)
                 .frame(width: geo.size.width * 0.9)
