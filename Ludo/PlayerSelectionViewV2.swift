@@ -30,7 +30,9 @@ struct PlayerSelectionViewV2: View {
     var body: some View {
         ZStack {
             // Background
-            Color(red: 249/255, green: 247/255, blue: 252/255)
+            Image("pawn-selection-background-v0")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
             
             // Back Button
@@ -168,13 +170,6 @@ struct PlayerSelectionViewV2: View {
                     leftColumnHeight = h
                 }
                 .padding(40)
-                .background(
-                    Image("pawn-selection-background-v0")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                )
-                .cornerRadius(30)
-                .shadow(radius: 20)
                 .frame(width: geo.size.width * 0.9)
                 .position(x: geo.size.width / 2, y: geo.size.height / 2) // Explicit centering
             }
