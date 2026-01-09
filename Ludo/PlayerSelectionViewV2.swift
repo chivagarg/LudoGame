@@ -103,10 +103,11 @@ struct PlayerSelectionViewV2: View {
                                             .frame(width: 40, height: 40)
                                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.1), lineWidth: 1))
                                         
-                                        TextField("Player", text: Binding(
+                                        TextField(color.rawValue.capitalized, text: Binding(
                                             get: { playerNames[color] ?? "" },
                                             set: { playerNames[color] = $0 }
                                         ))
+                                        .frame(width: 170)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 8)
                                         .background(Color.white)
@@ -114,12 +115,20 @@ struct PlayerSelectionViewV2: View {
                                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.2), lineWidth: 1))
                                         .foregroundColor(.black)
                                         
-                                        Toggle("Robot", isOn: Binding(
-                                            get: { isRobot[color] ?? false },
-                                            set: { isRobot[color] = $0 }
-                                        ))
-                                        .labelsHidden()
-                                        .toggleStyle(SwitchToggleStyle(tint: .purple))
+                                        Spacer(minLength: 8)
+                                        
+                                        HStack(spacing: 8) {
+                                            Toggle("", isOn: Binding(
+                                                get: { isRobot[color] ?? false },
+                                                set: { isRobot[color] = $0 }
+                                            ))
+                                            .labelsHidden()
+                                            .toggleStyle(SwitchToggleStyle(tint: .purple))
+                                            
+                                            Text("Robot")
+                                                .font(.subheadline)
+                                                .foregroundColor(.black.opacity(0.7))
+                                        }
                                     }
                                     .contentShape(Rectangle())
                                     .simultaneousGesture(TapGesture().onEnded {
