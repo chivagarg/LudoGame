@@ -1,5 +1,12 @@
 import SwiftUI
 
+private struct ModalHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct PlayerSelectionViewV2: View {
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
@@ -10,6 +17,7 @@ struct PlayerSelectionViewV2: View {
     @State private var playerCount: Int = 2
     @State private var playerNames: [PlayerColor: String] = [:]
     @State private var isRobot: [PlayerColor: Bool] = [:]
+    @State private var modalHeight: CGFloat = 600
     
     var activeColors: [PlayerColor] {
         switch playerCount {
@@ -45,7 +53,7 @@ struct PlayerSelectionViewV2: View {
 
             // Content - Modal Style
             GeometryReader { geo in
-                HStack(alignment: .center, spacing: 20) {
+                HStack(alignment: .top, spacing: 20) {
                     // Left Column: Game Options + Pawn Selection
                     VStack(spacing: 20) {
                         // Section 1: Game Options Card
@@ -156,8 +164,21 @@ struct PlayerSelectionViewV2: View {
                     .frame(maxHeight: .infinity)
                 }
                 .padding(40)
+                .background(
+                    GeometryReader { g in
+                        Color.clear.preference(key: ModalHeightPreferenceKey.self, value: g.size.height)
+                    }
+                )
+                .onPreferenceChange(ModalHeightPreferenceKey.self) { h in
+                    // Avoid 0 during initial layout passes.
+                    if h > 0 { modalHeight = h }
+                }
                 .frame(width: geo.size.width * 0.9)
-                .position(x: geo.size.width / 2, y: geo.size.height / 2) // Explicit centering
+                // Keep the TOP of the modal fixed so the Game Options card "expands downward".
+                .position(
+                    x: geo.size.width / 2,
+                    y: max(24, (geo.size.height * 0.12) - 40) + (modalHeight / 2)
+                )
             }
             .ignoresSafeArea()
         }
