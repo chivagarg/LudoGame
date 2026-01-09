@@ -125,10 +125,22 @@ struct PlayerSelectionViewV2: View {
                             VStack(spacing: 12) {
                                 ForEach(activeColors, id: \.self) { color in
                                     HStack {
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .fill(color.primaryColor)
-                                            .frame(width: 40, height: 40)
-                                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                        let avatarName = selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.white.opacity(0.95))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(Color.purple.opacity(0.35), lineWidth: 2)
+                                                )
+                                            
+                                            Image(avatarName)
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .padding(6)
+                                                .scaleEffect(avatarName == "mirchi" ? 1.1 : 1.0)
+                                        }
+                                        .frame(width: 56, height: 56)
                                         
                                         TextField(color.rawValue.capitalized, text: Binding(
                                             get: { playerNames[color] ?? "" },
