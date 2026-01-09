@@ -1,5 +1,12 @@
 import SwiftUI
 
+struct HeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct PlayerSelectionViewV2: View {
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
@@ -10,6 +17,7 @@ struct PlayerSelectionViewV2: View {
     @State private var playerCount: Int = 2
     @State private var playerNames: [PlayerColor: String] = [:]
     @State private var isRobot: [PlayerColor: Bool] = [:]
+    @State private var leftColumnHeight: CGFloat = 0
     
     var activeColors: [PlayerColor] {
         switch playerCount {
@@ -22,9 +30,7 @@ struct PlayerSelectionViewV2: View {
     var body: some View {
         ZStack {
             // Background
-            Image("pawn-selection-background-v0")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            Color(red: 249/255, green: 247/255, blue: 252/255)
                 .ignoresSafeArea()
             
             // Back Button
@@ -144,24 +150,32 @@ struct PlayerSelectionViewV2: View {
                         .frame(height: 280) // Fixed height for Pawn Selection
                     }
                     .frame(width: geo.size.width * 0.45) // 45% width for Left Column
+                    .background(GeometryReader { g in
+                        Color.clear.preference(key: HeightPreferenceKey.self, value: g.size.height)
+                    })
                     
                     // Right Column (Section 3): Large Pawn Display
                     ZStack {
-                        Color.white.opacity(0.5) // Semi-transparent or white background
-                        
                         Image("pawn_red_marble_filled")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .padding(40)
                             .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                     }
-                    .frame(maxHeight: .infinity) // Fill height of the HStack (determined by Left Column)
-                    .background(Color.white.opacity(0.2)) // Optional styling
-                    .cornerRadius(20)
-                    .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    .frame(height: leftColumnHeight > 0 ? leftColumnHeight : nil) // Match height of Left Column
                 }
-                .padding(40) // Whitespace around the modal content
-                .frame(width: geo.size.width * 0.9) // 90% width, flexible height
+                .onPreferenceChange(HeightPreferenceKey.self) { h in
+                    leftColumnHeight = h
+                }
+                .padding(40)
+                .background(
+                    Image("pawn-selection-background-v0")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                )
+                .cornerRadius(30)
+                .shadow(radius: 20)
+                .frame(width: geo.size.width * 0.9)
                 .position(x: geo.size.width / 2, y: geo.size.height / 2) // Explicit centering
             }
             .ignoresSafeArea()
