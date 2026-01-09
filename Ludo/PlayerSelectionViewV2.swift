@@ -18,6 +18,7 @@ struct PlayerSelectionViewV2: View {
     @State private var playerNames: [PlayerColor: String] = [:]
     @State private var isRobot: [PlayerColor: Bool] = [:]
     @State private var modalHeight: CGFloat = 600
+    @State private var selectedPlayerColor: PlayerColor = .red
     
     var activeColors: [PlayerColor] {
         switch playerCount {
@@ -25,6 +26,12 @@ struct PlayerSelectionViewV2: View {
         case 3: return [.red, .green, .yellow]
         default: return [.red, .green, .yellow, .blue]
         }
+    }
+
+    private var selectedPlayerDisplayName: String {
+        let raw = (playerNames[selectedPlayerColor] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !raw.isEmpty { return raw }
+        return selectedPlayerColor.rawValue.capitalized
     }
     
     var body: some View {
@@ -97,7 +104,7 @@ struct PlayerSelectionViewV2: View {
                                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.black.opacity(0.1), lineWidth: 1))
                                         
                                         TextField("Player", text: Binding(
-                                            get: { playerNames[color] ?? "Player" },
+                                            get: { playerNames[color] ?? "" },
                                             set: { playerNames[color] = $0 }
                                         ))
                                         .padding(.horizontal, 12)
@@ -114,6 +121,18 @@ struct PlayerSelectionViewV2: View {
                                         .labelsHidden()
                                         .toggleStyle(SwitchToggleStyle(tint: .purple))
                                     }
+                                    .contentShape(Rectangle())
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        selectedPlayerColor = color
+                                    })
+                                    .padding(.vertical, 2)
+                                    .padding(.horizontal, 4)
+                                    .background(selectedPlayerColor == color ? Color.purple.opacity(0.06) : Color.clear)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(selectedPlayerColor == color ? Color.purple.opacity(0.35) : Color.clear, lineWidth: 2)
+                                    )
+                                    .cornerRadius(10)
                                 }
                             }
                         }
@@ -124,7 +143,7 @@ struct PlayerSelectionViewV2: View {
                         
                         // Section 2: Pawn Selection Card
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("[Player 1] pawn")
+                            Text("\(selectedPlayerDisplayName) pawn")
                                 .font(.title3)
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
@@ -148,6 +167,12 @@ struct PlayerSelectionViewV2: View {
                         .cornerRadius(20)
                         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                         .frame(height: 280) // Fixed height for Pawn Selection
+                    }
+                    .onChange(of: playerCount) { _ in
+                        // If the selected row disappears (e.g. switching to 2 players), pick the first active row.
+                        if !activeColors.contains(selectedPlayerColor) {
+                            selectedPlayerColor = activeColors.first ?? .red
+                        }
                     }
                     .frame(width: geo.size.width * 0.45) // 45% width for Left Column
                     
