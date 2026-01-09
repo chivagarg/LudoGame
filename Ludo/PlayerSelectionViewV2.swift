@@ -14,7 +14,7 @@ struct PlayerSelectionViewV2: View {
     var onStart: () -> Void
     var onBack: () -> Void
     
-    @State private var playerCount: Int = 2
+    @State private var playerCount: Int = 4
     @State private var playerNames: [PlayerColor: String] = [:]
     @State private var isRobot: [PlayerColor: Bool] = [:]
     @State private var modalHeight: CGFloat = 600
@@ -136,8 +136,6 @@ struct PlayerSelectionViewV2: View {
                                     .background(Color.purple.opacity(0.1))
                                     .cornerRadius(8)
                                     .foregroundColor(.purple)
-                                Text("Accessories")
-                                    .foregroundColor(.gray)
                             }
                             
                             RoundedRectangle(cornerRadius: 12)
