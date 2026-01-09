@@ -44,10 +44,16 @@ struct PlayerSelectionViewV2: View {
         case .red:
             // First step: only implement 2 red options.
             // Default selection should remain pawn_red_marble_filled.
-            return ["pawn_red_marble_filled", "pawn_mirchi"]
-        default:
-            // Placeholder until we add themed options for other colors.
-            return []
+            return ["pawn_red_marble_filled", "mirchi"]
+        case .green:
+            // Minimal placeholder (for now): single themed pawn.
+            return ["pawn_green_marble_filled"]
+        case .yellow:
+            // Minimal placeholder (for now): single themed pawn.
+            return ["pawn_yellow_marble_filled"]
+        case .blue:
+            // Minimal placeholder (for now): single themed pawn.
+            return ["pawn_blue_marble_filled"]
         }
     }
 
@@ -188,43 +194,33 @@ struct PlayerSelectionViewV2: View {
                             }
                             
                             let options = avatarOptions(for: selectedPlayerColor)
-                            if !options.isEmpty {
-                                HStack(spacing: 16) {
-                                    ForEach(options, id: \.self) { avatarName in
-                                        let isSelected = (selectedAvatars[selectedPlayerColor] ?? "pawn_\(selectedPlayerColor.rawValue)_marble_filled") == avatarName
-                                        Button {
-                                            selectedAvatars[selectedPlayerColor] = avatarName
-                                        } label: {
-                                            ZStack {
-                                                RoundedRectangle(cornerRadius: 14)
-                                                    .fill(Color.white.opacity(0.9))
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 14)
-                                                            .stroke(isSelected ? Color.purple.opacity(0.7) : Color.purple.opacity(0.15), lineWidth: isSelected ? 3 : 1)
-                                                    )
-                                                
-                                                Image(avatarName)
-                                                    .resizable()
-                                                    .aspectRatio(contentMode: .fit)
-                                                    .padding(10)
-                                                    .scaleEffect(avatarName == "pawn_mirchi" ? 1.15 : 1.0)
-                                            }
+                            HStack(spacing: 16) {
+                                ForEach(options, id: \.self) { avatarName in
+                                    let isSelected = (selectedAvatars[selectedPlayerColor] ?? "pawn_\(selectedPlayerColor.rawValue)_marble_filled") == avatarName
+                                    Button {
+                                        selectedAvatars[selectedPlayerColor] = avatarName
+                                    } label: {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .fill(Color.white.opacity(0.9))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 14)
+                                                        .stroke(isSelected ? Color.purple.opacity(0.7) : Color.purple.opacity(0.15), lineWidth: isSelected ? 3 : 1)
+                                                )
+                                            
+                                            Image(avatarName)
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fit)
+                                                .padding(10)
+                                                .scaleEffect(avatarName == "mirchi" ? 1.15 : 1.0)
                                         }
-                                        .buttonStyle(PlainButtonStyle())
-                                        .frame(width: 80, height: 80)
                                     }
-                                    Spacer(minLength: 0)
+                                    .buttonStyle(PlainButtonStyle())
+                                    .frame(width: 80, height: 80)
                                 }
-                                .frame(height: 150)
-                            } else {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.gray.opacity(0.1))
-                                    .frame(height: 150)
-                                    .overlay(
-                                        Text("More pawns coming soon")
-                                            .foregroundColor(.gray)
-                                    )
+                                Spacer(minLength: 0)
                             }
+                            .frame(height: 150)
                         }
                         .padding(24)
                         .background(Color.white)
