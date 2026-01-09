@@ -139,7 +139,6 @@ struct PlayerSelectionViewV2: View {
                                                 .resizable()
                                                 .aspectRatio(contentMode: .fit)
                                                 .padding(6)
-                                                .scaleEffect(avatarName == "mirchi" ? 1.1 : 1.0)
                                         }
                                         .frame(width: 56, height: 56)
                                         
@@ -225,7 +224,6 @@ struct PlayerSelectionViewV2: View {
                                                 .resizable()
                                                 .aspectRatio(contentMode: .fit)
                                                 .padding(10)
-                                                .scaleEffect(avatarName == "mirchi" ? 1.15 : 1.0)
                                         }
                                     }
                                     .buttonStyle(PlainButtonStyle())
