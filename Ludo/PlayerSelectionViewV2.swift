@@ -13,6 +13,8 @@ struct PlayerSelectionViewV2: View {
     @Binding var aiPlayers: Set<PlayerColor>
     var onStart: () -> Void
     var onBack: () -> Void
+
+    @EnvironmentObject private var game: LudoGame
     
     @State private var playerCount: Int = 4
     @State private var playerNames: [PlayerColor: String] = [:]
@@ -244,6 +246,8 @@ struct PlayerSelectionViewV2: View {
                             let active = Set(activeColors)
                             selectedPlayers = active
                             aiPlayers = Set(activeColors.filter { isRobot[$0] ?? false })
+                            // Mirror PlayerSetupCard behavior: persist avatar choices into the game before starting.
+                            game.selectedAvatars = selectedAvatars
                             onStart()
                         }
                     }
