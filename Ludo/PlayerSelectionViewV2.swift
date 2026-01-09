@@ -154,14 +154,15 @@ struct PlayerSelectionViewV2: View {
                     .frame(width: geo.size.width * 0.45) // 45% width for Left Column
                     
                     // Right Column (Section 3): Large Pawn Display
-                    ZStack {
+                    VStack(spacing: 0) {
                         Image("pawn_red_marble_filled")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .padding(40)
                             .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                        Spacer(minLength: 0)
                     }
-                    .frame(maxHeight: .infinity)
+                    .frame(maxHeight: .infinity, alignment: .top)
                 }
                 .padding(40)
                 .background(
