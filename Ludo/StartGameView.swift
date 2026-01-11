@@ -9,7 +9,7 @@ struct StartGameView: View {
 
     // Decorative dice for the header - REMOVED
     
-    @State private var step: Int = 0 // 0 = mode select, 1 = setup players
+    @State private var step: Int = 0 // 0 = homepage, 1 = player selection (v2)
     @State private var showSettings: Bool = false
     
     var body: some View {
@@ -77,11 +77,6 @@ struct StartGameView: View {
                                         selectedMode = .mirchi
                                         withAnimation { step = 1 }
                                     }
-                                    
-                                    MirchiPrimaryButton(title: "Let's play v2") {
-                                        selectedMode = .mirchi
-                                        withAnimation { step = 2 }
-                                    }
                                 }
                                 .padding(.leading, 60) // Adjust based on image content layout
                                 .padding(.vertical)
@@ -101,13 +96,6 @@ struct StartGameView: View {
                 }
                 .transition(.opacity)
             } else if step == 1 {
-                PlayerSetupCard(isAdminMode: $isAdminMode,
-                                selectedPlayers: $selectedPlayers,
-                                aiPlayers: $aiPlayers,
-                                onStart: onStartGame,
-                                onBack: { withAnimation { step = 0 } })
-                .transition(.opacity)
-            } else if step == 2 {
                 PlayerSelectionViewV2(isAdminMode: $isAdminMode,
                                       selectedPlayers: $selectedPlayers,
                                       aiPlayers: $aiPlayers,
