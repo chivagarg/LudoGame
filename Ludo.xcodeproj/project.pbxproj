@@ -12,6 +12,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */; };
 		58ED41672F0FA69F009414F6 /* PlayerSelectionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */; };
 		58ED41692F10FF01009414F6 /* MirchiPrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */; };
+		58ED416B2F13C4DD009414F6 /* Boost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED416A2F13C4DD009414F6 /* Boost.swift */; };
 		DA471F602DF144CC00955EC1 /* PlayerSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */; };
 		DA471F622DF407C300955EC1 /* PawnState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA471F612DF407C300955EC1 /* PawnState.swift */; };
 		DA79440C2DFA861D00EE49FC /* DiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA79440B2DFA861D00EE49FC /* DiceView.swift */; };
@@ -68,6 +69,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A20 /* Ludo Mirchi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Ludo Mirchi.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewV2.swift; sourceTree = "<group>"; };
 		58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirchiPrimaryButton.swift; sourceTree = "<group>"; };
+		58ED416A2F13C4DD009414F6 /* Boost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boost.swift; sourceTree = "<group>"; };
 		DA471F5F2DF144CC00955EC1 /* PlayerSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionView.swift; sourceTree = "<group>"; };
 		DA471F612DF407C300955EC1 /* PawnState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PawnState.swift; sourceTree = "<group>"; };
 		DA79440B2DFA861D00EE49FC /* DiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceView.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				58ED416A2F13C4DD009414F6 /* Boost.swift */,
 				58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */,
 				58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */,
 				DAE12ABD2E514E5D00862C75 /* UnlockManager.swift */,
@@ -325,6 +328,7 @@
 				58ED41692F10FF01009414F6 /* MirchiPrimaryButton.swift in Sources */,
 				DA471F622DF407C300955EC1 /* PawnState.swift in Sources */,
 				DAFC6FD62DEA05DC00073666 /* SoundManager.swift in Sources */,
+				58ED416B2F13C4DD009414F6 /* Boost.swift in Sources */,
 				DA7944322E04B69500EE49FC /* Extensions.swift in Sources */,
 				1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */,
 				DA79444C2E2CBB0E00EE49FC /* PauseDialogView.swift in Sources */,

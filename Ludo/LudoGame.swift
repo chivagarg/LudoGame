@@ -29,6 +29,10 @@ class LudoGame: ObservableObject {
     @Published var aiControlledPlayers: Set<PlayerColor> = []
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
+    
+    // MARK: - Boost (pawn abilities)
+    // Modeled as a state machine per player: available → armed → used
+    @Published var boostState: [PlayerColor: BoostState] = [:]
 
     // Remaining Mirchi (backward) moves per player
     @Published var mirchiMovesRemaining: [PlayerColor: Int] = [.red: 5, .green: 5, .yellow: 5, .blue: 5]
@@ -434,6 +438,12 @@ class LudoGame: ObservableObject {
             currentRollPlayer = nil
         }
         eligiblePawns.removeAll()
+        // Clear any armed boost at turn change (boost is only usable on the current player's turn).
+        for c in PlayerColor.allCases {
+            if boostState[c] == .armed {
+                boostState[c] = .available
+            }
+        }
 
         // Recursive call if the newly set currentPlayer has completed their game.
         // This is to immediately skip over a completed player's turn.
@@ -501,6 +511,8 @@ class LudoGame: ObservableObject {
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
+        // Reset boost state
+        self.boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         // Reset Mirchi move counts for selected players
         mirchiMovesRemaining = Dictionary(uniqueKeysWithValues: selectedPlayers.map { ($0, 5) })
 
@@ -947,7 +959,44 @@ class LudoGame: ObservableObject {
     func resetGame() {
         gameStarted = false
         isGameOver = false
+        boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         // Reset other game-specific states as needed
+    }
+    
+    // MARK: - Boost API (centralized)
+    func boostAbility(for color: PlayerColor) -> (any BoostAbility)? {
+        BoostRegistry.ability(for: selectedAvatar(for: color))
+    }
+    
+    func getBoostState(for color: PlayerColor) -> BoostState {
+        boostState[color] ?? .available
+    }
+    
+    func tapBoost(color: PlayerColor) {
+        guard let ability = boostAbility(for: color) else { return }
+        let context = BoostContext(
+            currentPlayer: currentPlayer,
+            isBusy: isBusy,
+            isAIControlled: aiControlledPlayers.contains(color)
+        )
+        guard ability.canArm(context: context) else { return }
+        
+        let current = getBoostState(for: color)
+        boostState[color] = ability.onTap(currentState: current)
+    }
+    
+    func consumeBoostOnPawnTapIfNeeded(color: PlayerColor) {
+        guard let ability = boostAbility(for: color) else { return }
+        let context = BoostContext(
+            currentPlayer: currentPlayer,
+            isBusy: isBusy,
+            isAIControlled: aiControlledPlayers.contains(color)
+        )
+        let current = getBoostState(for: color)
+        guard ability.shouldConsumeOnPawnTap(context: context, currentState: current) else { return }
+        
+        GameLogger.shared.log("⚡️ [BOOST] Consuming boost for \(color.rawValue).", level: .debug)
+        boostState[color] = .used
     }
 }
 

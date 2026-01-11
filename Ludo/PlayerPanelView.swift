@@ -9,6 +9,50 @@ struct PlayerPanelView: View {
     let onDiceTap: () -> Void
     @State private var localDiceRolling: Bool = false
 
+    private func canUseBoost(for color: PlayerColor) -> Bool {
+        // Must be on your turn (boost can be armed anytime on your turn).
+        return game.currentPlayer == color
+            && !game.aiControlledPlayers.contains(color)
+            && !game.isBusy
+    }
+
+    @ViewBuilder
+    private func boostButton(for color: PlayerColor) -> some View {
+        if let ability = game.boostAbility(for: color) {
+            let state = game.getBoostState(for: color)
+            let isUsed = state == .used
+            let isActive = state == .armed
+            let isEnabled = !isUsed && canUseBoost(for: color)
+
+            Button(action: {
+                guard isEnabled else { return }
+                game.tapBoost(color: color)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
+
+                    Image(systemName: ability.iconSystemName)
+                        .font(.system(size: 26, weight: .heavy))
+                        .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
+                }
+                .frame(width: 56, height: 56)
+                .opacity(isUsed ? 0.35 : (isEnabled ? 1.0 : 0.6))
+                .scaleEffect(isActive ? 1.12 : 1.0)
+                .overlay(
+                    Circle()
+                        .stroke(isActive ? Color.purple.opacity(0.8) : Color.clear, lineWidth: 3)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .disabled(!isEnabled)
+        } else {
+            EmptyView()
+        }
+    }
+
     var body: some View {
         ZStack {
             if game.selectedPlayers.contains(color) {
@@ -76,6 +120,9 @@ struct PlayerPanelView: View {
                                     .padding(.vertical, 6)
                                     .background(Capsule().fill(Color.white))
                             }
+
+                            // Boost (only for special pawns like mirchi/mango)
+                            boostButton(for: color)
                         }
 
                         // 3. Skull & kills
@@ -171,6 +218,9 @@ struct PlayerPanelView: View {
                                     .padding(.vertical, 6)
                                     .background(Capsule().fill(Color.white))
                             }
+
+                            // Boost (only for special pawns like mirchi/mango)
+                            boostButton(for: color)
                         }
 
                         // 4. Dice

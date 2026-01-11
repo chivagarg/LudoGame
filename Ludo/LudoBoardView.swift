@@ -1066,6 +1066,11 @@ struct LudoBoardView: View {
             return
         }
 
+        // If a boost is armed, consume it now (one-time use). Specific effects will be implemented via BoostAbility next.
+        if game.currentPlayer == color {
+            game.consumeBoostOnPawnTapIfNeeded(color: color)
+        }
+
         if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {
             GameLogger.shared.log("🌶️ [MIRCHI] MIRCHI MODE ON AND arrow activated for \(color.rawValue).", level: .debug)
             if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id) {
