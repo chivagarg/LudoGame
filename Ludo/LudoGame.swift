@@ -246,70 +246,43 @@ class LudoGame: ObservableObject {
         GameLogger.shared.log("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
-        // Mark eligible pawns based on the roll
+        // Post-roll handling: compute eligible pawns + AI/human auto-move + no-move auto-advance.
         if let currentPawns = pawns[currentPlayer] {
-            eligiblePawns = getEligiblePawns()
-            
-            // If it's an AI's turn, let it make a move
-            if aiControlledPlayers.contains(currentPlayer) {
-                if let strategy = aiStrategies[currentPlayer],
-                   let pawnAndDirection = strategy.selectPawnMovementStrategy(from: eligiblePawns, for: currentPlayer, in: self) {
-                    let pawnId = pawnAndDirection.pawnId
-                    let moveBackwards = pawnAndDirection.moveBackwards
+            handlePostRoll(currentPawns: currentPawns, player: currentPlayer)
+        }
+    }
 
-                    // If the AI chose a backward move, update the UI to show the arrow selected
-                    if moveBackwards {
-                        self.mirchiArrowActivated[self.currentPlayer] = true
-                        GameLogger.shared.log("🌶️ [AI] AI \(self.currentPlayer.rawValue) selected backward move.", level: .debug)
-                    }
+    private func handlePostRoll(currentPawns: [PawnState], player: PlayerColor) {
+        eligiblePawns = getEligiblePawns()
 
-                    // Add a delay to make the AI's move feel more natural
-                    DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
-                        // Find the selected pawn to check its state
-                        if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
-                            // CASE 1: Pawn is at home and needs to move out (requires a 6)
-                            if pawn.positionIndex == nil {
-                                // Backward moves from home are not possible, so this logic is safe.
-                                self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: self.diceValue)
-                            }
-                            // CASE 2: Pawn is already on the path
-                            else {
-                                let currentPos = pawn.positionIndex ?? -1
-                                let steps = self.diceValue
-                                let moveDirection = moveBackwards ? "backward" : "forward"
-                                if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId, isBackward: moveBackwards) {
-                                    NotificationCenter.default.post(
-                                        name: NSNotification.Name("AnimatePawnMovement"),
-                                        object: nil,
-                                        userInfo: [
-                                            "color": self.currentPlayer,
-                                            "pawnId": pawnId,
-                                            "from": currentPos,
-                                            "to": destinationIndex,
-                                            "steps": steps,
-                                            "moveDirection": moveDirection
-                                        ]
-                                    )
-                                }
-                            }
-                        }
-                    }
+        // If it's an AI's turn, let it make a move
+        if aiControlledPlayers.contains(player) {
+            if let strategy = aiStrategies[player],
+               let pawnAndDirection = strategy.selectPawnMovementStrategy(from: eligiblePawns, for: player, in: self) {
+                let pawnId = pawnAndDirection.pawnId
+                let moveBackwards = pawnAndDirection.moveBackwards
+
+                // If the AI chose a backward move, update the UI to show the arrow selected
+                if moveBackwards {
+                    self.mirchiArrowActivated[self.currentPlayer] = true
+                    GameLogger.shared.log("🌶️ [AI] AI \(self.currentPlayer.rawValue) selected backward move.", level: .debug)
                 }
-            }
-            // If there's exactly one eligible pawn (for a human player), simulate tapping it
-            // If we are in Mirchi mode, we don't want to auto-move the pawn as the player may want to move backward
-            else if eligiblePawns.count == 1 && gameMode != .mirchi {
-                if let pawnId = eligiblePawns.first,
-                   let pawn = currentPawns.first(where: { $0.id == pawnId }) {
-                    // Add a small delay to show the dice roll before moving
-                    DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
-                        // Only auto-move if the pawn is on the path (not in home)
-                        if pawn.positionIndex != nil {
+
+                // Add a delay to make the AI's move feel more natural
+                DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
+                    // Find the selected pawn to check its state
+                    if let pawn = self.pawns[self.currentPlayer]?.first(where: { $0.id == pawnId }) {
+                        // CASE 1: Pawn is at home and needs to move out (requires a 6)
+                        if pawn.positionIndex == nil {
+                            // Backward moves from home are not possible, so this logic is safe.
+                            self.movePawn(color: self.currentPlayer, pawnId: pawnId, steps: self.diceValue)
+                        }
+                        // CASE 2: Pawn is already on the path
+                        else {
                             let currentPos = pawn.positionIndex ?? -1
                             let steps = self.diceValue
-                            
-                            if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
-                                // Notify the view to animate the movement
+                            let moveDirection = moveBackwards ? "backward" : "forward"
+                            if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId, isBackward: moveBackwards) {
                                 NotificationCenter.default.post(
                                     name: NSNotification.Name("AnimatePawnMovement"),
                                     object: nil,
@@ -318,7 +291,8 @@ class LudoGame: ObservableObject {
                                         "pawnId": pawnId,
                                         "from": currentPos,
                                         "to": destinationIndex,
-                                        "steps": steps
+                                        "steps": steps,
+                                        "moveDirection": moveDirection
                                     ]
                                 )
                             }
@@ -327,10 +301,39 @@ class LudoGame: ObservableObject {
                 }
             }
         }
-        
+        // If there's exactly one eligible pawn (for a human player), simulate tapping it
+        // If we are in Mirchi mode, we don't want to auto-move the pawn as the player may want to move backward
+        else if eligiblePawns.count == 1 && gameMode != .mirchi {
+            if let pawnId = eligiblePawns.first,
+               let pawn = currentPawns.first(where: { $0.id == pawnId }) {
+                // Add a small delay to show the dice roll before moving
+                DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
+                    // Only auto-move if the pawn is on the path (not in home)
+                    if pawn.positionIndex != nil {
+                        let currentPos = pawn.positionIndex ?? -1
+                        let steps = self.diceValue
+
+                        if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
+                            // Notify the view to animate the movement
+                            NotificationCenter.default.post(
+                                name: NSNotification.Name("AnimatePawnMovement"),
+                                object: nil,
+                                userInfo: [
+                                    "color": self.currentPlayer,
+                                    "pawnId": pawnId,
+                                    "from": currentPos,
+                                    "to": destinationIndex,
+                                    "steps": steps
+                                ]
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
-            // Keep the current player's roll visible for 1 seconds before moving to next turn
             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
             }
@@ -974,6 +977,7 @@ class LudoGame: ObservableObject {
     
     func tapBoost(color: PlayerColor) {
         guard let ability = boostAbility(for: color) else { return }
+        guard currentPlayer == color else { return }
         let context = BoostContext(
             currentPlayer: currentPlayer,
             isBusy: isBusy,
@@ -982,7 +986,9 @@ class LudoGame: ObservableObject {
         guard ability.canArm(context: context) else { return }
         
         let current = getBoostState(for: color)
-        boostState[color] = ability.onTap(currentState: current)
+        let nextState = ability.onTap(currentState: current)
+        boostState[color] = nextState
+        ability.performOnTap(game: self, color: color, context: context)
     }
     
     func consumeBoostOnPawnTapIfNeeded(color: PlayerColor) {
@@ -997,6 +1003,36 @@ class LudoGame: ObservableObject {
         
         GameLogger.shared.log("⚡️ [BOOST] Consuming boost for \(color.rawValue).", level: .debug)
         boostState[color] = .used
+    }
+
+    // MARK: - Mango boost effect
+    /// Force a dice-roll animation that ends in a 6.
+    /// This is designed for the Mango boost and can be used before OR after a normal roll.
+    func forceDiceRollToSixForCurrentTurn() {
+        guard !isBusy else { return }
+        guard !hasCompletedGame(color: currentPlayer) else { return }
+
+        diceValue = GameConstants.sixDiceRoll
+
+        // Track roll history
+        var rolls = diceRollHistory[currentPlayer] ?? []
+        rolls.append(diceValue)
+        diceRollHistory[currentPlayer] = rolls
+
+        rollID += 1 // triggers dice animation in the UI
+        currentRollPlayer = currentPlayer
+        if let currentPawns = pawns[currentPlayer] {
+            handlePostRoll(currentPawns: currentPawns, player: currentPlayer)
+        } else {
+            eligiblePawns = getEligiblePawns()
+            if eligiblePawns.isEmpty {
+                DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
+                    self.nextTurn(clearRoll: true)
+                }
+            }
+        }
+
+        GameLogger.shared.log("🥭⚡️ [BOOST] Forced dice roll to 6 for \(currentPlayer.rawValue) (Roll ID: \(rollID))", level: .debug)
     }
 }
 

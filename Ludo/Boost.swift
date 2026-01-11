@@ -34,6 +34,10 @@ protocol BoostAbility {
     /// Toggle behavior when the boost button is tapped.
     func onTap(currentState: BoostState) -> BoostState
 
+    /// Side effects when the boost button is tapped (e.g. reroll dice, arm a special mode, etc).
+    /// Keep game mutations here, not in views.
+    func performOnTap(game: LudoGame, color: PlayerColor, context: BoostContext)
+
     /// Whether to consume the boost when a pawn is tapped (common rule today).
     /// Some future boosts may prefer different consumption timing.
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool
@@ -53,6 +57,10 @@ extension BoostAbility {
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool {
         // Default behavior: if it's armed and it's your turn, consume when you tap a pawn to move.
         return currentState == .armed
+    }
+
+    func performOnTap(game: LudoGame, color: PlayerColor, context: BoostContext) {
+        // Default: no side effects.
     }
 }
 
@@ -74,7 +82,17 @@ struct MangoRerollToSixBoost: BoostAbility {
     let kind: BoostKind = .mangoRerollToSix
     func isCompatible(with avatarName: String) -> Bool { avatarName.contains("mango") }
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
-    func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { currentState == .armed }
+
+    // Mango boost is consumed immediately on tap (reroll to 6).
+    func onTap(currentState: BoostState) -> BoostState {
+        currentState == .used ? .used : .used
+    }
+
+    func performOnTap(game: LudoGame, color: PlayerColor, context: BoostContext) {
+        game.forceDiceRollToSixForCurrentTurn()
+    }
+
+    func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { false }
 }
 
 struct MirchiExtraBackwardMoveBoost: BoostAbility {
