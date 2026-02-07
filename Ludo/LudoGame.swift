@@ -673,7 +673,7 @@ class LudoGame: ObservableObject {
     }
     
     // Function to validate if a backward move is legal in Mirchi Mode
-    func isValidBackwardMove(color: PlayerColor, pawnId: Int) -> Bool {
+    func isValidBackwardMove(color: PlayerColor, pawnId: Int, isBoost: Bool = false) -> Bool {
         // Standard move validation
         guard color == currentPlayer,
               color == currentRollPlayer,
@@ -681,8 +681,8 @@ class LudoGame: ObservableObject {
             return false
         }
 
-        // Ensure the player has remaining Mirchi moves
-        guard mirchiMovesRemaining[color, default: 0] > 0 else {
+        // Ensure the player has remaining Mirchi moves OR it's a boost move
+        guard isBoost || mirchiMovesRemaining[color, default: 0] > 0 else {
             return false
         }
         
@@ -981,7 +981,8 @@ class LudoGame: ObservableObject {
         let context = BoostContext(
             currentPlayer: currentPlayer,
             isBusy: isBusy,
-            isAIControlled: aiControlledPlayers.contains(color)
+            isAIControlled: aiControlledPlayers.contains(color),
+            isBackwardMove: false
         )
         guard ability.canArm(context: context) else { return }
         
@@ -991,12 +992,13 @@ class LudoGame: ObservableObject {
         ability.performOnTap(game: self, color: color, context: context)
     }
     
-    func consumeBoostOnPawnTapIfNeeded(color: PlayerColor) {
+    func consumeBoostOnPawnTapIfNeeded(color: PlayerColor, isBackward: Bool = false) {
         guard let ability = boostAbility(for: color) else { return }
         let context = BoostContext(
             currentPlayer: currentPlayer,
             isBusy: isBusy,
-            isAIControlled: aiControlledPlayers.contains(color)
+            isAIControlled: aiControlledPlayers.contains(color),
+            isBackwardMove: isBackward
         )
         let current = getBoostState(for: color)
         guard ability.shouldConsumeOnPawnTap(context: context, currentState: current) else { return }

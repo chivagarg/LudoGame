@@ -19,6 +19,8 @@ struct BoostContext {
     let currentPlayer: PlayerColor
     let isBusy: Bool
     let isAIControlled: Bool
+    // Optional: context on the move being attempted
+    let isBackwardMove: Bool
 }
 
 protocol BoostAbility {
@@ -99,7 +101,10 @@ struct MirchiExtraBackwardMoveBoost: BoostAbility {
     let kind: BoostKind = .mirchiExtraBackwardMove
     func isCompatible(with avatarName: String) -> Bool { avatarName.contains("mirchi") }
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
-    func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { currentState == .armed }
+    func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool {
+        // Only consume if moving backward
+        return currentState == .armed && context.isBackwardMove
+    }
 }
 
 

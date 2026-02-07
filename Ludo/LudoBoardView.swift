@@ -1066,23 +1066,46 @@ struct LudoBoardView: View {
             return
         }
 
-        // If a boost is armed, consume it now (one-time use). Specific effects will be implemented via BoostAbility next.
-        if game.currentPlayer == color {
-            game.consumeBoostOnPawnTapIfNeeded(color: color)
-        }
+        // Determine if we should attempt a backward move
+        // This handles both the classic "Mirchi Mode" arrow selection AND the new "Boost" ability
+        let isMirchiBoostArmed = (game.boostAbility(for: color)?.kind == .mirchiExtraBackwardMove) && (game.getBoostState(for: color) == .armed)
+        let isMirchiModeArrow = (game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true)
+        let attemptBackward = isMirchiModeArrow || isMirchiBoostArmed
 
-        if game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true {
-            GameLogger.shared.log("🌶️ [MIRCHI] MIRCHI MODE ON AND arrow activated for \(color.rawValue).", level: .debug)
-            if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id) {
+        if attemptBackward {
+            GameLogger.shared.log("🌶️ [MIRCHI] Attempting backward move (Arrow: \(isMirchiModeArrow), Boost: \(isMirchiBoostArmed)) for pawn \(pawn.id)", level: .debug)
+            
+            // Note: isValidBackwardMove handles the validation logic.
+            // We pass isBoost: true if it's a boost move, so it bypasses the "mirchiMovesRemaining" check.
+            if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id, isBoost: isMirchiBoostArmed) {
+                
+                // Consume boost if applicable (passing isBackward: true ensures Mirchi boost is consumed)
+                if game.currentPlayer == color {
+                    game.consumeBoostOnPawnTapIfNeeded(color: color, isBackward: true)
+                }
+                
                 let steps = game.diceValue
                 animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
                     game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true)
                     isPathAnimating = false
                     isDiceRolling = false
                 }
+            } else {
+                // Backward move requested but invalid.
+                // We do NOT fall through to forward move, as that would be confusing.
+                // Just log it.
+                GameLogger.shared.log("🌶️ [MIRCHI] Backward move invalid for pawn \(pawn.id)", level: .debug)
             }
         } else {
+            // Standard forward move logic
             if game.isValidMove(color: color, pawnId: pawn.id) {
+                
+                // Check if any generic boost should be consumed (e.g. hypothetical forward boost)
+                // Passing isBackward: false prevents Mirchi boost from being consumed here.
+                if game.currentPlayer == color {
+                    game.consumeBoostOnPawnTapIfNeeded(color: color, isBackward: false)
+                }
+                
                 let currentPos = pawn.positionIndex ?? -1
                 let steps = game.diceValue
                 
