@@ -6,7 +6,7 @@ enum GameMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-struct Position: Equatable {
+struct Position: Equatable, Hashable {
     var row: Int
     var col: Int
 }
@@ -29,6 +29,10 @@ class LudoGame: ObservableObject {
     @Published var aiControlledPlayers: Set<PlayerColor> = []
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
+    
+    // Custom safe zones created by players via boosts.
+    // Stores positions that are now considered safe for all players.
+    @Published var customSafeZones: Set<Position> = []
     
     // MARK: - Boost (pawn abilities)
     // Modeled as a state machine per player: available → armed → used
@@ -513,6 +517,7 @@ class LudoGame: ObservableObject {
         killCounts = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
+        customSafeZones.removeAll() // Clear custom safe zones on new game
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
         // Reset boost state
         self.boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
@@ -608,8 +613,39 @@ class LudoGame: ObservableObject {
         }
     }
     
+    // MARK: - Safe Zone Logic
+    
+    // Helper to create a custom safe zone via boost
+    func handleCellTap(row: Int, col: Int) {
+        // Ensure boost is armed and is the correct type
+        guard let boostState = boostState[currentPlayer], boostState == .armed else { return }
+        guard let ability = boostAbility(for: currentPlayer), ability.kind == .greenCapsicumSafeZone else { return }
+        
+        let position = Position(row: row, col: col)
+        
+        // Mark as safe zone if not already safe
+        // We allow marking even if it's already a natural safe zone, effectively consuming the boost
+        // but adding it to our custom set for consistency (and maybe visual overlay).
+        if !customSafeZones.contains(position) {
+            customSafeZones.insert(position)
+            
+            // Consume the boost
+            self.boostState[currentPlayer] = .used
+            
+            // Play sound and notify
+            SoundManager.shared.playPawnHopSound() // Using available sound as placeholder for magic sound
+            
+            GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
+        }
+    }
+
     // Helper to check if a position is a safe spot
     func isSafePosition(_ position: Position) -> Bool {
+        // Check if position is a custom safe zone
+        if customSafeZones.contains(position) {
+            return true
+        }
+
         // Check if position is in any safe zone
         if Self.redSafeZone.contains(position) || 
            Self.greenSafeZone.contains(position) ||
@@ -963,7 +999,7 @@ class LudoGame: ObservableObject {
         gameStarted = false
         isGameOver = false
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
-        // Reset other game-specific states as needed
+        customSafeZones.removeAll() // Reset custom safe zones
     }
     
     // MARK: - Boost API (centralized)

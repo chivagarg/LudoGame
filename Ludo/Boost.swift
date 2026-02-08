@@ -5,6 +5,7 @@ import Foundation
 enum BoostKind: String, Equatable {
     case mangoRerollToSix
     case mirchiExtraBackwardMove
+    case greenCapsicumSafeZone
 }
 
 enum BoostState: Equatable {
@@ -74,6 +75,7 @@ enum BoostRegistry {
         // These are placeholders for now; we’ll implement their real effects next.
         if avatarName.contains("mango") { return MangoRerollToSixBoost() }
         if avatarName.contains("mirchi") { return MirchiExtraBackwardMoveBoost() }
+        if avatarName.contains("capsicum") { return GreenCapsicumSafeZoneBoost() }
         return nil
     }
 }
@@ -107,4 +109,18 @@ struct MirchiExtraBackwardMoveBoost: BoostAbility {
     }
 }
 
-
+struct GreenCapsicumSafeZoneBoost: BoostAbility {
+    let kind: BoostKind = .greenCapsicumSafeZone
+    
+    // Override the default icon with a shield
+    var iconSystemName: String { "shield.fill" }
+    
+    func isCompatible(with avatarName: String) -> Bool { avatarName.contains("capsicum") }
+    
+    // Can arm if it's the player's turn, game isn't busy, and not AI
+    func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
+    
+    // This boost is consumed on CELL tap (handled in LudoGame), not pawn tap.
+    // So we return false here to allow normal pawn selection/movement even when armed.
+    func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { false }
+}

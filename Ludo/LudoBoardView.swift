@@ -433,7 +433,8 @@ struct LudoBoardView: View {
                                 col: col,
                                 cellSize: cellSize,
                                 currentPlayer: game.currentPlayer,
-                                eligiblePawns: game.eligiblePawns
+                                eligiblePawns: game.eligiblePawns,
+                                isCustomSafeZone: game.customSafeZones.contains(Position(row: row, col: col))
                             )
                             .equatable()
                         }
@@ -485,6 +486,7 @@ struct LudoBoardView: View {
         let cellSize: CGFloat
         let currentPlayer: PlayerColor
         let eligiblePawns: Set<Int>
+        let isCustomSafeZone: Bool
 
         // Compute the set of eligible pawn IDs in this cell
         var eligiblePawnIdsInCell: Set<Int> {
@@ -497,11 +499,16 @@ struct LudoBoardView: View {
             let lhsPawnKeys = lhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
             let rhsPawnKeys = rhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
             // Also compare eligible pawn IDs in the cell
-            return lhsPawnKeys == rhsPawnKeys && lhs.eligiblePawnIdsInCell == rhs.eligiblePawnIdsInCell
+            return lhsPawnKeys == rhsPawnKeys && 
+                   lhs.eligiblePawnIdsInCell == rhs.eligiblePawnIdsInCell &&
+                   lhs.isCustomSafeZone == rhs.isCustomSafeZone
         }
 
         var body: some View {
             parent.cellView(row: row, col: col, cellSize: cellSize)
+                .onTapGesture {
+                    parent.game.handleCellTap(row: row, col: col)
+                }
         }
     }
     
@@ -514,6 +521,15 @@ struct LudoBoardView: View {
         print("cellView rendered \(RenderCounter.count) times (row: \(row), col: \(col))")
         return ZStack {
             cellBackground(row: row, col: col, cellSize: cellSize)
+            
+            // Add Star Overlay for generic star spaces OR custom safe zones
+            if isStarSpace(row: row, col: col) || game.customSafeZones.contains(Position(row: row, col: col)) {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: cellSize * 0.4))
+                    .allowsHitTesting(false) // Let taps pass through
+            }
+            
             cellPawns(row: row, col: col, cellSize: cellSize)
         }
         .frame(width: cellSize, height: cellSize)
@@ -590,6 +606,12 @@ struct LudoBoardView: View {
                 // Blue Safe Zone
                 } else if col == 7 && (9...13).contains(row) {
                     Rectangle().fill(PlayerColor.blue.primaryColor)
+                } else if game.customSafeZones.contains(Position(row: row, col: col)) {
+                    // Color code custom safe zones based on quadrant
+                    if row <= 7 && col <= 7 { Rectangle().fill(PlayerColor.red.secondaryColor) }
+                    else if row <= 7 && col > 7 { Rectangle().fill(PlayerColor.green.secondaryColor) }
+                    else if row > 7 && col <= 7 { Rectangle().fill(PlayerColor.blue.secondaryColor) }
+                    else { Rectangle().fill(PlayerColor.yellow.secondaryColor) }
                 } else {
                     // Path cells
                     Rectangle().fill(Color.white)
