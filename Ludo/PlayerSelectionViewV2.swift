@@ -49,12 +49,12 @@ struct PlayerSelectionViewV2: View {
             return [PawnAssets.redMarble, PawnAssets.redMirchi]
         case .green:
             // Minimal placeholder (for now): single themed pawn.
-            return [PawnAssets.greenMarble]
+            return [PawnAssets.greenMarble, PawnAssets.greenCapsicum]
         case .yellow:
             return [PawnAssets.yellowMarble, PawnAssets.yellowMango]
         case .blue:
             // Minimal placeholder (for now): single themed pawn.
-            return [PawnAssets.blueMarble]
+            return [PawnAssets.blueMarble, PawnAssets.blueAubergine]
         }
     }
 

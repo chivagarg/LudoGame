@@ -103,9 +103,11 @@ public enum PawnAssets {
     // Green
     static let greenMarble = "pawn_green_marble_filled"
     static let greenMango = "pawn_mango_green"
+    static let greenCapsicum = "pawn_green_capsicum"
     
     // Blue
     static let blueMarble = "pawn_blue_marble_filled"
+    static let blueAubergine = "pawn_blue_aubergine"
     
     // Generic/Other
     static let alien = "avatar_alien"
