@@ -145,7 +145,7 @@ struct PlayerPanelView: View {
                             let avatarName = game.selectedAvatar(for: color)
                             AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                                 .frame(width: iconSize, height: iconSize)
-                                .scaleEffect(avatarName == "pawn_mirchi" ? 1.25 : 1.0)
+                                .scaleEffect(avatarName == "pawn_red_mirchi" ? 1.25 : 1.0)
 
                             Text("\(game.scores[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -160,7 +160,7 @@ struct PlayerPanelView: View {
                             let avatarName = game.selectedAvatar(for: color)
                             AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                                 .frame(width: iconSize, height: iconSize)
-                                .scaleEffect(avatarName == "pawn_mirchi" ? 1.25 : 1.0)
+                                .scaleEffect(avatarName == "pawn_red_mirchi" ? 1.25 : 1.0)
 
                             Text("\(game.scores[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))

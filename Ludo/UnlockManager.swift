@@ -5,8 +5,8 @@ struct UnlockManager {
     static let gamesPerUnlock = 10
 
     static let unlockProgression: [String] = [
-        "pawn_mango",
-        "pawn_mirchi",
+        "pawn_yellow_mango",
+        "pawn_red_mirchi",
         "pawn_mango_green"
     ]
 

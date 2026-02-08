@@ -69,7 +69,7 @@ struct ProgressGaugeView: View {
 }
 
 #Preview {
-    ProgressGaugeView(currentValue: 3, maxValue: 10, nextUnlockablePawn: "pawn_mango")
+    ProgressGaugeView(currentValue: 3, maxValue: 10, nextUnlockablePawn: "pawn_yellow_mango")
         .padding()
         .background(Color.gray)
 }

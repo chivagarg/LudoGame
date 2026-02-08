@@ -52,7 +52,7 @@ struct ModeSelectionCard: View {
                         .frame(width: 100, height: 100)
                         .shadow(radius: 4)
                 } else {
-                    Image("mirchi")
+                    Image("pawn_red_mirchi")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)
