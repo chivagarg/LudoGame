@@ -639,11 +639,32 @@ class LudoGame: ObservableObject {
             return
         }
         
+        // Constraint: Cannot deploy in starting home areas (colored corners)
+        if isStartingHomeArea(position) {
+            errorMessage = "This spot is ineligible to deploy (Starting Home)"
+            showError = true
+            return
+        }
+        
         // Constraint: Cannot deploy on a Trap
         if trappedZones.contains(position) {
             errorMessage = "This spot is ineligible to deploy (Trap is present)"
             showError = true
             return
+        }
+        
+        // Constraint: Cannot deploy if a pawn is present
+        for (color, playerPawns) in pawns {
+            let playerPath = path(for: color)
+            for pawn in playerPawns {
+                if let index = pawn.positionIndex, index >= 0, index < playerPath.count {
+                    if playerPath[index] == position {
+                        errorMessage = "This spot is ineligible to deploy (Occupied by Pawn)"
+                        showError = true
+                        return
+                    }
+                }
+            }
         }
 
         if ability.kind == .greenCapsicumSafeZone {
@@ -705,6 +726,26 @@ class LudoGame: ObservableObject {
         ]
         
         return additionalStarSpaces.contains(position)
+    }
+
+    // Helper to check if a position is within the starting home areas (colored corners)
+    func isStartingHomeArea(_ position: Position) -> Bool {
+        let row = position.row
+        let col = position.col
+        
+        // Red: Top-left corner (0-5, 0-5)
+        if row <= 5 && col <= 5 { return true }
+        
+        // Green: Top-right corner (0-5, 9-14)
+        if row <= 5 && col >= 9 && col <= 14 { return true }
+        
+        // Blue: Bottom-left corner (9-14, 0-5)
+        if row >= 9 && row <= 14 && col <= 5 { return true }
+        
+        // Yellow: Bottom-right corner (9-14, 9-14)
+        if row >= 9 && row <= 14 && col >= 9 && col <= 14 { return true }
+        
+        return false
     }
 
     // Function to validate if a move is legal
