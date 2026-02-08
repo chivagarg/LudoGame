@@ -49,7 +49,7 @@ struct PlayerSelectionView: View {
         selectedPlayers = Set(PlayerColor.allCases)
         aiPlayers.removeAll()
         selectedAvatars = PlayerColor.allCases.reduce(into: [:]) { result, color in
-            result[color] = "pawn_\(color.rawValue)_marble_filled"
+            result[color] = PawnAssets.defaultMarble(for: color)
         }
     }
 
@@ -74,13 +74,13 @@ struct PlayerSelectionView: View {
         var options: [String] = []
         switch color {
         case .red:
-            options = ["pawn_red_mirchi", "pawn_red_marble_filled", "avatar_alien"]
+            options = [PawnAssets.redMirchi, PawnAssets.redMarble, PawnAssets.alien]
         case .green:
-            options = ["pawn_mango_green", "pawn_green_marble_filled", "avatar_alien"]
+            options = [PawnAssets.greenMango, PawnAssets.greenMarble, PawnAssets.alien]
         case .blue:
-            options = ["pawn_blue_marble_filled", "avatar_alien"]
+            options = [PawnAssets.blueMarble, PawnAssets.alien]
         case .yellow:
-            options = ["pawn_yellow_mango", "pawn_yellow_marble_filled", "avatar_alien"]
+            options = [PawnAssets.yellowMango, PawnAssets.yellowMarble, PawnAssets.alien]
         }
         options.append("unselect")
         return options
@@ -114,7 +114,7 @@ fileprivate struct PlayerRowView: View {
             Spacer()
 
             // Pawn image with GeometryReader to find its position
-            let avatarName = selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
+            let avatarName = selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
             ZStack(alignment: .bottomTrailing) {
                 AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(color))
                 

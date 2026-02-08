@@ -29,7 +29,7 @@ struct ProgressGaugeView: View {
                         .border(Color.white.opacity(0.5), width: 1)
                     
                     if i == animatedProgress {
-                        Image("pawn_blue_marble_filled")
+                        Image(PawnAssets.blueMarble)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: gridSize * 0.8, height: gridSize * 0.8)
@@ -69,7 +69,7 @@ struct ProgressGaugeView: View {
 }
 
 #Preview {
-    ProgressGaugeView(currentValue: 3, maxValue: 10, nextUnlockablePawn: "pawn_yellow_mango")
+    ProgressGaugeView(currentValue: 3, maxValue: 10, nextUnlockablePawn: PawnAssets.yellowMango)
         .padding()
         .background(Color.gray)
 }

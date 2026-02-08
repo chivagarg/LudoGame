@@ -183,14 +183,14 @@ class LudoGame: ObservableObject {
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
     @Published var selectedAvatars: [PlayerColor: String] = [
-        .red: "pawn_red_marble_filled",
-        .green: "pawn_green_marble_filled",
-        .blue: "pawn_blue_marble_filled",
-        .yellow: "pawn_yellow_marble_filled"
+        .red: PawnAssets.redMarble,
+        .green: PawnAssets.greenMarble,
+        .blue: PawnAssets.blueMarble,
+        .yellow: PawnAssets.yellowMarble
     ]
-
+    
     func selectedAvatar(for color: PlayerColor) -> String {
-        return selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
+        return selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
     }
     
     private func getDiceRoll() -> Int {

@@ -46,13 +46,13 @@ struct ModeSelectionCard: View {
             VStack(spacing: 12) {
                 // Icon
                 if mode == .classic {
-                    Image("pawn_green_marble_filled")
+                    Image(PawnAssets.greenMarble)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)
                         .shadow(radius: 4)
                 } else {
-                    Image("pawn_red_mirchi")
+                    Image(PawnAssets.redMirchi)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)

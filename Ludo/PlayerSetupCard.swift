@@ -13,13 +13,13 @@ struct PlayerSetupCard: View {
     @State private var redY: CGFloat = 0
     @State private var blueOffsetY: CGFloat = 0
     @State private var blueGone: Bool = false
-    @State private var attackingPawn: String = "pawn_red_marble_filled"
-    @State private var kickedPawn: String = "pawn_blue_marble_filled"
+    @State private var attackingPawn: String = PawnAssets.redMarble
+    @State private var kickedPawn: String = PawnAssets.blueMarble
     @State private var selectedAvatars: [PlayerColor: String] = [
-        .red: "pawn_red_marble_filled",
-        .green: "pawn_green_marble_filled",
-        .blue: "pawn_blue_marble_filled",
-        .yellow: "pawn_yellow_marble_filled"
+        .red: PawnAssets.redMarble,
+        .green: PawnAssets.greenMarble,
+        .blue: PawnAssets.blueMarble,
+        .yellow: PawnAssets.yellowMarble
     ]
 
     var body: some View {
@@ -106,8 +106,8 @@ struct PlayerSetupCard: View {
     }
 
     private func randomizePawns() {
-        let pawnColors = ["pawn_red_marble_filled", "pawn_green_marble_filled", "pawn_blue_marble_filled", "pawn_yellow_marble_filled"]
-        attackingPawn = pawnColors.randomElement() ?? "pawn_red_marble_filled"
-        kickedPawn = pawnColors.filter { $0 != attackingPawn }.randomElement() ?? "pawn_blue_marble_filled"
+        let pawnColors = [PawnAssets.redMarble, PawnAssets.greenMarble, PawnAssets.blueMarble, PawnAssets.yellowMarble]
+        attackingPawn = pawnColors.randomElement() ?? PawnAssets.redMarble
+        kickedPawn = pawnColors.filter { $0 != attackingPawn }.randomElement() ?? PawnAssets.blueMarble
     }
 } 

@@ -10,7 +10,7 @@ struct SplashScreenView: View {
                 Color.black.edgesIgnoringSafeArea(.all)
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
                     Text("m")
-                    Image("pawn_mirchi_splash")
+                    Image(PawnAssets.mirchiSplash)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(height: fontSize)

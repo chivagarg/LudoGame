@@ -89,3 +89,38 @@ public enum GameConstants {
     static let diceAnimationDuration: TimeInterval = 0.8
 }
 
+// MARK: - Asset Constants --------------------------------------------------------
+
+public enum PawnAssets {
+    // Red
+    static let redMarble = "pawn_red_marble_filled"
+    static let redMirchi = "pawn_red_mirchi"
+    
+    // Yellow
+    static let yellowMarble = "pawn_yellow_marble_filled"
+    static let yellowMango = "pawn_yellow_mango"
+    
+    // Green
+    static let greenMarble = "pawn_green_marble_filled"
+    static let greenMango = "pawn_mango_green"
+    
+    // Blue
+    static let blueMarble = "pawn_blue_marble_filled"
+    
+    // Generic/Other
+    static let alien = "avatar_alien"
+    static let mirchiIndicator = "mirchi" // UI icon for mirchi moves, not the pawn itself
+    
+    // Splash
+    static let mirchiSplash = "pawn_mirchi_splash"
+    
+    static func defaultMarble(for color: PlayerColor) -> String {
+        switch color {
+        case .red: return redMarble
+        case .green: return greenMarble
+        case .yellow: return yellowMarble
+        case .blue: return blueMarble
+        }
+    }
+}
+

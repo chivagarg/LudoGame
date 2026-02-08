@@ -5,9 +5,9 @@ struct UnlockManager {
     static let gamesPerUnlock = 10
 
     static let unlockProgression: [String] = [
-        "pawn_yellow_mango",
-        "pawn_red_mirchi",
-        "pawn_mango_green"
+        PawnAssets.yellowMango,
+        PawnAssets.redMirchi,
+        PawnAssets.greenMango
     ]
 
     static func getUnlockedPawns() -> Set<String> {

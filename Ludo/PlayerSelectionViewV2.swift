@@ -21,7 +21,7 @@ struct PlayerSelectionViewV2: View {
     @State private var isRobot: [PlayerColor: Bool] = [:]
     @State private var selectedAvatars: [PlayerColor: String] = Dictionary(
         uniqueKeysWithValues: PlayerColor.allCases.map { color in
-            (color, "pawn_\(color.rawValue)_marble_filled")
+            (color, PawnAssets.defaultMarble(for: color))
         }
     )
     @State private var modalHeight: CGFloat = 600
@@ -46,20 +46,20 @@ struct PlayerSelectionViewV2: View {
         case .red:
             // First step: only implement 2 red options.
             // Default selection should remain pawn_red_marble_filled.
-            return ["pawn_red_marble_filled", "pawn_red_mirchi"]
+            return [PawnAssets.redMarble, PawnAssets.redMirchi]
         case .green:
             // Minimal placeholder (for now): single themed pawn.
-            return ["pawn_green_marble_filled"]
+            return [PawnAssets.greenMarble]
         case .yellow:
-            return ["pawn_yellow_marble_filled", "pawn_yellow_mango"]
+            return [PawnAssets.yellowMarble, PawnAssets.yellowMango]
         case .blue:
             // Minimal placeholder (for now): single themed pawn.
-            return ["pawn_blue_marble_filled"]
+            return [PawnAssets.blueMarble]
         }
     }
 
     private var selectedAvatarNameForSelectedPlayer: String {
-        selectedAvatars[selectedPlayerColor] ?? "pawn_\(selectedPlayerColor.rawValue)_marble_filled"
+        selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)
     }
     
     var body: some View {
@@ -126,7 +126,7 @@ struct PlayerSelectionViewV2: View {
                             VStack(spacing: 12) {
                                 ForEach(activeColors, id: \.self) { color in
                                     HStack {
-                                        let avatarName = selectedAvatars[color] ?? "pawn_\(color.rawValue)_marble_filled"
+                                        let avatarName = selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .fill(Color.white.opacity(0.95))
@@ -208,7 +208,7 @@ struct PlayerSelectionViewV2: View {
                             let options = avatarOptions(for: selectedPlayerColor)
                             HStack(spacing: 16) {
                                 ForEach(options, id: \.self) { avatarName in
-                                    let isSelected = (selectedAvatars[selectedPlayerColor] ?? "pawn_\(selectedPlayerColor.rawValue)_marble_filled") == avatarName
+                                    let isSelected = (selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)) == avatarName
                                     Button {
                                         selectedAvatars[selectedPlayerColor] = avatarName
                                     } label: {
