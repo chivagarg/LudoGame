@@ -46,7 +46,7 @@ struct PlayerSelectionViewV2: View {
         case .red:
             // First step: only implement 2 red options.
             // Default selection should remain pawn_red_marble_filled.
-            return [PawnAssets.redMarble, PawnAssets.redMirchi]
+            return [PawnAssets.redMarble, PawnAssets.redTomato]
         case .green:
             // Minimal placeholder (for now): single themed pawn.
             return [PawnAssets.greenMarble, PawnAssets.greenCapsicum]

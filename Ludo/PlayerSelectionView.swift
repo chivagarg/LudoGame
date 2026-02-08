@@ -74,7 +74,7 @@ struct PlayerSelectionView: View {
         var options: [String] = []
         switch color {
         case .red:
-            options = [PawnAssets.redMirchi, PawnAssets.redMarble, PawnAssets.alien]
+            options = [PawnAssets.redTomato, PawnAssets.redMarble, PawnAssets.alien]
         case .green:
             options = [PawnAssets.greenMango, PawnAssets.greenCapsicum, PawnAssets.greenMarble, PawnAssets.alien]
         case .blue:

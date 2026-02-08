@@ -94,7 +94,9 @@ public enum GameConstants {
 public enum PawnAssets {
     // Red
     static let redMarble = "pawn_red_marble_filled"
+    @available(*, deprecated, message: "Use redTomato instead")
     static let redMirchi = "pawn_red_mirchi"
+    static let redTomato = "pawn_red_tomato"
     
     // Yellow
     static let yellowMarble = "pawn_yellow_marble_filled"
@@ -125,4 +127,3 @@ public enum PawnAssets {
         }
     }
 }
-

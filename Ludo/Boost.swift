@@ -82,7 +82,7 @@ enum BoostRegistry {
     static func ability(for avatarName: String) -> (any BoostAbility)? {
         // These are placeholders for now; we’ll implement their real effects next.
         if avatarName.contains("mango") { return MangoRerollToSixBoost() }
-        if avatarName.contains("mirchi") { return MirchiExtraBackwardMoveBoost() }
+        if avatarName.contains("mirchi") || avatarName.contains("tomato") { return MirchiExtraBackwardMoveBoost() }
         if avatarName.contains("capsicum") { return GreenCapsicumSafeZoneBoost() }
         if avatarName.contains("aubergine") { return BlueAubergineTrapBoost() }
         return nil
@@ -110,7 +110,9 @@ struct MangoRerollToSixBoost: BoostAbility {
 
 struct MirchiExtraBackwardMoveBoost: BoostAbility {
     let kind: BoostKind = .mirchiExtraBackwardMove
-    func isCompatible(with avatarName: String) -> Bool { avatarName.contains("mirchi") }
+    func isCompatible(with avatarName: String) -> Bool {
+        avatarName.contains("mirchi") || avatarName.contains("tomato")
+    }
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool {
         // Only consume if moving backward

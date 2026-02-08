@@ -6,13 +6,21 @@ struct UnlockManager {
 
     static let unlockProgression: [String] = [
         PawnAssets.yellowMango,
-        PawnAssets.redMirchi,
+        PawnAssets.redTomato,
         PawnAssets.greenMango
     ]
 
     static func getUnlockedPawns() -> Set<String> {
         let saved = UserDefaults.standard.stringArray(forKey: unlockedPawnsKey) ?? []
-        return Set(saved)
+        var unlocked = Set(saved)
+        
+        // Migration: Treat deprecated redMirchi as redTomato
+        if unlocked.contains(PawnAssets.redMirchi) {
+            unlocked.remove(PawnAssets.redMirchi)
+            unlocked.insert(PawnAssets.redTomato)
+        }
+        
+        return unlocked
     }
 
     static func unlockPawn(_ pawnName: String) {
