@@ -211,6 +211,48 @@ struct LudoBoardView: View {
                 trailParticlesOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
                 // Confetti and +10 overlay
                 ConfettiOverlay()
+                
+                // Error Overlay
+                if game.showError {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .edgesIgnoringSafeArea(.all)
+                            .onTapGesture { game.showError = false }
+                        
+                        VStack(spacing: 20) {
+                            Text("Invalid Move")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                            
+                            Text(game.errorMessage ?? "")
+                                .font(.body)
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.horizontal)
+                            
+                            Button(action: {
+                                game.showError = false
+                            }) {
+                                Text("OK")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.blue)
+                                    .cornerRadius(10)
+                            }
+                        }
+                        .padding(24)
+                        .frame(width: 300)
+                        .background(Color.white) // Opaque white background
+                        .cornerRadius(16)
+                        .shadow(radius: 20)
+                    }
+                    .zIndex(100) // Ensure it's on top
+                    .transition(.opacity)
+                }
             }
             .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             .onChange(of: game.totalPawnsAtFinishingHome) { newCount in

@@ -30,6 +30,10 @@ class LudoGame: ObservableObject {
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
     
+    // Error state for UI feedback
+    @Published var errorMessage: String? = nil
+    @Published var showError: Bool = false
+    
     // Custom safe zones created by players via boosts.
     // Stores positions that are now considered safe for all players.
     @Published var customSafeZones: Set<Position> = []
@@ -627,22 +631,33 @@ class LudoGame: ObservableObject {
         
         let position = Position(row: row, col: col)
 
+        // Constraint: Cannot deploy on any safe position (Start, Finish, Home, Stars, or existing Shield)
+        // reusing isSafePosition automatically factors in all these cases.
+        if isSafePosition(position) {
+            errorMessage = "This spot is ineligible to deploy (Safe Zone)"
+            showError = true
+            return
+        }
+        
+        // Constraint: Cannot deploy on a Trap
+        if trappedZones.contains(position) {
+            errorMessage = "This spot is ineligible to deploy (Trap is present)"
+            showError = true
+            return
+        }
+
         if ability.kind == .greenCapsicumSafeZone {
-            // Mark as safe zone if not already safe
-            if !customSafeZones.contains(position) {
-                customSafeZones.insert(position)
-                self.boostState[currentPlayer] = .used
-                SoundManager.shared.playPawnHopSound() 
-                GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
-            }
+            // Mark as safe zone
+            customSafeZones.insert(position)
+            self.boostState[currentPlayer] = .used
+            SoundManager.shared.playPawnHopSound() 
+            GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
         } else if ability.kind == .blueAubergineTrap {
-            // Mark as trap if not already a trap
-            if !trappedZones.contains(position) {
-                trappedZones.insert(position)
-                self.boostState[currentPlayer] = .used
-                SoundManager.shared.playPawnHopSound()
-                GameLogger.shared.log("🔥 [BOOST] Trap deployed at \(row),\(col)", level: .info)
-            }
+            // Mark as trap
+            trappedZones.insert(position)
+            self.boostState[currentPlayer] = .used
+            SoundManager.shared.playPawnHopSound()
+            GameLogger.shared.log("🔥 [BOOST] Trap deployed at \(row),\(col)", level: .info)
         }
     }
 
