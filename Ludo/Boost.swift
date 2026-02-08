@@ -1,3 +1,10 @@
+//
+//  Boost.swift
+//  Ludo
+//
+//  Created by Cursor on 1/28/25.
+//
+
 import Foundation
 
 // MARK: - Boost core models
@@ -6,6 +13,7 @@ enum BoostKind: String, Equatable {
     case mangoRerollToSix
     case mirchiExtraBackwardMove
     case greenCapsicumSafeZone
+    case blueAubergineTrap
 }
 
 enum BoostState: Equatable {
@@ -76,6 +84,7 @@ enum BoostRegistry {
         if avatarName.contains("mango") { return MangoRerollToSixBoost() }
         if avatarName.contains("mirchi") { return MirchiExtraBackwardMoveBoost() }
         if avatarName.contains("capsicum") { return GreenCapsicumSafeZoneBoost() }
+        if avatarName.contains("aubergine") { return BlueAubergineTrapBoost() }
         return nil
     }
 }
@@ -116,6 +125,22 @@ struct GreenCapsicumSafeZoneBoost: BoostAbility {
     var iconSystemName: String { "shield.fill" }
     
     func isCompatible(with avatarName: String) -> Bool { avatarName.contains("capsicum") }
+    
+    // Can arm if it's the player's turn, game isn't busy, and not AI
+    func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
+    
+    // This boost is consumed on CELL tap (handled in LudoGame), not pawn tap.
+    // So we return false here to allow normal pawn selection/movement even when armed.
+    func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { false }
+}
+
+struct BlueAubergineTrapBoost: BoostAbility {
+    let kind: BoostKind = .blueAubergineTrap
+    
+    // Override the default icon with a flame (for trap)
+    var iconSystemName: String { "flame.fill" }
+    
+    func isCompatible(with avatarName: String) -> Bool { avatarName.contains("aubergine") }
     
     // Can arm if it's the player's turn, game isn't busy, and not AI
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }

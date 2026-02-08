@@ -34,6 +34,9 @@ class LudoGame: ObservableObject {
     // Stores positions that are now considered safe for all players.
     @Published var customSafeZones: Set<Position> = []
     
+    // Trapped zones created by the Blue Aubergine boost
+    @Published var trappedZones: Set<Position> = []
+    
     // MARK: - Boost (pawn abilities)
     // Modeled as a state machine per player: available → armed → used
     @Published var boostState: [PlayerColor: BoostState] = [:]
@@ -518,6 +521,7 @@ class LudoGame: ObservableObject {
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
         customSafeZones.removeAll() // Clear custom safe zones on new game
+        trappedZones.removeAll() // Clear trapped zones
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
         // Reset boost state
         self.boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
@@ -615,27 +619,30 @@ class LudoGame: ObservableObject {
     
     // MARK: - Safe Zone Logic
     
-    // Helper to create a custom safe zone via boost
+    // Helper to create a custom safe zone or trap via boost
     func handleCellTap(row: Int, col: Int) {
-        // Ensure boost is armed and is the correct type
+        // Ensure boost is armed
         guard let boostState = boostState[currentPlayer], boostState == .armed else { return }
-        guard let ability = boostAbility(for: currentPlayer), ability.kind == .greenCapsicumSafeZone else { return }
+        guard let ability = boostAbility(for: currentPlayer) else { return }
         
         let position = Position(row: row, col: col)
-        
-        // Mark as safe zone if not already safe
-        // We allow marking even if it's already a natural safe zone, effectively consuming the boost
-        // but adding it to our custom set for consistency (and maybe visual overlay).
-        if !customSafeZones.contains(position) {
-            customSafeZones.insert(position)
-            
-            // Consume the boost
-            self.boostState[currentPlayer] = .used
-            
-            // Play sound and notify
-            SoundManager.shared.playPawnHopSound() // Using available sound as placeholder for magic sound
-            
-            GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
+
+        if ability.kind == .greenCapsicumSafeZone {
+            // Mark as safe zone if not already safe
+            if !customSafeZones.contains(position) {
+                customSafeZones.insert(position)
+                self.boostState[currentPlayer] = .used
+                SoundManager.shared.playPawnHopSound() 
+                GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
+            }
+        } else if ability.kind == .blueAubergineTrap {
+            // Mark as trap if not already a trap
+            if !trappedZones.contains(position) {
+                trappedZones.insert(position)
+                self.boostState[currentPlayer] = .used
+                SoundManager.shared.playPawnHopSound()
+                GameLogger.shared.log("🔥 [BOOST] Trap deployed at \(row),\(col)", level: .info)
+            }
         }
     }
 
@@ -884,6 +891,25 @@ class LudoGame: ObservableObject {
         // First check if the new position would result in a capture
         let newPosition = currentPath[newIndex]
         
+        // Check for TRAP
+        if trappedZones.contains(newPosition) {
+            GameLogger.shared.log("⚠️ [TRAP] Pawn landed on trap at \(newPosition.row),\(newPosition.col)", level: .info)
+            // Trigger capture on self (the pawn gets "cut")
+            if let pawn = pawns[color]?[pawnIndex] {
+                // Post notification to animate the pawn being captured (sent home)
+                NotificationCenter.default.post(name: .animatePawnCapture,
+                                               object: nil,
+                                               userInfo: ["color": color, "pawnId": pawn.id])
+            }
+            
+            // Update position to trap cell temporarily. 
+            // The completePawnCapture callback (triggered by UI after animation) will reset it to home.
+            pawns[color]?[pawnIndex].positionIndex = newIndex
+            
+            // Landing on a trap ends turn immediately, no bonus roll.
+            return false
+        }
+        
         // Check if the position is a safe spot
         let isSafeSpot = isSafePosition(newPosition)
         
@@ -1000,6 +1026,7 @@ class LudoGame: ObservableObject {
         isGameOver = false
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         customSafeZones.removeAll() // Reset custom safe zones
+        trappedZones.removeAll() // Clear trapped zones
     }
     
     // MARK: - Boost API (centralized)

@@ -434,7 +434,8 @@ struct LudoBoardView: View {
                                 cellSize: cellSize,
                                 currentPlayer: game.currentPlayer,
                                 eligiblePawns: game.eligiblePawns,
-                                isCustomSafeZone: game.customSafeZones.contains(Position(row: row, col: col))
+                                isCustomSafeZone: game.customSafeZones.contains(Position(row: row, col: col)),
+                                isTrappedZone: game.trappedZones.contains(Position(row: row, col: col))
                             )
                             .equatable()
                         }
@@ -487,7 +488,8 @@ struct LudoBoardView: View {
         let currentPlayer: PlayerColor
         let eligiblePawns: Set<Int>
         let isCustomSafeZone: Bool
-
+        let isTrappedZone: Bool
+        
         // Compute the set of eligible pawn IDs in this cell
         var eligiblePawnIdsInCell: Set<Int> {
             return Set(pawnsInCell.filter { $0.color == currentPlayer && eligiblePawns.contains($0.id) }.map { $0.id })
@@ -501,7 +503,8 @@ struct LudoBoardView: View {
             // Also compare eligible pawn IDs in the cell
             return lhsPawnKeys == rhsPawnKeys && 
                    lhs.eligiblePawnIdsInCell == rhs.eligiblePawnIdsInCell &&
-                   lhs.isCustomSafeZone == rhs.isCustomSafeZone
+                   lhs.isCustomSafeZone == rhs.isCustomSafeZone &&
+                   lhs.isTrappedZone == rhs.isTrappedZone
         }
 
         var body: some View {
@@ -522,8 +525,15 @@ struct LudoBoardView: View {
         return ZStack {
             cellBackground(row: row, col: col, cellSize: cellSize)
             
+            // Add Trap Overlay
+            if game.trappedZones.contains(Position(row: row, col: col)) {
+                Image(systemName: "flame.fill")
+                    .foregroundColor(.red)
+                    .font(.system(size: cellSize * 0.5))
+                    .allowsHitTesting(false)
+            }
             // Add Star Overlay for generic star spaces OR custom safe zones
-            if isStarSpace(row: row, col: col) || game.customSafeZones.contains(Position(row: row, col: col)) {
+            else if isStarSpace(row: row, col: col) || game.customSafeZones.contains(Position(row: row, col: col)) {
                 Image(systemName: "star.fill")
                     .foregroundColor(.white.opacity(0.8))
                     .font(.system(size: cellSize * 0.4))
