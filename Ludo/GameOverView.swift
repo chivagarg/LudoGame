@@ -155,11 +155,13 @@ struct GameOverView: View {
                         confettiSize: 24,
                         radius: 400)
         .onAppear {
+            /*
             GameStats.incrementGameCompletionCount()
             let unlocked = UnlockManager.checkForUnlocks()
             if let firstUnlocked = unlocked.first {
                 self.newlyUnlockedPawn = firstUnlocked
             }
+            */
             bubbles = true
             applyBonusesOnce()
             setupAnimatedScores()

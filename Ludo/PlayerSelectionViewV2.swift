@@ -62,6 +62,57 @@ struct PlayerSelectionViewV2: View {
         selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)
     }
     
+    private func getPawnDetails(for avatarName: String) -> (title: String, description: String, hasBoost: Bool) {
+        if avatarName == PawnAssets.redTomato {
+            return ("Lal Tomato", "Gain an extra hop backwards (total of 6) for the duration of your game.", true)
+        } else if avatarName == PawnAssets.yellowMango {
+            return ("Mango Tango", "Roll a 6 any time!", true)
+        } else if avatarName == PawnAssets.greenCapsicum {
+            return ("Shima Shield", "Place an extra safe zone on any empty space to protect your pawns from capture", true)
+        } else if avatarName == PawnAssets.blueAubergine {
+            return ("Bombergine", "Deploy a single trap to send opponents home, but beware, you could land on it too!", true)
+        } else {
+            let colorName = avatarName.contains("red") ? "Red" :
+                            avatarName.contains("yellow") ? "Yellow" :
+                            avatarName.contains("green") ? "Green" : "Blue"
+            return ("Classic \(colorName)", "", false)
+        }
+    }
+
+    @ViewBuilder
+    private func pawnBoostIcon(for avatarName: String) -> some View {
+        if avatarName == PawnAssets.yellowMango {
+             Image(systemName: "die.face.6.fill")
+                .font(.system(size: 70))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
+        } else if avatarName == PawnAssets.redTomato {
+             HStack(spacing: 4) {
+                Text("+1")
+                    .font(.system(size: 50, weight: .heavy, design: .rounded))
+                    .foregroundColor(.red)
+                Image(PawnAssets.mirchiIndicator)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 50, height: 50)
+            }
+        } else if avatarName == PawnAssets.greenCapsicum {
+             Image(systemName: "shield.fill")
+                .font(.system(size: 60, weight: .semibold))
+                .foregroundColor(Color(red: 50/255, green: 159/255, blue: 91/255))
+        } else if avatarName == PawnAssets.blueAubergine {
+             Image(systemName: "flame.fill")
+                .font(.system(size: 60, weight: .semibold))
+                .foregroundColor(.red)
+        }
+    }
+
     var body: some View {
         ZStack {
             // Background
@@ -264,6 +315,27 @@ struct PlayerSelectionViewV2: View {
                             .aspectRatio(contentMode: .fit)
                             .padding(40)
                             .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                        
+                        let details = getPawnDetails(for: selectedAvatarNameForSelectedPlayer)
+                        
+                        VStack(spacing: 12) {
+                            Text(details.title)
+                                .font(.system(size: 44, weight: .black, design: .rounded))
+                                .foregroundColor(.black)
+                            
+                            if details.hasBoost {
+                                HStack(spacing: 16) {
+                                    pawnBoostIcon(for: selectedAvatarNameForSelectedPlayer)
+                                    Text(details.description)
+                                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                                        .foregroundColor(.gray)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(.top, 12)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
                         Spacer(minLength: 0)
                     }
                     .frame(maxHeight: .infinity, alignment: .top)

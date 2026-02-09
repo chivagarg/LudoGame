@@ -88,11 +88,13 @@ struct StartGameView: View {
                         .padding(.horizontal)
                     
                     // Progress Gauge
+                    /*
                     let progress = UnlockManager.getCurrentProgress()
                     let nextUnlock = UnlockManager.getNextUnlockablePawn()
                     ProgressGaugeView(currentValue: progress.current, maxValue: progress.max, nextUnlockablePawn: nextUnlock)
                         .padding(.bottom, 20)
                         .padding(.horizontal)
+                    */
                 }
                 .transition(.opacity)
             } else if step == 1 {
