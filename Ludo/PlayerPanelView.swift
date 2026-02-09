@@ -34,9 +34,40 @@ struct PlayerPanelView: View {
                         .fill(Color.white)
                         .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
 
-                    Image(systemName: ability.iconSystemName)
-                        .font(.system(size: 26, weight: .heavy))
-                        .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
+                    if ability.kind == .mangoRerollToSix {
+                        // Custom Mango Boost Visuals: Big Gold Dice (Face 6)
+                        Image(systemName: "die.face.6.fill")
+                            .font(.system(size: 34)) // Adjusted size to fit container
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
+                            .saturation(isUsed ? 0.0 : 1.0)
+                            .opacity(isUsed ? 0.6 : 1.0)
+                    } else if ability.kind == .mirchiExtraBackwardMove {
+                        // Custom Mirchi Boost Visuals: +1 with small mirchi inside
+                        HStack(spacing: 2) {
+                            Text("+1")
+                                .font(.system(size: 22, weight: .heavy, design: .rounded))
+                                .foregroundColor(.red)
+                            
+                            Image(PawnAssets.mirchiIndicator)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 18, height: 18)
+                        }
+                        .saturation(isUsed ? 0.0 : 1.0)
+                        .opacity(isUsed ? 0.6 : 1.0)
+                    } else {
+                        // Standard visuals for other boosts (Shield, Trap, Mirchi)
+                        Image(systemName: ability.iconSystemName)
+                            .font(.system(size: 26, weight: .heavy))
+                            .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
+                    }
                 }
                 .frame(width: 56, height: 56)
                 .opacity(isUsed ? 0.35 : (isEnabled ? 1.0 : 0.6))
@@ -145,7 +176,6 @@ struct PlayerPanelView: View {
                             let avatarName = game.selectedAvatar(for: color)
                             AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                                 .frame(width: iconSize, height: iconSize)
-                                .scaleEffect(avatarName == PawnAssets.redMirchi ? 1.25 : 1.0)
 
                             Text("\(game.scores[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -160,7 +190,6 @@ struct PlayerPanelView: View {
                             let avatarName = game.selectedAvatar(for: color)
                             AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                                 .frame(width: iconSize, height: iconSize)
-                                .scaleEffect(avatarName == PawnAssets.redMirchi ? 1.25 : 1.0)
 
                             Text("\(game.scores[color] ?? 0)")
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -266,5 +295,4 @@ struct PlayerPanelView: View {
             }
         }
     }
-} 
- 
+}
