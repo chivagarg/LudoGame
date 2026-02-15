@@ -295,4 +295,4 @@ struct PlayerPanelView: View {
             }
         }
     }
-}
+} 

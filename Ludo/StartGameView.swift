@@ -8,7 +8,7 @@ struct StartGameView: View {
     let onStartGame: () -> Void
 
     // Decorative dice for the header - REMOVED
-    
+
     @State private var step: Int = 0 // 0 = homepage, 1 = player selection (v2)
     @State private var showSettings: Bool = false
     
@@ -18,24 +18,24 @@ struct StartGameView: View {
             Color(red: 249/255, green: 247/255, blue: 252/255).ignoresSafeArea()
             
             if step == 0 {
-                VStack {
+            VStack {
                     // Top Bar
-                    HStack {
+                HStack {
                         // Exit button
-                        Button(action: { exit(0) }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: "door.left.hand.open")
-                                    .font(.largeTitle)
-                                    Text("Exit")
-                                        .font(.caption2)
-                                        .fontWeight(.semibold)
-                            }
-                            .foregroundColor(PlayerColor.red.primaryColor)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    Button(action: { exit(0) }) {
+                        VStack(spacing: 2) {
+                            Image(systemName: "door.left.hand.open")
+                                .font(.largeTitle)
+                            Text("Exit")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
                         }
+                        .foregroundColor(PlayerColor.red.primaryColor)
+                        .padding(10)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
                         
-                        Spacer()
+                Spacer()
                         
                         // Settings button
                         Button(action: { showSettings = true }) {
@@ -44,8 +44,8 @@ struct StartGameView: View {
                                 .foregroundColor(.gray)
                                 .padding(10)
                                 .background(.ultraThinMaterial, in: Circle())
-                        }
                     }
+                }
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     
@@ -61,11 +61,11 @@ struct StartGameView: View {
                                     Text("It's time to play")
                                         .font(.title3)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.black)
+                                .foregroundColor(.black)
                                     
                                     Text("Ludo Mirchi!")
                                         .font(.system(size: 60, weight: .black))
-                                        .foregroundColor(.black)
+                                .foregroundColor(.black)
                                     
                                     Text("Get 5 mirchis to hop backwards.\nCatch your opponents before\nthey catch you.")
                                         .font(.body)
@@ -89,9 +89,9 @@ struct StartGameView: View {
                     
                     // Progress Gauge
                     /*
-                    let progress = UnlockManager.getCurrentProgress()
-                    let nextUnlock = UnlockManager.getNextUnlockablePawn()
-                    ProgressGaugeView(currentValue: progress.current, maxValue: progress.max, nextUnlockablePawn: nextUnlock)
+                            let progress = UnlockManager.getCurrentProgress()
+                            let nextUnlock = UnlockManager.getNextUnlockablePawn()
+                            ProgressGaugeView(currentValue: progress.current, maxValue: progress.max, nextUnlockablePawn: nextUnlock)
                         .padding(.bottom, 20)
                         .padding(.horizontal)
                     */
@@ -99,13 +99,13 @@ struct StartGameView: View {
                 .transition(.opacity)
             } else if step == 1 {
                 PlayerSelectionViewV2(isAdminMode: $isAdminMode,
-                                      selectedPlayers: $selectedPlayers,
-                                      aiPlayers: $aiPlayers,
-                                      onStart: onStartGame,
-                                      onBack: { withAnimation { step = 0 } })
+                                        selectedPlayers: $selectedPlayers,
+                                        aiPlayers: $aiPlayers,
+                                        onStart: onStartGame,
+                                        onBack: { withAnimation { step = 0 } })
                 .transition(.opacity)
-            }
-        }
+                    }
+                }
         .sheet(isPresented: $showSettings) {
             if #available(iOS 16.0, *) {
                 SettingsTableView(isAdminMode: $isAdminMode)

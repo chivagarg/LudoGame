@@ -531,7 +531,7 @@ struct LudoBoardView: View {
         let eligiblePawns: Set<Int>
         let isCustomSafeZone: Bool
         let isTrappedZone: Bool
-        
+
         // Compute the set of eligible pawn IDs in this cell
         var eligiblePawnIdsInCell: Set<Int> {
             return Set(pawnsInCell.filter { $0.color == currentPlayer && eligiblePawns.contains($0.id) }.map { $0.id })
