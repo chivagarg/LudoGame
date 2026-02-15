@@ -23,62 +23,72 @@ struct PlayerPanelView: View {
             let isUsed = state == .used
             let isActive = state == .armed
             let isEnabled = !isUsed && canUseBoost(for: color)
+            let boostsRemaining = game.boostUsesRemaining[color] ?? PawnAssets.boostUses(for: game.selectedAvatar(for: color))
 
-            Button(action: {
-                guard isEnabled else { return }
-                game.tapBoost(color: color)
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(Color.white)
-                        .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
+            VStack(spacing: 4) {
+                Button(action: {
+                    guard isEnabled else { return }
+                    game.tapBoost(color: color)
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
 
-                    if ability.kind == .rerollToSix {
-                        // Custom Mango Boost Visuals: Big Gold Dice (Face 6)
-                        Image(systemName: "die.face.6.fill")
-                            .font(.system(size: 34)) // Adjusted size to fit container
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
+                        if ability.kind == .rerollToSix {
+                            // Custom Mango Boost Visuals: Big Gold Dice (Face 6)
+                            Image(systemName: "die.face.6.fill")
+                                .font(.system(size: 34)) // Adjusted size to fit container
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
                                 )
-                            )
-                            .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
+                                .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
+                                .saturation(isUsed ? 0.0 : 1.0)
+                                .opacity(isUsed ? 0.6 : 1.0)
+                        } else if ability.kind == .extraBackwardMove {
+                            // Custom Mirchi Boost Visuals: +1 with small mirchi inside
+                            HStack(spacing: 2) {
+                                Text("+1")
+                                    .font(.system(size: 22, weight: .heavy, design: .rounded))
+                                    .foregroundColor(.red)
+                                
+                                Image(PawnAssets.mirchiIndicator)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 18, height: 18)
+                            }
                             .saturation(isUsed ? 0.0 : 1.0)
                             .opacity(isUsed ? 0.6 : 1.0)
-                    } else if ability.kind == .extraBackwardMove {
-                        // Custom Mirchi Boost Visuals: +1 with small mirchi inside
-                        HStack(spacing: 2) {
-                            Text("+1")
-                                .font(.system(size: 22, weight: .heavy, design: .rounded))
-                                .foregroundColor(.red)
-                            
-                            Image(PawnAssets.mirchiIndicator)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 18, height: 18)
+                        } else {
+                            // Standard visuals for other boosts (Shield, Trap, Mirchi)
+                            Image(systemName: ability.iconSystemName)
+                                .font(.system(size: 26, weight: .heavy))
+                                .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
                         }
-                        .saturation(isUsed ? 0.0 : 1.0)
-                        .opacity(isUsed ? 0.6 : 1.0)
-                    } else {
-                        // Standard visuals for other boosts (Shield, Trap, Mirchi)
-                        Image(systemName: ability.iconSystemName)
-                            .font(.system(size: 26, weight: .heavy))
-                            .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
                     }
+                    .frame(width: 56, height: 56)
+                    .opacity(isUsed ? 0.35 : (isEnabled ? 1.0 : 0.6))
+                    .scaleEffect(isActive ? 1.12 : 1.0)
+                    .overlay(
+                        Circle()
+                            .stroke(isActive ? Color.purple.opacity(0.8) : Color.clear, lineWidth: 3)
+                    )
                 }
-                .frame(width: 56, height: 56)
-                .opacity(isUsed ? 0.35 : (isEnabled ? 1.0 : 0.6))
-                .scaleEffect(isActive ? 1.12 : 1.0)
-                .overlay(
-                    Circle()
-                        .stroke(isActive ? Color.purple.opacity(0.8) : Color.clear, lineWidth: 3)
-                )
+                .buttonStyle(PlainButtonStyle())
+                .disabled(!isEnabled)
+
+                Text("\(max(0, boostsRemaining))")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.black)
+                    .frame(minWidth: 60)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color.white))
             }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(!isEnabled)
         } else {
             EmptyView()
         }

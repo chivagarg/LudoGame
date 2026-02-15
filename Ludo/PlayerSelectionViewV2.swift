@@ -62,19 +62,19 @@ struct PlayerSelectionViewV2: View {
         if avatarName == PawnAssets.redTomato {
             return ("Lal Tomato", "Gain an extra hop backwards (total of 6) for the duration of your game.", true)
         } else if avatarName == PawnAssets.redAnar {
-            return ("Anar Kali", "Gain an extra hop backwards (total of 6) for the duration of your game. Use this boost twice.", true)
+            return ("Anar Kali", "Gain 2 extra hop backwards (total of 6) for the duration of your game.", true)
         } else if avatarName == PawnAssets.yellowMango {
             return ("Mango Tango", "Roll a 6 any time!", true)
         } else if avatarName == PawnAssets.yellowPineapple {
-            return ("Pina Anna", "Roll a 6 any time! Use this boost twice.", true)
+            return ("Pina Anna", "Roll a 6 any time, twice!", true)
         } else if avatarName == PawnAssets.greenCapsicum {
-            return ("Shima Shield", "Place an extra safe zone on any empty space to protect your pawns from capture", true)
+            return ("Shima Shield", "Place an extra safe zone on any empty space to protect pawns from capture", true)
         } else if avatarName == PawnAssets.greenWatermelon {
-            return ("Tarboozii", "Place an extra safe zone on any empty space to protect your pawns from capture. Use this boost twice.", true)
+            return ("Tarboozii", "Place 2 extra safe zones on any empty space to protect pawns from capture.", true)
         } else if avatarName == PawnAssets.blueAubergine {
             return ("Bombergine", "Deploy a single trap to send opponents home, but beware, you could land on it too!", true)
         } else if avatarName == PawnAssets.blueJamun {
-            return ("Jamun", "Deploy a single trap to send opponents home, but beware, you could land on it too! Use this boost twice.", true)
+            return ("Jamun", "Deploy 2 traps to send opponents home, but beware, you could land on it too!", true)
         } else {
             let colorName = avatarName.contains("red") ? "Red" :
                             avatarName.contains("yellow") ? "Yellow" :
@@ -84,45 +84,51 @@ struct PlayerSelectionViewV2: View {
     }
 
     @ViewBuilder
-    private func pawnBoostIcon(for avatarName: String) -> some View {
-        if avatarName == PawnAssets.yellowMango || avatarName == PawnAssets.yellowPineapple {
-             Image(systemName: "die.face.6.fill")
-                .font(.system(size: 70))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
-        } else if avatarName == PawnAssets.redTomato || avatarName == PawnAssets.redAnar {
-             HStack(spacing: 4) {
-                Text("+1")
-                    .font(.system(size: 50, weight: .heavy, design: .rounded))
-                    .foregroundColor(.red)
-                Image(PawnAssets.mirchiIndicator)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 50, height: 50)
-            }
-        } else if avatarName == PawnAssets.greenCapsicum || avatarName == PawnAssets.greenWatermelon {
-             Image(systemName: "shield.fill")
-                .font(.system(size: 60, weight: .semibold))
-                .foregroundColor(Color(red: 50/255, green: 159/255, blue: 91/255))
-        } else if avatarName == PawnAssets.blueAubergine || avatarName == PawnAssets.blueJamun {
-             Image(systemName: "flame.fill")
-                .font(.system(size: 60, weight: .semibold))
-                .foregroundColor(.red)
-        }
-    }
-
-    @ViewBuilder
     private func pawnBoostSymbols(for avatarName: String) -> some View {
-        let symbolCount = max(1, PawnAssets.boostUses(for: avatarName))
-        HStack(spacing: 12) {
-            ForEach(0..<symbolCount, id: \.self) { _ in
-                pawnBoostIcon(for: avatarName)
+        if let ability = BoostRegistry.ability(for: avatarName) {
+            let boostsRemaining = max(1, PawnAssets.boostUses(for: avatarName))
+            VStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
+
+                    if ability.kind == .rerollToSix {
+                        Image(systemName: "die.face.6.fill")
+                            .font(.system(size: 34))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
+                    } else if ability.kind == .extraBackwardMove {
+                        HStack(spacing: 2) {
+                            Text("+1")
+                                .font(.system(size: 22, weight: .heavy, design: .rounded))
+                                .foregroundColor(.red)
+
+                            Image(PawnAssets.mirchiIndicator)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 18, height: 18)
+                        }
+                    } else {
+                        Image(systemName: ability.iconSystemName)
+                            .font(.system(size: 26, weight: .heavy))
+                            .foregroundColor(Color.purple.opacity(0.7))
+                    }
+                }
+                .frame(width: 56, height: 56)
+
+                Text("\(boostsRemaining)")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.black)
+                    .frame(minWidth: 60)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color.white))
             }
         }
     }
