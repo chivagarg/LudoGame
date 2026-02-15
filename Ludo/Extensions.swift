@@ -92,24 +92,34 @@ public enum GameConstants {
 // MARK: - Asset Constants --------------------------------------------------------
 
 public enum PawnAssets {
+    enum Tier {
+        case level0
+        case level1
+        case level2
+    }
+
     // Red
     static let redMarble = "pawn_red_marble_filled"
     @available(*, deprecated, message: "Use redTomato instead")
     static let redMirchi = "pawn_red_mirchi"
     static let redTomato = "pawn_red_tomato"
+    static let redAnar = "pawn_red_anar"
     
     // Yellow
     static let yellowMarble = "pawn_yellow_marble_filled"
     static let yellowMango = "pawn_yellow_mango"
+    static let yellowPineapple = "pawn_yellow_pineapple"
     
     // Green
     static let greenMarble = "pawn_green_marble_filled"
     static let greenMango = "pawn_mango_green"
     static let greenCapsicum = "pawn_green_capsicum"
+    static let greenWatermelon = "pawn_green_watermelon"
     
     // Blue
     static let blueMarble = "pawn_blue_marble_filled"
     static let blueAubergine = "pawn_blue_aubergine"
+    static let blueJamun = "pawn_blue_jamun"
     
     // Generic/Other
     static let alien = "avatar_alien"
@@ -125,5 +135,27 @@ public enum PawnAssets {
         case .yellow: return yellowMarble
         case .blue: return blueMarble
         }
+    }
+
+    static func tier(for avatarName: String) -> Tier {
+        if [redAnar, greenWatermelon, yellowPineapple, blueJamun].contains(avatarName) {
+            return .level2
+        }
+        if [redTomato, greenCapsicum, yellowMango, blueAubergine].contains(avatarName) {
+            return .level1
+        }
+        return .level0
+    }
+
+    static func boostUses(for avatarName: String) -> Int {
+        switch tier(for: avatarName) {
+        case .level0: return 0
+        case .level1: return 1
+        case .level2: return 2
+        }
+    }
+
+    static func hasBoost(for avatarName: String) -> Bool {
+        boostUses(for: avatarName) > 0
     }
 }

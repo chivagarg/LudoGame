@@ -1142,7 +1142,7 @@ struct LudoBoardView: View {
 
         // Determine if we should attempt a backward move
         // This handles both the classic "Mirchi Mode" arrow selection AND the new "Boost" ability
-        let isMirchiBoostArmed = (game.boostAbility(for: color)?.kind == .mirchiExtraBackwardMove) && (game.getBoostState(for: color) == .armed)
+        let isMirchiBoostArmed = (game.boostAbility(for: color)?.kind == .extraBackwardMove) && (game.getBoostState(for: color) == .armed)
         let isMirchiModeArrow = (game.gameMode == .mirchi && game.mirchiArrowActivated[color] == true)
         let attemptBackward = isMirchiModeArrow || isMirchiBoostArmed
 

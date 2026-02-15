@@ -42,8 +42,9 @@ class LudoGame: ObservableObject {
     @Published var trappedZones: Set<Position> = []
     
     // MARK: - Boost (pawn abilities)
-    // Modeled as a state machine per player: available → armed → used
+    // State machine per player: available ↔ armed, and used when no charges remain.
     @Published var boostState: [PlayerColor: BoostState] = [:]
+    @Published var boostUsesRemaining: [PlayerColor: Int] = [:]
 
     // Remaining Mirchi (backward) moves per player
     @Published var mirchiMovesRemaining: [PlayerColor: Int] = [.red: 5, .green: 5, .yellow: 5, .blue: 5]
@@ -455,7 +456,8 @@ class LudoGame: ObservableObject {
         // Clear any armed boost at turn change (boost is only usable on the current player's turn).
         for c in PlayerColor.allCases {
             if boostState[c] == .armed {
-                boostState[c] = .available
+                let remaining = boostUsesRemaining[c, default: maxBoostUses(for: c)]
+                boostState[c] = remaining > 0 ? .available : .used
             }
         }
 
@@ -529,6 +531,9 @@ class LudoGame: ObservableObject {
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
         // Reset boost state
         self.boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
+        self.boostUsesRemaining = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { color in
+            (color, maxBoostUses(for: color))
+        })
         // Reset Mirchi move counts for selected players
         mirchiMovesRemaining = Dictionary(uniqueKeysWithValues: selectedPlayers.map { ($0, 5) })
 
@@ -626,7 +631,7 @@ class LudoGame: ObservableObject {
     // Helper to create a custom safe zone or trap via boost
     func handleCellTap(row: Int, col: Int) {
         // Ensure boost is armed
-        guard let boostState = boostState[currentPlayer], boostState == .armed else { return }
+        guard getBoostState(for: currentPlayer) == .armed else { return }
         guard let ability = boostAbility(for: currentPlayer) else { return }
         
         let position = Position(row: row, col: col)
@@ -667,16 +672,16 @@ class LudoGame: ObservableObject {
             }
         }
 
-        if ability.kind == .greenCapsicumSafeZone {
+        if ability.kind == .safeZone {
             // Mark as safe zone
             customSafeZones.insert(position)
-            self.boostState[currentPlayer] = .used
+            consumeBoostUse(for: currentPlayer)
             SoundManager.shared.playPawnHopSound() 
             GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
-        } else if ability.kind == .blueAubergineTrap {
+        } else if ability.kind == .trap {
             // Mark as trap
             trappedZones.insert(position)
-            self.boostState[currentPlayer] = .used
+            consumeBoostUse(for: currentPlayer)
             SoundManager.shared.playPawnHopSound()
             GameLogger.shared.log("🔥 [BOOST] Trap deployed at \(row),\(col)", level: .info)
         }
@@ -1081,6 +1086,7 @@ class LudoGame: ObservableObject {
         gameStarted = false
         isGameOver = false
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
+        boostUsesRemaining = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, 0) })
         customSafeZones.removeAll() // Reset custom safe zones
         trappedZones.removeAll() // Clear trapped zones
     }
@@ -1089,9 +1095,29 @@ class LudoGame: ObservableObject {
     func boostAbility(for color: PlayerColor) -> (any BoostAbility)? {
         BoostRegistry.ability(for: selectedAvatar(for: color))
     }
+
+    private func maxBoostUses(for color: PlayerColor) -> Int {
+        PawnAssets.boostUses(for: selectedAvatar(for: color))
+    }
+
+    private func consumeBoostUse(for color: PlayerColor) {
+        let currentRemaining = boostUsesRemaining[color] ?? maxBoostUses(for: color)
+        guard currentRemaining > 0 else {
+            boostUsesRemaining[color] = 0
+            boostState[color] = .used
+            return
+        }
+
+        let nextRemaining = currentRemaining - 1
+        boostUsesRemaining[color] = nextRemaining
+        boostState[color] = nextRemaining > 0 ? .available : .used
+    }
     
     func getBoostState(for color: PlayerColor) -> BoostState {
-        boostState[color] ?? .available
+        guard boostAbility(for: color) != nil else { return .used }
+        let remaining = boostUsesRemaining[color] ?? maxBoostUses(for: color)
+        if remaining <= 0 { return .used }
+        return boostState[color] == .armed ? .armed : .available
     }
     
     func tapBoost(color: PlayerColor) {
@@ -1104,11 +1130,21 @@ class LudoGame: ObservableObject {
             isBackwardMove: false
         )
         guard ability.canArm(context: context) else { return }
-        
+        let remaining = boostUsesRemaining[color] ?? maxBoostUses(for: color)
+        guard remaining > 0 else {
+            boostState[color] = .used
+            return
+        }
+
         let current = getBoostState(for: color)
         let nextState = ability.onTap(currentState: current)
-        boostState[color] = nextState
-        ability.performOnTap(game: self, color: color, context: context)
+        if nextState == .used {
+            ability.performOnTap(game: self, color: color, context: context)
+            consumeBoostUse(for: color)
+        } else {
+            boostState[color] = nextState
+            ability.performOnTap(game: self, color: color, context: context)
+        }
     }
     
     func consumeBoostOnPawnTapIfNeeded(color: PlayerColor, isBackward: Bool = false) {
@@ -1123,7 +1159,7 @@ class LudoGame: ObservableObject {
         guard ability.shouldConsumeOnPawnTap(context: context, currentState: current) else { return }
         
         GameLogger.shared.log("⚡️ [BOOST] Consuming boost for \(color.rawValue).", level: .debug)
-        boostState[color] = .used
+        consumeBoostUse(for: color)
     }
 
     // MARK: - Mango boost effect

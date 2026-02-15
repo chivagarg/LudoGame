@@ -74,13 +74,13 @@ struct PlayerSelectionView: View {
         var options: [String] = []
         switch color {
         case .red:
-            options = [PawnAssets.redTomato, PawnAssets.redMarble, PawnAssets.alien]
+            options = [PawnAssets.redAnar, PawnAssets.redTomato, PawnAssets.redMarble, PawnAssets.alien]
         case .green:
-            options = [PawnAssets.greenMango, PawnAssets.greenCapsicum, PawnAssets.greenMarble, PawnAssets.alien]
+            options = [PawnAssets.greenWatermelon, PawnAssets.greenCapsicum, PawnAssets.greenMarble, PawnAssets.alien]
         case .blue:
-            options = [PawnAssets.blueAubergine, PawnAssets.blueMarble, PawnAssets.alien]
+            options = [PawnAssets.blueJamun, PawnAssets.blueAubergine, PawnAssets.blueMarble, PawnAssets.alien]
         case .yellow:
-            options = [PawnAssets.yellowMango, PawnAssets.yellowMarble, PawnAssets.alien]
+            options = [PawnAssets.yellowPineapple, PawnAssets.yellowMango, PawnAssets.yellowMarble, PawnAssets.alien]
         }
         options.append("unselect")
         return options

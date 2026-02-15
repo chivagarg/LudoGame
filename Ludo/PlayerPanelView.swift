@@ -34,7 +34,7 @@ struct PlayerPanelView: View {
                         .fill(Color.white)
                         .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
 
-                    if ability.kind == .mangoRerollToSix {
+                    if ability.kind == .rerollToSix {
                         // Custom Mango Boost Visuals: Big Gold Dice (Face 6)
                         Image(systemName: "die.face.6.fill")
                             .font(.system(size: 34)) // Adjusted size to fit container
@@ -48,7 +48,7 @@ struct PlayerPanelView: View {
                             .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
                             .saturation(isUsed ? 0.0 : 1.0)
                             .opacity(isUsed ? 0.6 : 1.0)
-                    } else if ability.kind == .mirchiExtraBackwardMove {
+                    } else if ability.kind == .extraBackwardMove {
                         // Custom Mirchi Boost Visuals: +1 with small mirchi inside
                         HStack(spacing: 2) {
                             Text("+1")

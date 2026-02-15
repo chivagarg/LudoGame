@@ -14,13 +14,9 @@ struct PawnView: View {
 
     var body: some View {
         let avatarName = game.selectedAvatar(for: pawn.color)
-        let isMango = avatarName.contains("mango")
-        let isMirchi = avatarName.contains("mirchi")
 
         AvatarIcon(avatarName: avatarName, playerColor: pawn.color.primaryColor)
             .frame(width: size, height: size)
-            .scaleEffect(isMirchi ? 1.25 : 1.0)
-            .offset(x: isMango ? size * 0.1 : 0, y: isMango ? -size * 0.15 : 0)
             .shadow(color: .black.opacity(0.2), radius: size / 10, x: 0, y: size / 10) // Soft, ambient shadow
             .shadow(color: .black.opacity(0.5), radius: size / 40, x: 0, y: size / 40) // Sharp, contact shadow
             .scaleEffect(isAnimating ? 1.2 : 1.0)

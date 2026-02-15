@@ -44,17 +44,13 @@ struct PlayerSelectionViewV2: View {
     private func avatarOptions(for color: PlayerColor) -> [String] {
         switch color {
         case .red:
-            // First step: only implement 2 red options.
-            // Default selection should remain pawn_red_marble_filled.
-            return [PawnAssets.redMarble, PawnAssets.redTomato]
+            return [PawnAssets.redMarble, PawnAssets.redTomato, PawnAssets.redAnar]
         case .green:
-            // Minimal placeholder (for now): single themed pawn.
-            return [PawnAssets.greenMarble, PawnAssets.greenCapsicum]
+            return [PawnAssets.greenMarble, PawnAssets.greenCapsicum, PawnAssets.greenWatermelon]
         case .yellow:
-            return [PawnAssets.yellowMarble, PawnAssets.yellowMango]
+            return [PawnAssets.yellowMarble, PawnAssets.yellowMango, PawnAssets.yellowPineapple]
         case .blue:
-            // Minimal placeholder (for now): single themed pawn.
-            return [PawnAssets.blueMarble, PawnAssets.blueAubergine]
+            return [PawnAssets.blueMarble, PawnAssets.blueAubergine, PawnAssets.blueJamun]
         }
     }
 
@@ -65,12 +61,20 @@ struct PlayerSelectionViewV2: View {
     private func getPawnDetails(for avatarName: String) -> (title: String, description: String, hasBoost: Bool) {
         if avatarName == PawnAssets.redTomato {
             return ("Lal Tomato", "Gain an extra hop backwards (total of 6) for the duration of your game.", true)
+        } else if avatarName == PawnAssets.redAnar {
+            return ("Anar Kali", "Gain an extra hop backwards (total of 6) for the duration of your game. Use this boost twice.", true)
         } else if avatarName == PawnAssets.yellowMango {
             return ("Mango Tango", "Roll a 6 any time!", true)
+        } else if avatarName == PawnAssets.yellowPineapple {
+            return ("Pina Anna", "Roll a 6 any time! Use this boost twice.", true)
         } else if avatarName == PawnAssets.greenCapsicum {
             return ("Shima Shield", "Place an extra safe zone on any empty space to protect your pawns from capture", true)
+        } else if avatarName == PawnAssets.greenWatermelon {
+            return ("Tarboozii", "Place an extra safe zone on any empty space to protect your pawns from capture. Use this boost twice.", true)
         } else if avatarName == PawnAssets.blueAubergine {
             return ("Bombergine", "Deploy a single trap to send opponents home, but beware, you could land on it too!", true)
+        } else if avatarName == PawnAssets.blueJamun {
+            return ("Jamun", "Deploy a single trap to send opponents home, but beware, you could land on it too! Use this boost twice.", true)
         } else {
             let colorName = avatarName.contains("red") ? "Red" :
                             avatarName.contains("yellow") ? "Yellow" :
@@ -81,7 +85,7 @@ struct PlayerSelectionViewV2: View {
 
     @ViewBuilder
     private func pawnBoostIcon(for avatarName: String) -> some View {
-        if avatarName == PawnAssets.yellowMango {
+        if avatarName == PawnAssets.yellowMango || avatarName == PawnAssets.yellowPineapple {
              Image(systemName: "die.face.6.fill")
                 .font(.system(size: 70))
                 .foregroundStyle(
@@ -92,7 +96,7 @@ struct PlayerSelectionViewV2: View {
                     )
                 )
                 .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
-        } else if avatarName == PawnAssets.redTomato {
+        } else if avatarName == PawnAssets.redTomato || avatarName == PawnAssets.redAnar {
              HStack(spacing: 4) {
                 Text("+1")
                     .font(.system(size: 50, weight: .heavy, design: .rounded))
@@ -102,14 +106,24 @@ struct PlayerSelectionViewV2: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 50, height: 50)
             }
-        } else if avatarName == PawnAssets.greenCapsicum {
+        } else if avatarName == PawnAssets.greenCapsicum || avatarName == PawnAssets.greenWatermelon {
              Image(systemName: "shield.fill")
                 .font(.system(size: 60, weight: .semibold))
                 .foregroundColor(Color(red: 50/255, green: 159/255, blue: 91/255))
-        } else if avatarName == PawnAssets.blueAubergine {
+        } else if avatarName == PawnAssets.blueAubergine || avatarName == PawnAssets.blueJamun {
              Image(systemName: "flame.fill")
                 .font(.system(size: 60, weight: .semibold))
                 .foregroundColor(.red)
+        }
+    }
+
+    @ViewBuilder
+    private func pawnBoostSymbols(for avatarName: String) -> some View {
+        let symbolCount = max(1, PawnAssets.boostUses(for: avatarName))
+        HStack(spacing: 12) {
+            ForEach(0..<symbolCount, id: \.self) { _ in
+                pawnBoostIcon(for: avatarName)
+            }
         }
     }
 
@@ -325,7 +339,7 @@ struct PlayerSelectionViewV2: View {
                             
                             if details.hasBoost {
                                 HStack(spacing: 16) {
-                                    pawnBoostIcon(for: selectedAvatarNameForSelectedPlayer)
+                                    pawnBoostSymbols(for: selectedAvatarNameForSelectedPlayer)
                                     Text(details.description)
                                         .font(.system(size: 28, weight: .bold, design: .rounded))
                                         .foregroundColor(.gray)

@@ -10,10 +10,10 @@ import Foundation
 // MARK: - Boost core models
 
 enum BoostKind: String, Equatable {
-    case mangoRerollToSix
-    case mirchiExtraBackwardMove
-    case greenCapsicumSafeZone
-    case blueAubergineTrap
+    case rerollToSix
+    case extraBackwardMove
+    case safeZone
+    case trap
 }
 
 enum BoostState: Equatable {
@@ -80,20 +80,33 @@ extension BoostAbility {
 enum BoostRegistry {
     /// Returns the boost ability for an avatar name, if any.
     static func ability(for avatarName: String) -> (any BoostAbility)? {
-        // These are placeholders for now; we’ll implement their real effects next.
-        if avatarName.contains("mango") { return MangoRerollToSixBoost() }
-        if avatarName.contains("mirchi") || avatarName.contains("tomato") { return MirchiExtraBackwardMoveBoost() }
-        if avatarName.contains("capsicum") { return GreenCapsicumSafeZoneBoost() }
-        if avatarName.contains("aubergine") { return BlueAubergineTrapBoost() }
+        // Red family -> backward boost
+        if avatarName == PawnAssets.redTomato || avatarName == PawnAssets.redAnar {
+            return ExtraBackwardMoveBoost()
+        }
+        // Yellow family -> reroll-to-6 boost
+        if avatarName == PawnAssets.yellowMango || avatarName == PawnAssets.yellowPineapple {
+            return RerollToSixBoost()
+        }
+        // Green family -> safe-zone boost
+        if avatarName == PawnAssets.greenCapsicum || avatarName == PawnAssets.greenWatermelon {
+            return SafeZoneBoost()
+        }
+        // Blue family -> trap boost
+        if avatarName == PawnAssets.blueAubergine || avatarName == PawnAssets.blueJamun {
+            return TrapBoost()
+        }
         return nil
     }
 }
 
 // MARK: - Placeholder abilities (no special effects yet)
 
-struct MangoRerollToSixBoost: BoostAbility {
-    let kind: BoostKind = .mangoRerollToSix
-    func isCompatible(with avatarName: String) -> Bool { avatarName.contains("mango") }
+struct RerollToSixBoost: BoostAbility {
+    let kind: BoostKind = .rerollToSix
+    func isCompatible(with avatarName: String) -> Bool {
+        avatarName == PawnAssets.yellowMango || avatarName == PawnAssets.yellowPineapple
+    }
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
 
     // Mango boost is consumed immediately on tap (reroll to 6).
@@ -108,10 +121,10 @@ struct MangoRerollToSixBoost: BoostAbility {
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { false }
 }
 
-struct MirchiExtraBackwardMoveBoost: BoostAbility {
-    let kind: BoostKind = .mirchiExtraBackwardMove
+struct ExtraBackwardMoveBoost: BoostAbility {
+    let kind: BoostKind = .extraBackwardMove
     func isCompatible(with avatarName: String) -> Bool {
-        avatarName.contains("mirchi") || avatarName.contains("tomato")
+        avatarName == PawnAssets.redTomato || avatarName == PawnAssets.redAnar
     }
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool {
@@ -120,13 +133,15 @@ struct MirchiExtraBackwardMoveBoost: BoostAbility {
     }
 }
 
-struct GreenCapsicumSafeZoneBoost: BoostAbility {
-    let kind: BoostKind = .greenCapsicumSafeZone
+struct SafeZoneBoost: BoostAbility {
+    let kind: BoostKind = .safeZone
     
     // Override the default icon with a shield
     var iconSystemName: String { "shield.fill" }
     
-    func isCompatible(with avatarName: String) -> Bool { avatarName.contains("capsicum") }
+    func isCompatible(with avatarName: String) -> Bool {
+        avatarName == PawnAssets.greenCapsicum || avatarName == PawnAssets.greenWatermelon
+    }
     
     // Can arm if it's the player's turn, game isn't busy, and not AI
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
@@ -136,13 +151,15 @@ struct GreenCapsicumSafeZoneBoost: BoostAbility {
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool { false }
 }
 
-struct BlueAubergineTrapBoost: BoostAbility {
-    let kind: BoostKind = .blueAubergineTrap
+struct TrapBoost: BoostAbility {
+    let kind: BoostKind = .trap
     
     // Override the default icon with a flame (for trap)
     var iconSystemName: String { "flame.fill" }
     
-    func isCompatible(with avatarName: String) -> Bool { avatarName.contains("aubergine") }
+    func isCompatible(with avatarName: String) -> Bool {
+        avatarName == PawnAssets.blueAubergine || avatarName == PawnAssets.blueJamun
+    }
     
     // Can arm if it's the player's turn, game isn't busy, and not AI
     func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
