@@ -1191,6 +1191,46 @@ class LudoGame: ObservableObject {
 
         GameLogger.shared.log("🥭⚡️ [BOOST] Forced dice roll to 6 for \(currentPlayer.rawValue) (Roll ID: \(rollID))", level: .debug)
     }
+
+    // MARK: - Admin test helpers
+    /// Admin-only test utility to instantly finish the game with caller-provided scores.
+    /// This bypasses gameplay animations and teleports pawns to finished home.
+    func adminEndGame(finalScores: [PlayerColor: Int]) {
+        guard isAdminMode, gameStarted else { return }
+
+        // Apply requested final scores only to active players.
+        for color in selectedPlayers {
+            scores[color] = max(0, finalScores[color] ?? 0)
+        }
+
+        // Clear bonus-driving stats so admin-entered final scores remain stable on GameOver.
+        killCounts = Dictionary(uniqueKeysWithValues: selectedPlayers.map { ($0, 0) })
+        firstKillPlayer = nil
+        firstKillDone = false
+        diceRollHistory = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, []) })
+
+        // Force-finish all pawns instantly:
+        // 1) bring out from home to start index, 2) teleport to finished home index.
+        for color in selectedPlayers {
+            guard var playerPawns = pawns[color] else { continue }
+            for idx in playerPawns.indices {
+                if playerPawns[idx].positionIndex == GameConstants.homePawnIndex {
+                    playerPawns[idx].positionIndex = GameConstants.startingPathIndex
+                }
+                playerPawns[idx].positionIndex = GameConstants.finishedPawnIndex
+            }
+            pawns[color] = playerPawns
+        }
+
+        totalPawnsAtFinishingHome = selectedPlayers.count * GameConstants.pawnsPerPlayer
+        homeCompletionOrder = []
+        eligiblePawns.removeAll()
+        currentRollPlayer = nil
+        isBusy = false
+
+        finalRankings = selectedPlayers.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
+        isGameOver = true
+    }
 }
 
 extension Notification.Name {
