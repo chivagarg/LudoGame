@@ -18,10 +18,6 @@ struct PlayerPanelView: View {
             && !game.isBusy
     }
 
-    private var isRightSidePanel: Bool {
-        color == .green || color == .yellow
-    }
-
     private var mirchiRemaining: Int {
         game.mirchiMovesRemaining[color, default: 0]
     }
@@ -333,11 +329,7 @@ struct PlayerPanelView: View {
     private func leftSection() -> some View {
         VStack(spacing: max(2, panelHeight * 0.03)) {
             sectionTitle("Tools")
-            if isRightSidePanel {
-                scoreSlots()
-            } else {
-                toolsSlots()
-            }
+            toolsSlots()
         }
         .padding(.horizontal, sectionHorizontalInset)
         .frame(width: thirdWidth, alignment: .center)
@@ -347,11 +339,7 @@ struct PlayerPanelView: View {
     private func rightSection() -> some View {
         VStack(spacing: max(2, panelHeight * 0.03)) {
             sectionTitle("Score")
-            if isRightSidePanel {
-                toolsSlots()
-            } else {
-                scoreSlots()
-            }
+            scoreSlots()
         }
         .padding(.horizontal, sectionHorizontalInset)
         .frame(width: thirdWidth, alignment: .center)

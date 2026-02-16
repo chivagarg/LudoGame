@@ -396,6 +396,7 @@ struct LudoBoardView: View {
                 panelHeight: panelHeight
             )
             .environmentObject(game)
+            .rotationEffect(.degrees(180))
             .position(x: leftCenterX, y: topCenterY)
 
             PlayerPanelView(
@@ -408,6 +409,7 @@ struct LudoBoardView: View {
                 panelHeight: panelHeight
             )
             .environmentObject(game)
+            .rotationEffect(.degrees(180))
             .position(x: rightCenterX, y: topCenterY)
 
             PlayerPanelView(
