@@ -79,49 +79,20 @@ struct PlayerSelectionViewV2: View {
     private func pawnBoostSymbols(for avatarName: String, scale: CGFloat = 1.0) -> some View {
         if let ability = BoostRegistry.ability(for: avatarName) {
             let boostsRemaining = max(1, PawnAssets.boostUses(for: avatarName))
-            VStack(spacing: 10) {
-                ZStack {
-                    Circle()
-                        .fill(Color.white)
-                        .shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1)
-
-                    if ability.kind == .rerollToSix {
-                        Image(systemName: "die.face.6.fill")
-                            .font(.system(size: 34 * scale))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                            .shadow(color: .orange.opacity(0.4), radius: 1, x: 1, y: 1)
-                    } else if ability.kind == .extraBackwardMove {
-                        HStack(spacing: 2) {
-                            Text("+1")
-                                .font(.system(size: 22 * scale, weight: .heavy, design: .rounded))
-                                .foregroundColor(.red)
-
-                            Image(PawnAssets.mirchiIndicator)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 18 * scale, height: 18 * scale)
-                        }
-                    } else {
-                        Image(systemName: ability.iconSystemName)
-                            .font(.system(size: 26 * scale, weight: .heavy))
-                            .foregroundColor(Color.purple.opacity(0.7))
-                    }
-                }
-                .frame(width: 56 * scale, height: 56 * scale)
-
-                Text("\(boostsRemaining)")
-                    .font(.system(size: 18 * scale, weight: .bold, design: .rounded))
-                    .foregroundColor(.black)
-                    .frame(minWidth: 60 * scale)
-                    .padding(.vertical, 6 * scale)
-                    .background(Capsule().fill(Color.white))
-            }
+            let tileSize = 56 * scale
+            let iconSize = tileSize * 0.72
+            let badgeSize = max(12, tileSize * 0.36)
+            BoostIconTileView(
+                ability: ability,
+                tileSize: tileSize,
+                iconSize: iconSize,
+                badgeValue: boostsRemaining,
+                badgeSize: badgeSize,
+                isUsed: false,
+                isActive: false,
+                isEnabled: true,
+                highlightActiveBorder: false
+            )
         }
     }
 

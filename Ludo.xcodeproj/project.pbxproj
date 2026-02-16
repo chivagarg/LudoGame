@@ -10,6 +10,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1A /* LudoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1B /* LudoApp.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */; };
+		58D54CF22F43A6C900CF3ACF /* BoostIconTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */; };
 		58ED41672F0FA69F009414F6 /* PlayerSelectionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */; };
 		58ED41692F10FF01009414F6 /* MirchiPrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */; };
 		58ED416B2F13C4DD009414F6 /* Boost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED416A2F13C4DD009414F6 /* Boost.swift */; };
@@ -67,6 +68,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGameView.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGame.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A20 /* Ludo Mirchi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Ludo Mirchi.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostIconTileView.swift; sourceTree = "<group>"; };
 		58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewV2.swift; sourceTree = "<group>"; };
 		58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirchiPrimaryButton.swift; sourceTree = "<group>"; };
 		58ED416A2F13C4DD009414F6 /* Boost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boost.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A23 /* Ludo */ = {
 			isa = PBXGroup;
 			children = (
+				58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */,
 				58ED416A2F13C4DD009414F6 /* Boost.swift */,
 				58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */,
 				58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */,
@@ -346,6 +349,7 @@
 				DA7944142DFA8C7B00EE49FC /* LudoBoardView.swift in Sources */,
 				DAE12ABE2E514E5D00862C75 /* UnlockManager.swift in Sources */,
 				58ED41672F0FA69F009414F6 /* PlayerSelectionViewV2.swift in Sources */,
+				58D54CF22F43A6C900CF3ACF /* BoostIconTileView.swift in Sources */,
 				DA79440E2DFA871F00EE49FC /* SettingsTableView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

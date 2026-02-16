@@ -92,62 +92,26 @@ struct PlayerPanelView: View {
     }
 
     @ViewBuilder
-    private func boostIconBody(isUsed: Bool, isActive: Bool, isEnabled: Bool) -> some View {
-        if let ability = game.boostAbility(for: color) {
-            if ability.kind == .rerollToSix {
-                Image(systemName: "die.face.6.fill")
-                    .font(.system(size: iconSize * 1.15))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .saturation(isUsed ? 0.0 : 1.0)
-                    .opacity(isUsed ? 0.6 : 1.0)
-            } else if ability.kind == .extraBackwardMove {
-                HStack(spacing: 1) {
-                    Text("+1")
-                        .font(.system(size: iconSize * 0.58, weight: .heavy, design: .rounded))
-                        .foregroundColor(.red)
-                    Image(PawnAssets.mirchiIndicator)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: iconSize * 0.52, height: iconSize * 0.52)
-                }
-                .saturation(isUsed ? 0.0 : 1.0)
-                .opacity(isUsed ? 0.6 : 1.0)
-            } else {
-                Image(systemName: ability.iconSystemName)
-                    .font(.system(size: iconSize * 0.95, weight: .heavy))
-                    .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
-            }
-        } else {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: iconSize * 0.9, weight: .heavy))
-                .foregroundColor(.gray.opacity(0.6))
-        }
-    }
-
-    @ViewBuilder
     private func slotCard<Content: View>(
         title: String,
         valueText: String,
         badgeValue: Int? = nil,
         badgeActiveThreshold: Int = 1,
         valueColor: Color = .black,
+        drawContainer: Bool = true,
         content: () -> Content
     ) -> some View {
         VStack(spacing: max(2, panelHeight * 0.03)) {
             ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
-                    .fill(Color.white.opacity(0.95))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
-                            .stroke(Color.black.opacity(0.08), lineWidth: 1)
-                    )
-                    .frame(width: slotSize, height: slotSize)
+                if drawContainer {
+                    RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
+                        .fill(Color.white.opacity(0.95))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
+                                .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                        )
+                        .frame(width: slotSize, height: slotSize)
+                }
 
                 content()
                     .frame(width: slotSize, height: slotSize)
@@ -209,22 +173,23 @@ struct PlayerPanelView: View {
         slotCard(
             title: "Boost",
             valueText: "",
-            badgeValue: max(0, boostRemaining),
-            badgeActiveThreshold: 1
+            drawContainer: false
         ) {
             Button(action: {
                 guard isEnabled else { return }
                 game.tapBoost(color: color)
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }) {
-                ZStack {
-                    boostIconBody(isUsed: isUsed, isActive: isActive, isEnabled: isEnabled)
-                }
-                .opacity(isUsed ? 0.5 : (isEnabled ? 1.0 : 0.65))
-                .scaleEffect(isActive ? 1.08 : 1.0)
-                .overlay(
-                    RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
-                        .stroke(isActive ? Color.purple.opacity(0.8) : Color.clear, lineWidth: 2)
+                BoostIconTileView(
+                    ability: game.boostAbility(for: color),
+                    tileSize: slotSize,
+                    iconSize: iconSize,
+                    badgeValue: max(0, boostRemaining),
+                    badgeSize: badgeSize,
+                    isUsed: isUsed,
+                    isActive: isActive,
+                    isEnabled: isEnabled,
+                    highlightActiveBorder: true
                 )
             }
             .buttonStyle(PlainButtonStyle())
