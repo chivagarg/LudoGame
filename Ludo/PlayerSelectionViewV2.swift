@@ -131,7 +131,8 @@ struct PlayerSelectionViewV2: View {
                 Image("pawn-selection-background-v0")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: geo.size.width, height: geo.size.height)
+                    // Overscan slightly to hide any transparent edge pixels in the asset.
+                    .frame(width: geo.size.width * 1.08, height: geo.size.height * 1.08)
                     .clipped()
 
                 backButtonOverlay
@@ -237,32 +238,34 @@ struct PlayerSelectionViewV2: View {
     private func responsiveContent(in geo: GeometryProxy) -> some View {
         let m = metrics(for: geo)
         ZStack(alignment: .bottom) {
-            ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+
                 HStack(alignment: .top, spacing: m.spacing) {
                     leftColumn(metrics: m)
                     rightColumn(metrics: m)
                 }
-                .padding(.top, max(16, geo.size.height * 0.08))
-                .padding(.bottom, 88)
-                .padding(.trailing, 8)
-                .frame(width: m.modalWidth, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-#if DEBUG
-                .background(
-                    GeometryReader { proxy in
-                        Color.clear
-                            .onAppear {
-                                let f = proxy.frame(in: .global)
-                                print("[PlayerSelectionViewV2.debug] HStack frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
-                            }
-                            .onChange(of: proxy.size) { _ in
-                                let f = proxy.frame(in: .global)
-                                print("[PlayerSelectionViewV2.debug] HStack changed frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
-                            }
-                    }
-                )
-#endif
+                .frame(width: m.modalWidth, alignment: .center)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+#if DEBUG
+            .background(
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear {
+                            let f = proxy.frame(in: .global)
+                            print("[PlayerSelectionViewV2.debug] CenterContainer frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
+                        }
+                        .onChange(of: proxy.size) { _ in
+                            let f = proxy.frame(in: .global)
+                            print("[PlayerSelectionViewV2.debug] CenterContainer changed frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
+                        }
+                }
+            )
+#endif
 
             MirchiPrimaryButton(title: "Start game") {
                 let active = Set(activeColors)
@@ -273,7 +276,7 @@ struct PlayerSelectionViewV2: View {
             }
             .padding(.bottom, max(12, geo.safeAreaInsets.bottom))
         }
-        .padding(.horizontal, m.sideMargin)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

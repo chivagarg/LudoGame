@@ -112,6 +112,8 @@ struct StartGameView: View {
                                         aiPlayers: $aiPlayers,
                                         onStart: onStartGame,
                                         onBack: { withAnimation { step = 0 } })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
                 .transition(.opacity)
                 }
                     }
