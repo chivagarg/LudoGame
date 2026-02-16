@@ -199,17 +199,18 @@ struct LudoBoardView: View {
             ZStack {
                 // Board Grid extracted into a helper view
                 boardGridView(boardSize: boardSize, cellSize: cellSize)
-                    // Keep home->start animation in board-local coordinates to avoid screen-size drift.
+                    // Keep board-enter and capture animations in board-local coordinates
+                    // to avoid screen-size drift on compact devices.
                     .overlay {
-                        homeToStartPawnAnimationOverlay(cellSize: cellSize)
+                        ZStack {
+                            homeToStartPawnAnimationOverlay(cellSize: cellSize)
+                            capturedPawnAnimationOverlay(cellSize: cellSize)
+                        }
                     }
 
                 // Player panels extracted into a helper view
                 playerPanelsView(boardOffsetY: boardOffsetY)
 
-                // Animation overlays extracted into dedicated helper views
-                capturedPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
-                
                 // MARK: - Trail Particles Overlay
                 trailParticlesOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
                 // Confetti and +10 overlay
@@ -1058,7 +1059,7 @@ struct LudoBoardView: View {
     }
 
     @ViewBuilder
-    private func capturedPawnAnimationOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
+    private func capturedPawnAnimationOverlay(cellSize: CGFloat) -> some View {
         ForEach(capturedPawns, id: \.pawn.id) { capturedPawn in
             // Check if we have enough data to proceed
             if let startPositionIndex = capturedPawn.pawn.positionIndex {
@@ -1071,8 +1072,8 @@ struct LudoBoardView: View {
                 if let startPoint = animationPath.first {
                     
                     // 2. The view is positioned at the starting point of the path.
-                    let startX = boardOffsetX + (CGFloat(startPoint.col) + 0.5) * cellSize
-                    let startY = boardOffsetY + (CGFloat(startPoint.row) + 0.5) * cellSize
+                    let startX = (CGFloat(startPoint.col) + 0.5) * cellSize
+                    let startY = (CGFloat(startPoint.row) + 0.5) * cellSize
                     
                     PawnView(pawn: pawn, size: cellSize * 0.8)
                         .position(x: startX, y: startY)
