@@ -24,6 +24,9 @@ struct StartGameView: View {
                     let sidePadding = max(20.0, cardWidth * 0.09)
                     let contentScale = max(0.62, min(1.0, cardWidth / 760.0))
                     let heroTitleSize = min(max(24, cardWidth * 0.07), 56)
+                    let topBarIconSize = min(max(24, geo.size.width * 0.045), 34)
+                    let topBarPadding = min(max(8, geo.size.width * 0.018), 12)
+                    let topBarCornerRadius = min(max(10, geo.size.width * 0.02), 14)
 
                     ZStack(alignment: .top) {
                         // Hero card centered in the full screen space.
@@ -78,14 +81,14 @@ struct StartGameView: View {
                             Button(action: { exit(0) }) {
                                 VStack(spacing: 2) {
                                     Image(systemName: "door.left.hand.open")
-                                        .font(.largeTitle)
+                                        .font(.system(size: topBarIconSize, weight: .regular))
                                     Text("Exit")
                                         .font(.caption2)
                                         .fontWeight(.semibold)
                                 }
                                 .foregroundColor(PlayerColor.red.primaryColor)
-                                .padding(10)
-                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .padding(topBarPadding)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: topBarCornerRadius, style: .continuous))
                             }
                             
                             Spacer()
@@ -93,9 +96,9 @@ struct StartGameView: View {
                             // Settings button
                             Button(action: { showSettings = true }) {
                                 Image(systemName: "gearshape.fill")
-                                    .font(.largeTitle)
+                                    .font(.system(size: topBarIconSize, weight: .regular))
                                     .foregroundColor(.gray)
-                                    .padding(10)
+                                    .padding(topBarPadding)
                                     .background(.ultraThinMaterial, in: Circle())
                             }
                         }
