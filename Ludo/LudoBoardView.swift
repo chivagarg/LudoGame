@@ -199,12 +199,15 @@ struct LudoBoardView: View {
             ZStack {
                 // Board Grid extracted into a helper view
                 boardGridView(boardSize: boardSize, cellSize: cellSize)
+                    // Keep home->start animation in board-local coordinates to avoid screen-size drift.
+                    .overlay {
+                        homeToStartPawnAnimationOverlay(cellSize: cellSize)
+                    }
 
                 // Player panels extracted into a helper view
                 playerPanelsView(boardOffsetY: boardOffsetY)
 
                 // Animation overlays extracted into dedicated helper views
-                homeToStartPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
                 capturedPawnAnimationOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
                 
                 // MARK: - Trail Particles Overlay
@@ -1025,7 +1028,7 @@ struct LudoBoardView: View {
     }
 
     @ViewBuilder
-    private func homeToStartPawnAnimationOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
+    private func homeToStartPawnAnimationOverlay(cellSize: CGFloat) -> some View {
         ForEach(homeToStartPawns, id: \.pawn.id) { homeToStartPawn in
             let pawn = homeToStartPawn.pawn
             let progress = homeToStartPawn.progress
@@ -1046,8 +1049,8 @@ struct LudoBoardView: View {
             
             PawnView(pawn: pawn, size: cellSize * 0.8)
                 .position(
-                    x: boardOffsetX + currentX * cellSize,
-                    y: boardOffsetY + currentY * cellSize + yOffset
+                    x: currentX * cellSize,
+                    y: currentY * cellSize + yOffset
                 )
                 .zIndex(50)
                 .allowsHitTesting(false)
