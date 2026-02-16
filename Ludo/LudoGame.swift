@@ -65,6 +65,10 @@ class LudoGame: ObservableObject {
     // Busy state for blocking moves/rolls during animation
     // E.g. when a pawn is being captured, we don't want to allow the player to roll the dice or move the pawn
     @Published var isBusy: Bool = false
+    @Published var coins: Int = UnlockManager.getCoinBalance()
+
+    // Award coins exactly once per completed game.
+    private var didAwardCoinsForCurrentGame: Bool = false
 
     // Safe zones and home for each color
     static let redSafeZone: [Position] = [
@@ -469,6 +473,7 @@ class LudoGame: ObservableObject {
             if haveAllOtherPlayersCompleted() {
                 isGameOver = true
                 finalRankings = getFinalRankings() // Finalize rankings on game over
+                awardCoinsForWinningScoreIfNeeded()
                 return // Exit if game is truly over
             } else {
                 // If not all players are done, skip this completed player's turn by calling nextTurn again.
@@ -520,6 +525,7 @@ class LudoGame: ObservableObject {
         eligiblePawns.removeAll()
         currentRollPlayer = nil
         isGameOver = false
+        didAwardCoinsForCurrentGame = false
         finalRankings = []
         // Reset scores, kill counts, and home completion order
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
@@ -1060,6 +1066,7 @@ class LudoGame: ObservableObject {
             if haveAllOtherPlayersCompleted() {
                 isGameOver = true
                 finalRankings = getFinalRankings()
+                awardCoinsForWinningScoreIfNeeded()
                 return true  // Exit early if game is over
             }
             nextTurn(clearRoll: true)
@@ -1085,6 +1092,7 @@ class LudoGame: ObservableObject {
     func resetGame() {
         gameStarted = false
         isGameOver = false
+        didAwardCoinsForCurrentGame = false
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         boostUsesRemaining = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, 0) })
         customSafeZones.removeAll() // Reset custom safe zones
@@ -1230,6 +1238,28 @@ class LudoGame: ObservableObject {
 
         finalRankings = selectedPlayers.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
         isGameOver = true
+        awardCoinsForWinningScoreIfNeeded()
+    }
+
+    // MARK: - Coin rewards
+    private func awardCoinsForWinningScoreIfNeeded() {
+        guard !didAwardCoinsForCurrentGame else { return }
+        let rankings: [PlayerColor]
+        if !selectedPlayers.isEmpty {
+            rankings = selectedPlayers.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
+        } else {
+            rankings = finalRankings.isEmpty ? getFinalRankings() : finalRankings
+        }
+        guard let winner = rankings.first else { return }
+        let winningScore = max(0, scores[winner] ?? 0)
+        guard winningScore > 0 else {
+            didAwardCoinsForCurrentGame = true
+            return
+        }
+
+        UnlockManager.addCoins(winningScore)
+        coins = UnlockManager.getCoinBalance()
+        didAwardCoinsForCurrentGame = true
     }
 }
 

@@ -2,6 +2,7 @@ import Foundation
 
 struct UnlockManager {
     private static let unlockedPawnsKey = "unlockedPawnsKey"
+    private static let coinBalanceKey = "coinBalanceKey"
     static let gamesPerUnlock = 10
 
     static let unlockProgression: [String] = [
@@ -68,5 +69,19 @@ struct UnlockManager {
         let unlockedCount = getUnlockedPawns().count
         let progressSinceLastUnlock = totalGamesCompleted - (unlockedCount * gamesPerUnlock)
         return (progressSinceLastUnlock, gamesPerUnlock)
+    }
+
+    // MARK: - Coin system
+    static func getCoinBalance() -> Int {
+        max(0, UserDefaults.standard.integer(forKey: coinBalanceKey))
+    }
+
+    static func setCoinBalance(_ newValue: Int) {
+        UserDefaults.standard.set(max(0, newValue), forKey: coinBalanceKey)
+    }
+
+    static func addCoins(_ amount: Int) {
+        guard amount > 0 else { return }
+        setCoinBalance(getCoinBalance() + amount)
     }
 }

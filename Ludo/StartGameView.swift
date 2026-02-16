@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StartGameView: View {
+    @EnvironmentObject private var game: LudoGame
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
     @Binding var aiPlayers: Set<PlayerColor>
@@ -92,14 +93,18 @@ struct StartGameView: View {
                             }
                             
                             Spacer()
-                            
-                            // Settings button
-                            Button(action: { showSettings = true }) {
-                                Image(systemName: "gearshape.fill")
-                                    .font(.system(size: topBarIconSize, weight: .regular))
-                                    .foregroundColor(.gray)
-                                    .padding(topBarPadding)
-                                    .background(.ultraThinMaterial, in: Circle())
+
+                            HStack(spacing: 10) {
+                                coinBalancePill(iconSize: topBarIconSize, padding: topBarPadding, cornerRadius: topBarCornerRadius)
+
+                                // Settings button
+                                Button(action: { showSettings = true }) {
+                                    Image(systemName: "gearshape.fill")
+                                        .font(.system(size: topBarIconSize, weight: .regular))
+                                        .foregroundColor(.gray)
+                                        .padding(topBarPadding)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                }
                             }
                         }
                         .padding(.horizontal, 16)
@@ -126,6 +131,24 @@ struct StartGameView: View {
                 SettingsTableView(isAdminMode: $isAdminMode)
             }
         }
+    }
+
+    @ViewBuilder
+    private func coinBalancePill(iconSize: CGFloat, padding: CGFloat, cornerRadius: CGFloat) -> some View {
+        HStack(spacing: 8) {
+            Image("coin")
+                .resizable()
+                .scaledToFit()
+                .frame(width: iconSize * 0.95, height: iconSize * 0.95)
+
+            Text("\(game.coins)")
+                .font(.system(size: max(14, iconSize * 0.72), weight: .semibold))
+                .foregroundColor(.black.opacity(0.85))
+                .lineLimit(1)
+        }
+        .padding(.vertical, max(6, padding * 0.55))
+        .padding(.horizontal, max(10, padding * 0.95))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 } 
  
