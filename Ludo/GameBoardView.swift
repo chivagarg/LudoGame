@@ -14,7 +14,6 @@ struct GameBoardView: View {
                     .padding(.top, adminToolbarHeight + 20)
                     .overlay(alignment: .topLeading) {
                         AdminControlsView(
-                            currentPlayer: game.currentPlayer,
                             eligiblePawns: game.eligiblePawns,
                             selectedPlayers: game.selectedPlayers,
                             currentScores: game.scores,

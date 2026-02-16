@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct AdminControlsView: View {
-    let currentPlayer: PlayerColor
     let eligiblePawns: Set<Int>
     let selectedPlayers: Set<PlayerColor>
     let currentScores: [PlayerColor: Int]
@@ -32,49 +31,50 @@ struct AdminControlsView: View {
     }
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                Text("P: \(currentPlayer.rawValue.capitalized)")
-                    .font(.footnote.bold())
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(Color.white.opacity(0.95)))
-
-                ForEach([1, 2, 3, 4, 5, 6, 48, 56], id: \.self) { value in
-                    Button("\(value)") {
-                        onTestRoll(value)
+        HStack(spacing: 10) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach([1, 2, 3, 4, 5, 6, 48, 56], id: \.self) { value in
+                        Button("\(value)") {
+                            onTestRoll(value)
+                        }
+                        .font(.footnote.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : PlayerColor.green.primaryColor) : Color.gray)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .disabled(!eligiblePawns.isEmpty)
                     }
-                    .font(.footnote.bold())
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : PlayerColor.green.primaryColor) : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                    .disabled(!eligiblePawns.isEmpty)
-                }
 
-                HStack(spacing: 8) {
-                    ForEach(orderedSelectedPlayers, id: \.self) { color in
-                        HStack(spacing: 5) {
-                            Text(String(color.rawValue.prefix(1)).uppercased())
-                                .font(.footnote.bold())
-                                .frame(width: 16)
+                    HStack(spacing: 8) {
+                        ForEach(orderedSelectedPlayers, id: \.self) { color in
+                            HStack(spacing: 5) {
+                                Text(String(color.rawValue.prefix(1)).uppercased())
+                                    .font(.footnote.bold())
+                                    .frame(width: 16)
 
-                            TextField("0", text: Binding(
-                                get: { scoreInputs[color] ?? "0" },
-                                set: { scoreInputs[color] = $0 }
-                            ))
-                            .keyboardType(.numberPad)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .font(.footnote)
-                            .frame(width: 60)
+                                TextField("0", text: Binding(
+                                    get: { scoreInputs[color] ?? "0" },
+                                    set: { scoreInputs[color] = $0 }
+                                ))
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .font(.footnote)
+                                .frame(width: 60)
+                            }
                         }
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.95)))
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.95)))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+            }
 
+            // Keep critical actions always visible on compact screens.
+            HStack(spacing: 8) {
                 Button("End Game") {
                     onEndGame(parsedScores())
                 }
@@ -101,8 +101,7 @@ struct AdminControlsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
+            .padding(.trailing, 8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
