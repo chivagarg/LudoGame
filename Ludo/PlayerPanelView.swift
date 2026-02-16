@@ -366,20 +366,20 @@ struct PlayerPanelView: View {
                 .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
                 .frame(width: notchWidth * 0.88, height: notchWidth * 0.88)
 
-            DiceView(
-                value: diceValue,
-                isRolling: isDiceRolling || localDiceRolling,
-                shouldPulse: canRoll,
-                onTap: {
-                    if !game.aiControlledPlayers.contains(color) {
-                        onDiceTap()
+            if showDice {
+                DiceView(
+                    value: diceValue,
+                    isRolling: isDiceRolling || localDiceRolling,
+                    shouldPulse: canRoll,
+                    onTap: {
+                        if !game.aiControlledPlayers.contains(color) {
+                            onDiceTap()
+                        }
                     }
-                }
-            )
-            .id(canRoll)
-            .opacity(showDice ? 1.0 : 0.35)
-            .allowsHitTesting(showDice)
-            .scaleEffect(diceScale)
+                )
+                .id(canRoll)
+                .scaleEffect(diceScale)
+            }
         }
         .frame(width: thirdWidth, alignment: .center)
     }
