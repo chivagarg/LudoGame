@@ -444,7 +444,6 @@ struct PlayerSelectionViewV2: View {
             let details = getPawnDetails(for: selectedAvatarNameForSelectedPlayer)
             let isBoostedPawn = details.hasBoost
             let imageWidthFactor: CGFloat = isBoostedPawn ? (isTightRightPanel ? 0.60 : 0.72) : (isTightRightPanel ? 0.72 : 0.86)
-            let titleScale: CGFloat = isBoostedPawn ? 0.78 : 0.92
             let descriptionScale: CGFloat = isBoostedPawn ? 0.76 : 0.9
             let boostSymbolScale: CGFloat = 0.78
 
@@ -474,9 +473,9 @@ struct PlayerSelectionViewV2: View {
 
             VStack(spacing: 12) {
                 Text(details.title)
-                    .font(.system(size: m.rightTitleSize * rightScale * titleScale, weight: .black, design: .rounded))
+                    .pawnNameTextStyle()
                     .foregroundColor(.black)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.85)
                     .lineLimit(3)
                     .allowsTightening(true)
                     .multilineTextAlignment(.center)
@@ -489,11 +488,10 @@ struct PlayerSelectionViewV2: View {
 
                     HStack(alignment: .top, spacing: 10) {
                         Text(details.description)
-                            .font(.system(size: m.rightDescriptionSize * rightScale * descriptionScale * 1.45, weight: .bold, design: .rounded))
-                            .foregroundColor(.gray)
+                            .boostDescriptionTextStyle()
+                            .foregroundColor(.black)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
-                            .minimumScaleFactor(0.6)
                             .lineLimit(nil)
                             .frame(width: descriptionColumnWidth, alignment: .leading)
                             .layoutPriority(1)

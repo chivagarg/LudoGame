@@ -159,3 +159,26 @@ public enum PawnAssets {
         boostUses(for: avatarName) > 0
     }
 }
+
+// MARK: - Typography -----------------------------------------------------------
+
+public enum AppTypography {
+    static let pawnNameFont = "BeVietnamPro-Bold"
+    static let pawnNameSize: CGFloat = 18
+    static let boostDescriptionFont = "Inter-Regular"
+    static let boostDescriptionSize: CGFloat = 14
+}
+
+extension Text {
+    func pawnNameTextStyle() -> some View {
+        self
+            .font(.custom(AppTypography.pawnNameFont, size: AppTypography.pawnNameSize))
+            .lineSpacing(0)
+    }
+
+    func boostDescriptionTextStyle() -> some View {
+        self
+            .font(.custom(AppTypography.boostDescriptionFont, size: AppTypography.boostDescriptionSize))
+            .lineSpacing(0)
+    }
+}
