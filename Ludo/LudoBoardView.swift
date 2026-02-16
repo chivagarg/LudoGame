@@ -205,14 +205,13 @@ struct LudoBoardView: View {
                         ZStack {
                             homeToStartPawnAnimationOverlay(cellSize: cellSize)
                             capturedPawnAnimationOverlay(cellSize: cellSize)
+                            trailParticlesOverlay(cellSize: cellSize)
                         }
                     }
 
                 // Player panels extracted into a helper view
                 playerPanelsView(boardOffsetY: boardOffsetY)
 
-                // MARK: - Trail Particles Overlay
-                trailParticlesOverlay(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, cellSize: cellSize)
                 // Confetti and +10 overlay
                 ConfettiOverlay()
                 
@@ -1122,12 +1121,12 @@ struct LudoBoardView: View {
     }
 
     @ViewBuilder
-    private func trailParticlesOverlay(boardOffsetX: CGFloat, boardOffsetY: CGFloat, cellSize: CGFloat) -> some View {
+    private func trailParticlesOverlay(cellSize: CGFloat) -> some View {
         ForEach(trailParticles) { particle in
             TrailParticleView(particle: particle, cellSize: cellSize)
                 .position(
-                    x: boardOffsetX + (CGFloat(particle.position.col) + 0.5) * cellSize,
-                    y: boardOffsetY + (CGFloat(particle.position.row) + 0.5) * cellSize
+                    x: (CGFloat(particle.position.col) + 0.5) * cellSize,
+                    y: (CGFloat(particle.position.row) + 0.5) * cellSize
                 )
                 .zIndex(40) // Above board, below pawns
                 .allowsHitTesting(false)
