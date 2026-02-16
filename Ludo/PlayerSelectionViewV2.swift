@@ -126,20 +126,20 @@ struct PlayerSelectionViewV2: View {
     }
 
     var body: some View {
-        ZStack {
-            Image("pawn-selection-background-v0")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
-                .clipped()
+        GeometryReader { geo in
+            ZStack {
+                Image("pawn-selection-background-v0")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
 
-            backButtonOverlay
-
-            GeometryReader { geo in
+                backButtonOverlay
                 responsiveContent(in: geo)
             }
-            .ignoresSafeArea()
+            .frame(width: geo.size.width, height: geo.size.height)
         }
+        .ignoresSafeArea()
     }
 
     private var backButtonOverlay: some View {
@@ -506,22 +506,27 @@ struct PlayerSelectionViewV2: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if details.hasBoost {
+                    let detailsRowWidth = rightContentWidth * 0.96
+                    let symbolColumnWidth: CGFloat = 92
+                    let descriptionColumnWidth = max(120, detailsRowWidth - symbolColumnWidth - 10)
+
                     HStack(alignment: .top, spacing: 10) {
                         Text(details.description)
-                            .font(.system(size: m.rightDescriptionSize * rightScale * descriptionScale, weight: .bold, design: .rounded))
+                            .font(.system(size: m.rightDescriptionSize * rightScale * descriptionScale * 1.45, weight: .bold, design: .rounded))
                             .foregroundColor(.gray)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                             .minimumScaleFactor(0.6)
                             .lineLimit(nil)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(width: descriptionColumnWidth, alignment: .leading)
+                            .layoutPriority(1)
 
                         pawnBoostSymbols(for: selectedAvatarNameForSelectedPlayer, scale: boostSymbolScale)
                             .fixedSize(horizontal: true, vertical: true)
-                            .frame(width: 92, alignment: .trailing)
+                            .frame(width: symbolColumnWidth, alignment: .trailing)
                             .layoutPriority(2)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(width: detailsRowWidth, alignment: .leading)
                     .padding(.top, 12)
                 }
             }
