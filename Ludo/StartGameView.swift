@@ -20,9 +20,10 @@ struct StartGameView: View {
                 
                 if step == 0 {
                     let isCompact = geo.size.width < 900
-                    let heroTitleSize = min(max(34, geo.size.width * 0.07), 60)
                     let cardWidth = min(geo.size.width * 0.98, 1180)
                     let sidePadding = max(20.0, cardWidth * 0.09)
+                    let contentScale = max(0.62, min(1.0, cardWidth / 760.0))
+                    let heroTitleSize = min(max(24, cardWidth * 0.07), 56)
 
                     ZStack(alignment: .top) {
                         // Hero card centered in the full screen space.
@@ -42,12 +43,13 @@ struct StartGameView: View {
                                             Text("Ludo Mirchi!")
                                                 .font(.system(size: heroTitleSize, weight: .black))
                                                 .foregroundColor(.black)
-                                                .minimumScaleFactor(0.8)
+                                                .minimumScaleFactor(0.7)
                                                 .lineLimit(1)
                                             
                                             Text("Get 5 mirchis to hop backwards.\nCatch your opponents before\nthey catch you.")
                                                 .font(isCompact ? .callout : .body)
                                                 .foregroundColor(.black.opacity(0.7))
+                                                .lineLimit(3)
                                                 .fixedSize(horizontal: false, vertical: true)
                                                 .padding(.bottom, 12)
                                             
@@ -56,6 +58,8 @@ struct StartGameView: View {
                                                 withAnimation { step = 1 }
                                             }
                                         }
+                                        .scaleEffect(contentScale, anchor: .leading)
+                                        .frame(maxWidth: cardWidth * 0.46, alignment: .leading)
                                         .padding(.leading, sidePadding)
                                         .padding(.vertical, isCompact ? 16 : 24)
                                         
