@@ -237,31 +237,33 @@ struct PlayerSelectionViewV2: View {
     @ViewBuilder
     private func responsiveContent(in geo: GeometryProxy) -> some View {
         let m = metrics(for: geo)
+        let topInset: CGFloat = geo.size.height * 0.25
+
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
-                Spacer(minLength: 0)
-
                 HStack(alignment: .top, spacing: m.spacing) {
                     leftColumn(metrics: m)
                     rightColumn(metrics: m)
                 }
                 .frame(width: m.modalWidth, alignment: .center)
                 .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, topInset)
+                .padding(.trailing, 8)
 
                 Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 #if DEBUG
             .background(
                 GeometryReader { proxy in
                     Color.clear
                         .onAppear {
                             let f = proxy.frame(in: .global)
-                            print("[PlayerSelectionViewV2.debug] CenterContainer frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
+                            print("[PlayerSelectionViewV2.debug] ContentContainer frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width), topInset=\(topInset)")
                         }
                         .onChange(of: proxy.size) { _ in
                             let f = proxy.frame(in: .global)
-                            print("[PlayerSelectionViewV2.debug] CenterContainer changed frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
+                            print("[PlayerSelectionViewV2.debug] ContentContainer changed frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width), topInset=\(topInset)")
                         }
                 }
             )
