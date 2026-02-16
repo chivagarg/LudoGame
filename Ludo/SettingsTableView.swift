@@ -3,7 +3,6 @@ import SwiftUI
 struct SettingsTableView: View {
     @Binding var isAdminMode: Bool
     @Environment(\.colorScheme) var colorScheme
-    @State private var gameCompletionCount: Int = GameStats.getGameCompletionCount()
     
     var body: some View {
         VStack(spacing: 0) {
@@ -15,9 +14,6 @@ struct SettingsTableView: View {
         .cornerRadius(15)
         .shadow(radius: 2)
         .frame(width: 300)
-        .onChange(of: gameCompletionCount) { newValue in
-            GameStats.setGameCompletionCount(newValue)
-        }
     }
     
     private var header: some View {
@@ -31,7 +27,6 @@ struct SettingsTableView: View {
         VStack(spacing: 0) {
             tableHeader
             adminModeRow
-            gamesPlayedRow
         }
         .background(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.gray.opacity(0.1))
         .cornerRadius(10)
@@ -71,19 +66,4 @@ struct SettingsTableView: View {
         .background(colorScheme == .dark ? Color.black : Color.white)
     }
     
-    private var gamesPlayedRow: some View {
-        HStack {
-            Text("Games Played")
-                .font(.body)
-                .foregroundColor(PlayerColor.blue.primaryColor)
-            Spacer()
-            Stepper(value: $gameCompletionCount, in: 0...100) {
-                Text("\(gameCompletionCount)")
-            }
-            .tint(PlayerColor.blue.primaryColor)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 12)
-        .background(colorScheme == .dark ? Color.black : Color.white)
-    }
 } 

@@ -50,31 +50,6 @@ struct PlayerSelectionViewV2: View {
         selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)
     }
     
-    private func getPawnDetails(for avatarName: String) -> (title: String, description: String, hasBoost: Bool) {
-        if avatarName == PawnAssets.redTomato {
-            return ("Lal Tomato", "Gain an extra hop backwards (total of 6) for the duration of your game.", true)
-        } else if avatarName == PawnAssets.redAnar {
-            return ("Anar Kali", "Gain 2 extra hop backwards (total of 6) for the duration of your game.", true)
-        } else if avatarName == PawnAssets.yellowMango {
-            return ("Mango Tango", "Roll a 6 any time!", true)
-        } else if avatarName == PawnAssets.yellowPineapple {
-            return ("Pina Anna", "Roll a 6 any time, twice!", true)
-        } else if avatarName == PawnAssets.greenCapsicum {
-            return ("Shima Shield", "Place an extra safe zone on any empty space to protect pawns from capture", true)
-        } else if avatarName == PawnAssets.greenWatermelon {
-            return ("Tarboozii", "Place 2 extra safe zones on any empty space to protect pawns from capture.", true)
-        } else if avatarName == PawnAssets.blueAubergine {
-            return ("Bombergine", "Deploy a single trap to send opponents home, but beware, you could land on it too!", true)
-        } else if avatarName == PawnAssets.blueJamun {
-            return ("Jamun", "Deploy 2 traps to send opponents home, but beware, you could land on it too!", true)
-        } else {
-            let colorName = avatarName.contains("red") ? "Red" :
-                            avatarName.contains("yellow") ? "Yellow" :
-                            avatarName.contains("green") ? "Green" : "Blue"
-            return ("Classic \(colorName)", "", false)
-        }
-    }
-
     @ViewBuilder
     private func pawnBoostSymbols(for avatarName: String, scale: CGFloat = 1.0) -> some View {
         if let ability = BoostRegistry.ability(for: avatarName) {
@@ -441,7 +416,7 @@ struct PlayerSelectionViewV2: View {
         let isTightRightPanel = m.rowCompact || rightContentWidth < 420
 
         VStack(spacing: 0) {
-            let details = getPawnDetails(for: selectedAvatarNameForSelectedPlayer)
+            let details = PawnCatalog.details(for: selectedAvatarNameForSelectedPlayer)
             let isBoostedPawn = details.hasBoost
             let imageWidthFactor: CGFloat = isBoostedPawn ? (isTightRightPanel ? 0.60 : 0.72) : (isTightRightPanel ? 0.72 : 0.86)
             let descriptionScale: CGFloat = isBoostedPawn ? 0.76 : 0.9

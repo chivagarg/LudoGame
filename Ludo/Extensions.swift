@@ -160,6 +160,75 @@ public enum PawnAssets {
     }
 }
 
+struct PawnDetails {
+    let title: String
+    let description: String
+    let hasBoost: Bool
+}
+
+enum PawnCatalog {
+    static func details(for avatarName: String) -> PawnDetails {
+        if avatarName == PawnAssets.redTomato {
+            return PawnDetails(
+                title: "Lal Tomato",
+                description: "Gain an extra hop backwards (total of 6) for the duration of your game.",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.redAnar {
+            return PawnDetails(
+                title: "Anar Kali",
+                description: "Gain 2 extra hop backwards (total of 6) for the duration of your game.",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.yellowMango {
+            return PawnDetails(
+                title: "Mango Tango",
+                description: "Roll a 6 any time!",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.yellowPineapple {
+            return PawnDetails(
+                title: "Pina Anna",
+                description: "Roll a 6 any time, twice!",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.greenCapsicum {
+            return PawnDetails(
+                title: "Shimla Shield",
+                description: "Place an extra safe zone on any empty space to protect pawns from capture.",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.greenWatermelon {
+            return PawnDetails(
+                title: "Tarboozii",
+                description: "Place 2 extra safe zones on any empty space to protect pawns from capture.",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.blueAubergine {
+            return PawnDetails(
+                title: "Bombergine",
+                description: "Deploy a single trap to send opponents home, but beware, you could land on it too!",
+                hasBoost: true
+            )
+        } else if avatarName == PawnAssets.blueJamun {
+            return PawnDetails(
+                title: "Jamun",
+                description: "Deploy 2 traps to send opponents home, but beware, you could land on it too!",
+                hasBoost: true
+            )
+        } else {
+            let colorName = avatarName.contains("red") ? "Red" :
+                            avatarName.contains("yellow") ? "Yellow" :
+                            avatarName.contains("green") ? "Green" : "Blue"
+            return PawnDetails(
+                title: "Classic \(colorName)",
+                description: "",
+                hasBoost: false
+            )
+        }
+    }
+}
+
 // MARK: - Typography -----------------------------------------------------------
 
 public enum AppTypography {

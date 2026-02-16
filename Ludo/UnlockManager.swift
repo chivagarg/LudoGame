@@ -3,12 +3,18 @@ import Foundation
 struct UnlockManager {
     private static let unlockedPawnsKey = "unlockedPawnsKey"
     private static let coinBalanceKey = "coinBalanceKey"
-    static let gamesPerUnlock = 10
+    static let unlockStepCost = 2500
 
+    // Level 1 first (R, Y, G, B), then Level 2 in same sequence.
     static let unlockProgression: [String] = [
-        PawnAssets.yellowMango,
         PawnAssets.redTomato,
-        PawnAssets.greenMango
+        PawnAssets.yellowMango,
+        PawnAssets.greenCapsicum,
+        PawnAssets.blueAubergine,
+        PawnAssets.redAnar,
+        PawnAssets.yellowPineapple,
+        PawnAssets.greenWatermelon,
+        PawnAssets.blueJamun
     ]
 
     static func getUnlockedPawns() -> Set<String> {
@@ -31,44 +37,47 @@ struct UnlockManager {
     }
 
     static func isPawnLocked(_ pawnName: String) -> Bool {
-        let specialPawns = Set(unlockProgression)
-        if !specialPawns.contains(pawnName) {
-            return false
-        }
+        // Level 0 pawns are always available.
+        guard PawnAssets.hasBoost(for: pawnName) else { return false }
         return !getUnlockedPawns().contains(pawnName)
     }
 
     static func getNextUnlockablePawn() -> String? {
-        let unlockedCount = getUnlockedPawns().count
-        if unlockedCount < unlockProgression.count {
-            return unlockProgression[unlockedCount]
-        }
-        return nil
+        let unlocked = getUnlockedPawns()
+        return unlockProgression.first(where: { !unlocked.contains($0) })
     }
 
-    static func checkForUnlocks() -> [String] {
-        let totalGamesCompleted = GameStats.getGameCompletionCount()
-        let unlockedCount = getUnlockedPawns().count
-        let expectedUnlockedCount = totalGamesCompleted / gamesPerUnlock
-        var newlyUnlocked: [String] = []
-
-        if expectedUnlockedCount > unlockedCount {
-            for i in unlockedCount..<expectedUnlockedCount {
-                if i < unlockProgression.count {
-                    let pawnToUnlock = unlockProgression[i]
-                    unlockPawn(pawnToUnlock)
-                    newlyUnlocked.append(pawnToUnlock)
-                }
-            }
-        }
-        return newlyUnlocked
+    static func getUpcomingUnlockablePawns(limit: Int) -> [String] {
+        guard limit > 0 else { return [] }
+        let unlocked = getUnlockedPawns()
+        return unlockProgression
+            .filter { !unlocked.contains($0) }
+            .prefix(limit)
+            .map { $0 }
     }
 
-    static func getCurrentProgress() -> (current: Int, max: Int) {
-        let totalGamesCompleted = GameStats.getGameCompletionCount()
-        let unlockedCount = getUnlockedPawns().count
-        let progressSinceLastUnlock = totalGamesCompleted - (unlockedCount * gamesPerUnlock)
-        return (progressSinceLastUnlock, gamesPerUnlock)
+    static func unlockCost(for pawnName: String) -> Int {
+        unlockProgression.contains(pawnName) ? unlockStepCost : 0
+    }
+
+    static func progressTowardNextClaim(for coinBalance: Int? = nil) -> (current: Int, target: Int) {
+        let coins = max(0, coinBalance ?? getCoinBalance())
+        let target = ((coins / unlockStepCost) + 1) * unlockStepCost
+        return (coins, max(unlockStepCost, target))
+    }
+
+    static func canClaimNextPawn(for coinBalance: Int? = nil) -> Bool {
+        let coins = max(0, coinBalance ?? getCoinBalance())
+        return getNextUnlockablePawn() != nil && coins >= unlockStepCost
+    }
+
+    @discardableResult
+    static func claimNextUnlockablePawn() -> String? {
+        guard let pawn = getNextUnlockablePawn() else { return nil }
+        guard canClaimNextPawn() else { return nil }
+        unlockPawn(pawn)
+        setCoinBalance(getCoinBalance() - unlockStepCost)
+        return pawn
     }
 
     // MARK: - Coin system
