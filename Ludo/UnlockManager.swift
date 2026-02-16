@@ -36,6 +36,10 @@ struct UnlockManager {
         UserDefaults.standard.set(Array(unlocked), forKey: unlockedPawnsKey)
     }
 
+    static func resetAllPawnUnlocks() {
+        UserDefaults.standard.set([], forKey: unlockedPawnsKey)
+    }
+
     static func isPawnLocked(_ pawnName: String) -> Bool {
         // Level 0 pawns are always available.
         guard PawnAssets.hasBoost(for: pawnName) else { return false }

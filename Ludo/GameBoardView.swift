@@ -22,6 +22,12 @@ struct GameBoardView: View {
                             },
                             onEndGame: { finalScores in
                                 game.adminEndGame(finalScores: finalScores)
+                            },
+                            onSetCoins: { amount in
+                                game.adminSetCoins(amount)
+                            },
+                            onResetUnlocks: {
+                                game.adminResetUnlocks()
                             }
                         )
                         .frame(height: adminToolbarHeight)

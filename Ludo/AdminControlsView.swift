@@ -6,8 +6,11 @@ struct AdminControlsView: View {
     let currentScores: [PlayerColor: Int]
     let onTestRoll: (Int) -> Void
     let onEndGame: ([PlayerColor: Int]) -> Void
+    let onSetCoins: (Int) -> Void
+    let onResetUnlocks: () -> Void
     
     @State private var scoreInputs: [PlayerColor: String] = [:]
+    @State private var coinInput: String = ""
     
     private var orderedSelectedPlayers: [PlayerColor] {
         PlayerColor.allCases.filter { selectedPlayers.contains($0) }
@@ -33,41 +36,70 @@ struct AdminControlsView: View {
     var body: some View {
         HStack(spacing: 10) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach([1, 2, 3, 4, 5, 6, 48, 56], id: \.self) { value in
-                        Button("\(value)") {
-                            onTestRoll(value)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Line 1: Dice number overrides (kept on a separate line for compact screens)
+                    HStack(spacing: 8) {
+                        ForEach([1, 2, 3, 4, 5, 6, 48, 56], id: \.self) { value in
+                            Button("\(value)") {
+                                onTestRoll(value)
+                            }
+                            .font(.footnote.bold())
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : PlayerColor.green.primaryColor) : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                            .disabled(!eligiblePawns.isEmpty)
                         }
-                        .font(.footnote.bold())
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : PlayerColor.green.primaryColor) : Color.gray)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        .disabled(!eligiblePawns.isEmpty)
                     }
 
-                    HStack(spacing: 8) {
-                        ForEach(orderedSelectedPlayers, id: \.self) { color in
-                            HStack(spacing: 5) {
-                                Text(String(color.rawValue.prefix(1)).uppercased())
-                                    .font(.footnote.bold())
-                                    .frame(width: 16)
+                    // Line 2: Score + coin controls
+                    HStack(spacing: 12) {
+                        HStack(spacing: 8) {
+                            ForEach(orderedSelectedPlayers, id: \.self) { color in
+                                HStack(spacing: 5) {
+                                    Text(String(color.rawValue.prefix(1)).uppercased())
+                                        .font(.footnote.bold())
+                                        .frame(width: 16)
 
-                                TextField("0", text: Binding(
-                                    get: { scoreInputs[color] ?? "0" },
-                                    set: { scoreInputs[color] = $0 }
-                                ))
+                                    TextField("0", text: Binding(
+                                        get: { scoreInputs[color] ?? "0" },
+                                        set: { scoreInputs[color] = $0 }
+                                    ))
+                                    .keyboardType(.numberPad)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .font(.footnote)
+                                    .frame(width: 60)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.95)))
+
+                        HStack(spacing: 6) {
+                            TextField("Coins", text: $coinInput)
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .font(.footnote)
-                                .frame(width: 60)
+                                .frame(width: 74)
+
+                            Button("Set") {
+                                let amount = max(0, Int(coinInput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0)
+                                onSetCoins(amount)
+                                coinInput = String(amount)
                             }
+                            .font(.footnote.bold())
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Color.orange)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.95)))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.95)))
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
@@ -82,6 +114,16 @@ struct AdminControlsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(Color.red)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+
+                Button("Reset Unlocks") {
+                    onResetUnlocks()
+                }
+                .font(.footnote.bold())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.black)
                 .foregroundColor(.white)
                 .cornerRadius(8)
 

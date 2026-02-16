@@ -12,6 +12,9 @@ struct StartGameView: View {
 
     @State private var step: Int = 0 // 0 = homepage, 1 = player selection (v2)
     @State private var showSettings: Bool = false
+    @State private var showClaimSuccessModal: Bool = false
+    @State private var recentlyClaimedPawnName: String? = nil
+    @State private var unlockModalQueue: [String] = []
 
     var body: some View {
         GeometryReader { geo in
@@ -33,6 +36,11 @@ struct StartGameView: View {
                     .transition(.opacity)
                 }
             }
+
+            if showClaimSuccessModal, let pawnName = recentlyClaimedPawnName {
+                claimSuccessModal(pawnName: pawnName)
+                    .zIndex(200)
+            }
         }
         .sheet(isPresented: $showSettings) {
             if #available(iOS 16.0, *) {
@@ -40,6 +48,14 @@ struct StartGameView: View {
                     .presentationDetents([.medium])
             } else {
                 SettingsTableView(isAdminMode: $isAdminMode)
+            }
+        }
+        .onAppear {
+            autoClaimEligiblePawnsIfNeeded()
+        }
+        .onChange(of: step) { newStep in
+            if newStep == 0 {
+                autoClaimEligiblePawnsIfNeeded()
             }
         }
     }
@@ -253,6 +269,118 @@ struct StartGameView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.72))
         )
+    }
+
+    @ViewBuilder
+    private func claimSuccessModal(pawnName: String) -> some View {
+        let details = PawnCatalog.details(for: pawnName)
+
+        ZStack {
+            Color.black.opacity(0.38)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                HStack {
+                    Spacer()
+                    Button {
+                        dismissAndAdvanceUnlockModal()
+                    } label: {
+                        Image(systemName: "xmark.circle")
+                            .font(.system(size: 26, weight: .regular))
+                            .foregroundColor(.black.opacity(0.75))
+                    }
+                }
+
+                Text("You’ve unlocked \(details.title)!")
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundColor(.black)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7)
+
+                Text(details.description)
+                    .boostDescriptionTextStyle()
+                    .foregroundColor(.black.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 420)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Image(pawnName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 230, height: 230)
+
+                Text("Find \(details.title) in the pawn selection in your next game!")
+                    .boostDescriptionTextStyle()
+                    .foregroundColor(.black.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 420)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button("Play now") {
+                    unlockModalQueue.removeAll()
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showClaimSuccessModal = false
+                    }
+                    selectedMode = .mirchi
+                    withAnimation { step = 1 }
+                }
+                .font(.system(size: 19, weight: .medium))
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(red: 0x7C/255, green: 0x5C/255, blue: 0xD6/255))
+                )
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, 28)
+            .padding(.vertical, 20)
+            .frame(maxWidth: 540)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white)
+            )
+            .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
+            .padding(.horizontal, 22)
+        }
+    }
+
+    private func autoClaimEligiblePawnsIfNeeded() {
+        guard step == 0 else { return }
+        var claimedThisPass: [String] = []
+        while UnlockManager.canClaimNextPawn(for: game.coins) {
+            guard let claimedPawn = UnlockManager.claimNextUnlockablePawn() else { break }
+            claimedThisPass.append(claimedPawn)
+            game.coins = UnlockManager.getCoinBalance()
+        }
+
+        guard !claimedThisPass.isEmpty else { return }
+        unlockModalQueue.append(contentsOf: claimedThisPass)
+        if !showClaimSuccessModal {
+            showNextUnlockModalIfNeeded()
+        }
+    }
+
+    private func showNextUnlockModalIfNeeded() {
+        guard !unlockModalQueue.isEmpty else {
+            recentlyClaimedPawnName = nil
+            return
+        }
+        recentlyClaimedPawnName = unlockModalQueue.removeFirst()
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+            showClaimSuccessModal = true
+        }
+    }
+
+    private func dismissAndAdvanceUnlockModal() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showClaimSuccessModal = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+            showNextUnlockModalIfNeeded()
+        }
     }
 
     private func formattedCoin(_ value: Int) -> String {

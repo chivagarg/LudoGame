@@ -1247,6 +1247,22 @@ class LudoGame: ObservableObject {
         awardCoinsForWinningScoreIfNeeded()
     }
 
+    /// Admin-only test utility to force coin balance.
+    func adminSetCoins(_ amount: Int) {
+        guard isAdminMode else { return }
+        let clamped = max(0, amount)
+        coins = clamped
+        coinBalanceBeforeLastAward = clamped
+        lastCoinAward = 0
+        UnlockManager.setCoinBalance(clamped)
+    }
+
+    /// Admin-only test utility to lock all non-classic pawns again.
+    func adminResetUnlocks() {
+        guard isAdminMode else { return }
+        UnlockManager.resetAllPawnUnlocks()
+    }
+
     // MARK: - Coin rewards
     private func awardCoinsForWinningScoreIfNeeded() {
         guard !didAwardCoinsForCurrentGame else { return }
