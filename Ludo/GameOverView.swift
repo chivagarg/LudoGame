@@ -49,6 +49,10 @@ struct GameOverView: View {
     // Unlock celebration
     @State private var newlyUnlockedPawn: String? = nil
     @State private var showUnlockCelebration: Bool = false
+    
+    // Coin award counter animation
+    @State private var animatedCoinBalance: Int = 0
+    @State private var showCoinCounterAnimation: Bool = false
 
     var body: some View {
         let winner = game.finalRankings.first ?? .red
@@ -123,6 +127,31 @@ struct GameOverView: View {
                 .cornerRadius(25)
                 .transition(.scale.animation(.spring(response: 0.4, dampingFraction: 0.6)))
             }
+
+            if showCoinCounterAnimation {
+                VStack(spacing: 10) {
+                    HStack(spacing: 10) {
+                        Image("coin")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 56, height: 56)
+                        Text("\(animatedCoinBalance)")
+                            .font(.system(size: 64, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 3)
+                    }
+                    Text("+\(max(0, game.lastCoinAward)) coins")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.35), radius: 5, x: 0, y: 2)
+                }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
+                .background(Color.black.opacity(0.72))
+                .cornerRadius(22)
+                .transition(.scale)
+                .zIndex(120)
+            }
         }
         .padding()
 #if canImport(ConfettiSwiftUI)
@@ -176,6 +205,7 @@ struct GameOverView: View {
             for c in killBonusWinners { queue.append((c, "TOP KILLS", "+5")) }
             bonusQueue = queue
             showNextBonus()
+            startCoinCountAnimation()
         }
     }
 
@@ -386,6 +416,31 @@ struct GameOverView: View {
                 withAnimation {
                     showUnlockCelebration = false
                 }
+            }
+        }
+    }
+
+    private func startCoinCountAnimation() {
+        let start = max(0, game.coinBalanceBeforeLastAward)
+        let end = max(start, game.coins)
+        let delta = end - start
+        guard delta > 0 else { return }
+
+        animatedCoinBalance = start
+        withAnimation(.spring(response: 0.26, dampingFraction: 0.78)) {
+            showCoinCounterAnimation = true
+        }
+
+        // Rapid incremental count-up: 101, 102, 103 ... end
+        for step in 1...delta {
+            DispatchQueue.main.asyncAfter(deadline: .now() + (Double(step) * 0.012)) {
+                animatedCoinBalance = start + step
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + (Double(delta) * 0.012) + 1.0) {
+            withAnimation(.easeOut(duration: 0.25)) {
+                showCoinCounterAnimation = false
             }
         }
     }

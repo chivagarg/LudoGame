@@ -66,6 +66,8 @@ class LudoGame: ObservableObject {
     // E.g. when a pawn is being captured, we don't want to allow the player to roll the dice or move the pawn
     @Published var isBusy: Bool = false
     @Published var coins: Int = UnlockManager.getCoinBalance()
+    @Published var coinBalanceBeforeLastAward: Int = UnlockManager.getCoinBalance()
+    @Published var lastCoinAward: Int = 0
 
     // Award coins exactly once per completed game.
     private var didAwardCoinsForCurrentGame: Bool = false
@@ -526,6 +528,8 @@ class LudoGame: ObservableObject {
         currentRollPlayer = nil
         isGameOver = false
         didAwardCoinsForCurrentGame = false
+        coinBalanceBeforeLastAward = coins
+        lastCoinAward = 0
         finalRankings = []
         // Reset scores, kill counts, and home completion order
         scores = [.red: 0, .green: 0, .yellow: 0, .blue: 0]
@@ -1093,6 +1097,8 @@ class LudoGame: ObservableObject {
         gameStarted = false
         isGameOver = false
         didAwardCoinsForCurrentGame = false
+        coinBalanceBeforeLastAward = coins
+        lastCoinAward = 0
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         boostUsesRemaining = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, 0) })
         customSafeZones.removeAll() // Reset custom safe zones
@@ -1252,6 +1258,8 @@ class LudoGame: ObservableObject {
         }
         guard let winner = rankings.first else { return }
         let winningScore = max(0, scores[winner] ?? 0)
+        coinBalanceBeforeLastAward = coins
+        lastCoinAward = winningScore
         guard winningScore > 0 else {
             didAwardCoinsForCurrentGame = true
             return
