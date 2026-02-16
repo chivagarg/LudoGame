@@ -1,12 +1,5 @@
 import SwiftUI
 
-private struct ModalHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
 struct PlayerSelectionViewV2: View {
     @Binding var isAdminMode: Bool
     @Binding var selectedPlayers: Set<PlayerColor>
@@ -24,7 +17,6 @@ struct PlayerSelectionViewV2: View {
             (color, PawnAssets.defaultMarble(for: color))
         }
     )
-    @State private var modalHeight: CGFloat = 600
     @State private var selectedPlayerColor: PlayerColor = .red
     
     var activeColors: [PlayerColor] {
@@ -84,7 +76,7 @@ struct PlayerSelectionViewV2: View {
     }
 
     @ViewBuilder
-    private func pawnBoostSymbols(for avatarName: String) -> some View {
+    private func pawnBoostSymbols(for avatarName: String, scale: CGFloat = 1.0) -> some View {
         if let ability = BoostRegistry.ability(for: avatarName) {
             let boostsRemaining = max(1, PawnAssets.boostUses(for: avatarName))
             VStack(spacing: 10) {
@@ -95,7 +87,7 @@ struct PlayerSelectionViewV2: View {
 
                     if ability.kind == .rerollToSix {
                         Image(systemName: "die.face.6.fill")
-                            .font(.system(size: 34))
+                            .font(.system(size: 34 * scale))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [Color(red: 1.0, green: 0.84, blue: 0.0), Color(red: 0.8, green: 0.6, blue: 0.0)],
@@ -107,27 +99,27 @@ struct PlayerSelectionViewV2: View {
                     } else if ability.kind == .extraBackwardMove {
                         HStack(spacing: 2) {
                             Text("+1")
-                                .font(.system(size: 22, weight: .heavy, design: .rounded))
+                                .font(.system(size: 22 * scale, weight: .heavy, design: .rounded))
                                 .foregroundColor(.red)
 
                             Image(PawnAssets.mirchiIndicator)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 18, height: 18)
+                                .frame(width: 18 * scale, height: 18 * scale)
                         }
                     } else {
                         Image(systemName: ability.iconSystemName)
-                            .font(.system(size: 26, weight: .heavy))
+                            .font(.system(size: 26 * scale, weight: .heavy))
                             .foregroundColor(Color.purple.opacity(0.7))
                     }
                 }
-                .frame(width: 56, height: 56)
+                .frame(width: 56 * scale, height: 56 * scale)
 
                 Text("\(boostsRemaining)")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.system(size: 18 * scale, weight: .bold, design: .rounded))
                     .foregroundColor(.black)
-                    .frame(minWidth: 60)
-                    .padding(.vertical, 6)
+                    .frame(minWidth: 60 * scale)
+                    .padding(.vertical, 6 * scale)
                     .background(Capsule().fill(Color.white))
             }
         }
@@ -135,250 +127,427 @@ struct PlayerSelectionViewV2: View {
 
     var body: some View {
         ZStack {
-            // Background
             Image("pawn-selection-background-v0")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
-            
-            // Back Button
-            VStack {
-                HStack {
-                    Button(action: onBack) {
-                        Image(systemName: "arrow.left.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.white)
-                            .shadow(radius: 2)
-                    }
-                    .padding()
-                    Spacer()
-                }
-                Spacer()
-            }
-            .zIndex(1)
+                .clipped()
 
-            // Content - Modal Style
+            backButtonOverlay
+
             GeometryReader { geo in
-                HStack(alignment: .top, spacing: 20) {
-                    // Left Column: Game Options + Pawn Selection
-                    VStack(spacing: 20) {
-                        // Section 1: Game Options Card
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text("Game options")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-                            
-                            // Player Count Selector
-                            HStack(spacing: 0) {
-                                ForEach([4, 3, 2], id: \.self) { count in
-                                    Button(action: { 
-                                        withAnimation { playerCount = count }
-                                    }) {
-                                        Text("\(count) Players")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 10)
-                                            .background(playerCount == count ? Color(red: 0x5F/255, green: 0x25/255, blue: 0x9F/255) : Color.white)
-                                            .foregroundColor(playerCount == count ? .white : .purple)
-                                    }
-                                }
-                            }
-                            .cornerRadius(8)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.3), lineWidth: 1))
-                            
-                            Text("Select your pawns")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.black)
-                            
-                            // Player Rows
-                            VStack(spacing: 12) {
-                                ForEach(activeColors, id: \.self) { color in
-                                    HStack {
-                                        let avatarName = selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.white.opacity(0.95))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color.purple.opacity(0.35), lineWidth: 2)
-                                                )
-                                            
-                                            Image(avatarName)
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fit)
-                                                .padding(6)
-                                        }
-                                        .frame(width: 56, height: 56)
-                                        
-                                        TextField(color.rawValue.capitalized, text: Binding(
-                                            get: { playerNames[color] ?? "" },
-                                            set: { playerNames[color] = $0 }
-                                        ))
-                                        .frame(width: 170)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .background(Color.white)
-                                        .cornerRadius(8)
-                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.2), lineWidth: 1))
-                                        .foregroundColor(.black)
-                                        
-                                        Spacer(minLength: 8)
-                                        
-                                        HStack(spacing: 8) {
-                                            Toggle("", isOn: Binding(
-                                                get: { isRobot[color] ?? false },
-                                                set: { isRobot[color] = $0 }
-                                            ))
-                                            .labelsHidden()
-                                            .toggleStyle(SwitchToggleStyle(tint: .purple))
-                                            
-                                            Text("Robot")
-                                                .font(.subheadline)
-                                                .foregroundColor(.black.opacity(0.7))
-                                        }
-                                    }
-                                    .contentShape(Rectangle())
-                                    .simultaneousGesture(TapGesture().onEnded {
-                                        selectedPlayerColor = color
-                                    })
-                                    .padding(.vertical, 2)
-                                    .padding(.horizontal, 4)
-                                    .background(selectedPlayerColor == color ? Color.purple.opacity(0.06) : Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(selectedPlayerColor == color ? Color.purple.opacity(0.35) : Color.clear, lineWidth: 2)
-                                    )
-                                    .cornerRadius(10)
-                                }
-                            }
-                        }
-                        .padding(24)
-                        .background(Color.white)
-                        .cornerRadius(20)
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        
-                        // Section 2: Pawn Selection Card
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("\(selectedPlayerDisplayName) pawn")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-                            
-                            HStack {
-                                Text("Pawns")
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 16)
-                                    .background(Color.purple.opacity(0.1))
-                                    .cornerRadius(8)
-                                    .foregroundColor(.purple)
-                            }
-                            
-                            let options = avatarOptions(for: selectedPlayerColor)
-                            HStack(spacing: 16) {
-                                ForEach(options, id: \.self) { avatarName in
-                                    let isSelected = (selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)) == avatarName
-                                    Button {
-                                        selectedAvatars[selectedPlayerColor] = avatarName
-                                    } label: {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .fill(Color.white.opacity(0.9))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 14)
-                                                        .stroke(isSelected ? Color.purple.opacity(0.7) : Color.purple.opacity(0.15), lineWidth: isSelected ? 3 : 1)
-                                                )
-                                            
-                                            Image(avatarName)
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fit)
-                                                .padding(10)
-                                        }
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .frame(width: 80, height: 80)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .frame(height: 150)
-                        }
-                        .padding(24)
-                        .background(Color.white)
-                        .cornerRadius(20)
-                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        .frame(height: 280) // Fixed height for Pawn Selection
-                        
-                        MirchiPrimaryButton(title: "Start game") {
-                            // Sync bindings based on the current rows.
-                            let active = Set(activeColors)
-                            selectedPlayers = active
-                            aiPlayers = Set(activeColors.filter { isRobot[$0] ?? false })
-                            // Mirror PlayerSetupCard behavior: persist avatar choices into the game before starting.
-                            game.selectedAvatars = selectedAvatars
-                            onStart()
-                        }
-                    }
-                    .onChange(of: playerCount) { _ in
-                        // If the selected row disappears (e.g. switching to 2 players), pick the first active row.
-                        if !activeColors.contains(selectedPlayerColor) {
-                            selectedPlayerColor = activeColors.first ?? .red
-                        }
-                    }
-                    .frame(width: geo.size.width * 0.45) // 45% width for Left Column
-                    
-                    // Right Column (Section 3): Large Pawn Display
-                    VStack(spacing: 0) {
-                        Image(selectedAvatarNameForSelectedPlayer)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(40)
-                            .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
-                        
-                        let details = getPawnDetails(for: selectedAvatarNameForSelectedPlayer)
-                        
-                        VStack(spacing: 12) {
-                            Text(details.title)
-                                .font(.system(size: 44, weight: .black, design: .rounded))
-                                .foregroundColor(.black)
-                            
-                            if details.hasBoost {
-                                HStack(spacing: 16) {
-                                    pawnBoostSymbols(for: selectedAvatarNameForSelectedPlayer)
-                                    Text(details.description)
-                                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                                        .foregroundColor(.gray)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                .padding(.top, 12)
-                            }
-                        }
-                        .padding(.horizontal)
-                        
-                        Spacer(minLength: 0)
-                    }
-                    .frame(maxHeight: .infinity, alignment: .top)
-                }
-                .padding(40)
-                .background(
-                    GeometryReader { g in
-                        Color.clear.preference(key: ModalHeightPreferenceKey.self, value: g.size.height)
-                    }
-                )
-                .onPreferenceChange(ModalHeightPreferenceKey.self) { h in
-                    // Avoid 0 during initial layout passes.
-                    if h > 0 { modalHeight = h }
-                }
-                .frame(width: geo.size.width * 0.9)
-                // Keep the TOP of the modal fixed so the Game Options card "expands downward".
-                .position(
-                    x: geo.size.width / 2,
-                    y: max(24, (geo.size.height * 0.12) - 40) + (modalHeight / 2)
-                )
+                responsiveContent(in: geo)
             }
             .ignoresSafeArea()
         }
+    }
+
+    private var backButtonOverlay: some View {
+        VStack {
+            HStack {
+                Button(action: onBack) {
+                    Image(systemName: "arrow.left.circle.fill")
+                        .font(.largeTitle)
+                        .foregroundColor(.white)
+                        .shadow(radius: 2)
+                }
+                .padding()
+                Spacer()
+            }
+            Spacer()
+        }
+        .zIndex(1)
+    }
+
+    private struct LayoutMetrics {
+        let sideMargin: CGFloat
+        let modalWidth: CGFloat
+        let spacing: CGFloat
+        let leftWidth: CGFloat
+        let rightWidth: CGFloat
+        let rowCompact: Bool
+        let cardHorizontalPadding: CGFloat
+        let cardVerticalPadding: CGFloat
+        let rowAvatarSize: CGFloat
+        let rightTitleSize: CGFloat
+        let rightDescriptionSize: CGFloat
+        let rightImagePadding: CGFloat
+    }
+
+    private func metrics(for geo: GeometryProxy) -> LayoutMetrics {
+        // Keep symmetric side margins, but avoid over-constraining compact iPads.
+        let sideMargin: CGFloat = geo.size.width < 900 ? 24 : 32
+        
+        let modalWidth = geo.size.width - (sideMargin * 2)
+        let spacing: CGFloat = 20
+        let available = max(0, modalWidth - spacing)
+        
+        let isCompactScreen = geo.size.width < 900
+        
+        // Calculate Left Width
+        let leftWidth: CGFloat
+        if isCompactScreen {
+            // On compact screens, prioritize right-panel visibility.
+            leftWidth = min(available * 0.46, 330)
+        } else {
+            // On larger screens, left can take up to 55%
+            leftWidth = min(available * 0.55, 460)
+        }
+        
+        // Ensure min width for usability
+        let finalLeftWidth = max(leftWidth, 230)
+        
+        // Right width is just whatever is left (used for font scaling calcs only)
+        let rightWidth = max(0, available - finalLeftWidth)
+
+        let rowCompact = finalLeftWidth < 420 // Aggressive compact mode for rows
+
+        let result = LayoutMetrics(
+            sideMargin: sideMargin,
+            modalWidth: modalWidth,
+            spacing: spacing,
+            leftWidth: finalLeftWidth,
+            rightWidth: rightWidth,
+            rowCompact: rowCompact,
+            cardHorizontalPadding: rowCompact ? 16.0 : 24.0,
+            cardVerticalPadding: rowCompact ? 16.0 : 24.0,
+            rowAvatarSize: rowCompact ? 44.0 : 56.0,
+            rightTitleSize: min(max(20, rightWidth * 0.08), 38),
+            rightDescriptionSize: min(max(13, rightWidth * 0.05), 20),
+            rightImagePadding: min(max(4, rightWidth * 0.04), 24)
+        )
+
+#if DEBUG
+        print(
+            """
+            [PlayerSelectionViewV2.metrics]
+            geo.size=\(geo.size), safeArea=\(geo.safeAreaInsets)
+            isCompactScreen=\(isCompactScreen), rowCompact=\(rowCompact)
+            sideMargin=\(result.sideMargin), modalWidth=\(result.modalWidth), spacing=\(result.spacing), available=\(available)
+            leftWidth=\(result.leftWidth), rightWidth=\(result.rightWidth)
+            cardPaddingH=\(result.cardHorizontalPadding), cardPaddingV=\(result.cardVerticalPadding), rowAvatar=\(result.rowAvatarSize)
+            rightTitleSize=\(result.rightTitleSize), rightDescriptionSize=\(result.rightDescriptionSize), rightImagePadding=\(result.rightImagePadding)
+            """
+        )
+#endif
+
+        return result
+    }
+    @ViewBuilder
+    private func responsiveContent(in geo: GeometryProxy) -> some View {
+        let m = metrics(for: geo)
+        ZStack(alignment: .bottom) {
+            ScrollView(.vertical, showsIndicators: false) {
+                HStack(alignment: .top, spacing: m.spacing) {
+                    leftColumn(metrics: m)
+                    rightColumn(metrics: m)
+                }
+                .padding(.top, max(16, geo.size.height * 0.08))
+                .padding(.bottom, 88)
+                .padding(.trailing, 8)
+                .frame(width: m.modalWidth, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+#if DEBUG
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear {
+                                let f = proxy.frame(in: .global)
+                                print("[PlayerSelectionViewV2.debug] HStack frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
+                            }
+                            .onChange(of: proxy.size) { _ in
+                                let f = proxy.frame(in: .global)
+                                print("[PlayerSelectionViewV2.debug] HStack changed frame=\(f), size=\(proxy.size), screenWidth=\(geo.size.width)")
+                            }
+                    }
+                )
+#endif
+            }
+
+            MirchiPrimaryButton(title: "Start game") {
+                let active = Set(activeColors)
+                selectedPlayers = active
+                aiPlayers = Set(activeColors.filter { isRobot[$0] ?? false })
+                game.selectedAvatars = selectedAvatars
+                onStart()
+            }
+            .padding(.bottom, max(12, geo.safeAreaInsets.bottom))
+        }
+        .padding(.horizontal, m.sideMargin)
+    }
+
+    @ViewBuilder
+    private func leftColumn(metrics m: LayoutMetrics) -> some View {
+        VStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Game options")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+
+                HStack(spacing: 0) {
+                    ForEach([4, 3, 2], id: \.self) { count in
+                        Button(action: {
+                            withAnimation { playerCount = count }
+                        }) {
+                            Text("\(count) Players")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(playerCount == count ? Color(red: 0x5F/255, green: 0x25/255, blue: 0x9F/255) : Color.white)
+                                .foregroundColor(playerCount == count ? .white : .purple)
+                        }
+                    }
+                }
+                .cornerRadius(8)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.3), lineWidth: 1))
+
+                Text("Select your pawns")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.black)
+
+                VStack(spacing: 12) {
+                    ForEach(activeColors, id: \.self) { color in
+                        playerRow(color: color, metrics: m)
+                    }
+                }
+            }
+            .padding(.horizontal, m.cardHorizontalPadding)
+            .padding(.vertical, m.cardVerticalPadding)
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("\(selectedPlayerDisplayName) pawn")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+
+                HStack {
+                    Text("Pawns")
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(Color.purple.opacity(0.1))
+                        .cornerRadius(8)
+                        .foregroundColor(.purple)
+                }
+
+                let options = avatarOptions(for: selectedPlayerColor)
+                HStack(spacing: 16) {
+                    ForEach(options, id: \.self) { avatarName in
+                        let isSelected = (selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)) == avatarName
+                        Button {
+                            selectedAvatars[selectedPlayerColor] = avatarName
+                        } label: {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white.opacity(0.9))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(isSelected ? Color.purple.opacity(0.7) : Color.purple.opacity(0.15), lineWidth: isSelected ? 3 : 1)
+                                    )
+
+                                Image(avatarName)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .padding(10)
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .frame(width: m.rowCompact ? 68 : 80, height: m.rowCompact ? 68 : 80)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .frame(height: m.rowCompact ? 120 : 150)
+            }
+            .padding(.horizontal, m.cardHorizontalPadding)
+            .padding(.vertical, m.cardVerticalPadding)
+            .background(Color.white)
+            .cornerRadius(20)
+            .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+        }
+        .onChange(of: playerCount) { _ in
+            if !activeColors.contains(selectedPlayerColor) {
+                selectedPlayerColor = activeColors.first ?? .red
+            }
+        }
+        .frame(width: m.leftWidth)
+    }
+
+    @ViewBuilder
+    private func playerRow(color: PlayerColor, metrics m: LayoutMetrics) -> some View {
+        HStack(spacing: m.rowCompact ? 8 : 10) {
+            let avatarName = selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.95))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.purple.opacity(0.35), lineWidth: 2)
+                    )
+
+                Image(avatarName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding(6)
+            }
+            .frame(width: m.rowAvatarSize, height: m.rowAvatarSize)
+
+            TextField(color.rawValue.capitalized, text: Binding(
+                get: { playerNames[color] ?? "" },
+                set: { playerNames[color] = $0 }
+            ))
+            .frame(minWidth: m.rowCompact ? 88 : 140, maxWidth: .infinity)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.white)
+            .cornerRadius(8)
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.2), lineWidth: 1))
+            .foregroundColor(.black)
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
+
+            Spacer(minLength: 8)
+
+            Group {
+                if m.rowCompact {
+                    VStack(spacing: 4) {
+                        Text("Robot")
+                            .font(.caption)
+                            .foregroundColor(.black.opacity(0.7))
+                        Toggle("", isOn: Binding(
+                            get: { isRobot[color] ?? false },
+                            set: { isRobot[color] = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: .purple))
+                        .frame(width: 52)
+                    }
+                } else {
+                    HStack(spacing: 8) {
+                        Toggle("", isOn: Binding(
+                            get: { isRobot[color] ?? false },
+                            set: { isRobot[color] = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(SwitchToggleStyle(tint: .purple))
+
+                        Text("Robot")
+                            .font(.subheadline)
+                            .foregroundColor(.black.opacity(0.7))
+                    }
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture().onEnded {
+            selectedPlayerColor = color
+        })
+        .padding(.vertical, 2)
+        .padding(.horizontal, 4)
+        .background(selectedPlayerColor == color ? Color.purple.opacity(0.06) : Color.clear)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(selectedPlayerColor == color ? Color.purple.opacity(0.35) : Color.clear, lineWidth: 2)
+        )
+        .cornerRadius(10)
+    }
+
+    @ViewBuilder
+    private func rightColumn(metrics m: LayoutMetrics) -> some View {
+        // Reserve an internal gutter so right-side content never hugs/clips the screen edge.
+        let rightContentWidth = max(170, m.rightWidth - 48)
+        let rightScale = max(0.46, min(1.0, rightContentWidth / 360.0))
+        let isTightRightPanel = m.rowCompact || rightContentWidth < 420
+
+        VStack(spacing: 0) {
+            let details = getPawnDetails(for: selectedAvatarNameForSelectedPlayer)
+            let isBoostedPawn = details.hasBoost
+            let imageWidthFactor: CGFloat = isBoostedPawn ? (isTightRightPanel ? 0.60 : 0.72) : (isTightRightPanel ? 0.72 : 0.86)
+            let titleScale: CGFloat = isBoostedPawn ? 0.78 : 0.92
+            let descriptionScale: CGFloat = isBoostedPawn ? 0.76 : 0.9
+            let boostSymbolScale: CGFloat = 0.78
+
+            Image(selectedAvatarNameForSelectedPlayer)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: rightContentWidth * imageWidthFactor)
+                .padding(m.rightImagePadding)
+                .shadow(color: .black.opacity(0.18), radius: isBoostedPawn ? 10 : 16, x: 0, y: 8)
+                // Force image to fit within available width
+                .frame(maxWidth: .infinity, alignment: .center)
+#if DEBUG
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear {
+                                let f = proxy.frame(in: .global)
+                                print("[PlayerSelectionViewV2.debug] PawnImage frame=\(f), size=\(proxy.size)")
+                            }
+                            .onChange(of: proxy.size) { _ in
+                                let f = proxy.frame(in: .global)
+                                print("[PlayerSelectionViewV2.debug] PawnImage changed frame=\(f), size=\(proxy.size)")
+                            }
+                    }
+                )
+#endif
+
+            VStack(spacing: 12) {
+                Text(details.title)
+                    .font(.system(size: m.rightTitleSize * rightScale * titleScale, weight: .black, design: .rounded))
+                    .foregroundColor(.black)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(3)
+                    .allowsTightening(true)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if details.hasBoost {
+                    HStack(alignment: .top, spacing: 10) {
+                        Text(details.description)
+                            .font(.system(size: m.rightDescriptionSize * rightScale * descriptionScale, weight: .bold, design: .rounded))
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .minimumScaleFactor(0.6)
+                            .lineLimit(nil)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        pawnBoostSymbols(for: selectedAvatarNameForSelectedPlayer, scale: boostSymbolScale)
+                            .fixedSize(horizontal: true, vertical: true)
+                            .frame(width: 92, alignment: .trailing)
+                            .layoutPriority(2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 12)
+                }
+            }
+            .padding(.horizontal, 10)
+            .frame(width: rightContentWidth * 0.96, alignment: .center)
+
+            Spacer(minLength: 0)
+        }
+        .frame(width: rightContentWidth, alignment: .top)
+        .padding(.trailing, 8)
+        .frame(maxHeight: .infinity, alignment: .top)
+#if DEBUG
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear {
+                        let f = proxy.frame(in: .global)
+                        print("[PlayerSelectionViewV2.debug] RightColumn frame=\(f), size=\(proxy.size)")
+                    }
+                    .onChange(of: proxy.size) { _ in
+                        let f = proxy.frame(in: .global)
+                        print("[PlayerSelectionViewV2.debug] RightColumn changed frame=\(f), size=\(proxy.size)")
+                    }
+            }
+        )
+#endif
     }
 }
 
