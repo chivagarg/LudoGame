@@ -237,7 +237,8 @@ struct PlayerSelectionViewV2: View {
     @ViewBuilder
     private func responsiveContent(in geo: GeometryProxy) -> some View {
         let m = metrics(for: geo)
-        let topInset: CGFloat = geo.size.height * 0.25
+        let topInset: CGFloat = geo.size.height * 0.20
+        let buttonBottomInset: CGFloat = geo.size.height * 0.05
 
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
@@ -276,7 +277,7 @@ struct PlayerSelectionViewV2: View {
                 game.selectedAvatars = selectedAvatars
                 onStart()
             }
-            .padding(.bottom, max(12, geo.safeAreaInsets.bottom))
+            .padding(.bottom, buttonBottomInset + max(12, geo.safeAreaInsets.bottom))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
