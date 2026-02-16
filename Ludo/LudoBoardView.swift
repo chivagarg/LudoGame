@@ -209,8 +209,8 @@ struct LudoBoardView: View {
                         }
                     }
 
-                // Player panels extracted into a helper view
-                playerPanelsView(boardOffsetY: boardOffsetY)
+                // Player panels anchored to exact board-cell geometry.
+                playerPanelsView(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, boardSize: boardSize, cellSize: cellSize)
 
                 // Confetti and +10 overlay
                 ConfettiOverlay()
@@ -365,98 +365,75 @@ struct LudoBoardView: View {
     }
     
     @ViewBuilder
-    private func playerPanelsView(boardOffsetY: CGFloat) -> some View {
-        // Calculate the required vertical padding to make the panels "hang" off the board.
-        // Panel height is 100. We want 15% (15pt) overlap, so 85% (85pt) should be outside.
-        // The padding from the screen edge needs to be the board's offset minus the 85pt overhang.
-        let verticalPadding = boardOffsetY - 85
+    private func playerPanelsView(boardOffsetX: CGFloat, boardOffsetY: CGFloat, boardSize: CGFloat, cellSize: CGFloat) -> some View {
+        let panelWidth = cellSize * 6.0
+        let panelHeight = min(max(cellSize * 2.5, 88), 140)
+        let edgeOverlap = max(2, cellSize * 0.12)
 
-        VStack {
-            // Top Row: Red and Green Panels
-            HStack {
-                PlayerPanelView(
-                    color: .red,
-                    showDice: game.currentPlayer == .red,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .fixedSize(horizontal: true, vertical: true)
-                
-                Spacer(minLength: 100)
-                
-                PlayerPanelView(
-                    color: .green,
-                    showDice: game.currentPlayer == .green,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .fixedSize(horizontal: true, vertical: true)
-            }
-            
-            Spacer()
-            
-            // Bottom Row: Blue and Yellow Panels
-            HStack {
-                PlayerPanelView(
-                    color: .blue,
-                    showDice: game.currentPlayer == .blue,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .fixedSize(horizontal: true, vertical: false)
-                
-                Spacer(minLength: 100)
-                
-                PlayerPanelView(
-                    color: .yellow,
-                    showDice: game.currentPlayer == .yellow,
-                    diceValue: game.diceValue,
-                    isDiceRolling: isDiceRolling,
-                    onDiceTap: {
-                        if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
-                            isDiceRolling = true
-                            game.rollDice()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
-                                isDiceRolling = false
-                            }
-                        }
-                    }
-                )
-                .environmentObject(game)
-                .fixedSize(horizontal: true, vertical: false)
+        let leftCenterX = boardOffsetX + (cellSize * 3.0)
+        let rightCenterX = boardOffsetX + (cellSize * 12.0)
+        let topCenterY = boardOffsetY - (panelHeight / 2.0) + edgeOverlap
+        let bottomCenterY = boardOffsetY + boardSize + (panelHeight / 2.0) - edgeOverlap
+
+        func rollAction() {
+            if !isDiceRolling && game.eligiblePawns.isEmpty && !game.isBusy {
+                isDiceRolling = true
+                game.rollDice()
+                DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.diceAnimationDuration) {
+                    isDiceRolling = false
+                }
             }
         }
-        .padding(.vertical, verticalPadding)
+
+        return ZStack {
+            PlayerPanelView(
+                color: .red,
+                showDice: game.currentPlayer == .red,
+                diceValue: game.diceValue,
+                isDiceRolling: isDiceRolling,
+                onDiceTap: rollAction,
+                panelWidth: panelWidth,
+                panelHeight: panelHeight
+            )
+            .environmentObject(game)
+            .position(x: leftCenterX, y: topCenterY)
+
+            PlayerPanelView(
+                color: .green,
+                showDice: game.currentPlayer == .green,
+                diceValue: game.diceValue,
+                isDiceRolling: isDiceRolling,
+                onDiceTap: rollAction,
+                panelWidth: panelWidth,
+                panelHeight: panelHeight
+            )
+            .environmentObject(game)
+            .position(x: rightCenterX, y: topCenterY)
+
+            PlayerPanelView(
+                color: .blue,
+                showDice: game.currentPlayer == .blue,
+                diceValue: game.diceValue,
+                isDiceRolling: isDiceRolling,
+                onDiceTap: rollAction,
+                panelWidth: panelWidth,
+                panelHeight: panelHeight
+            )
+            .environmentObject(game)
+            .position(x: leftCenterX, y: bottomCenterY)
+
+            PlayerPanelView(
+                color: .yellow,
+                showDice: game.currentPlayer == .yellow,
+                diceValue: game.diceValue,
+                isDiceRolling: isDiceRolling,
+                onDiceTap: rollAction,
+                panelWidth: panelWidth,
+                panelHeight: panelHeight
+            )
+            .environmentObject(game)
+            .position(x: rightCenterX, y: bottomCenterY)
+        }
     }
     
     @ViewBuilder
