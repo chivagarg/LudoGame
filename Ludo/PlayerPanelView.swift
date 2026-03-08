@@ -229,8 +229,7 @@ struct PlayerPanelView: View {
     private func pawnScoreSlot() -> some View {
         let avatarName = game.selectedAvatar(for: color)
         valueOnlySlot(
-            valueText: "\(game.scores[color] ?? 0)",
-            valueColor: color.toSwiftUIColor(for: color)
+            valueText: "\(game.scores[color] ?? 0)"
         ) {
             AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
                 .frame(width: iconSize, height: iconSize)
