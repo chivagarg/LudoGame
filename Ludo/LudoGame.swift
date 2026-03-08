@@ -577,7 +577,7 @@ class LudoGame: ObservableObject {
     // MARK: - Game Logic
 
     // Function to move a pawn (handles both forward and backward movement)
-    func movePawn(color: PlayerColor, pawnId: Int, steps: Int, backward: Bool = false) {
+    func movePawn(color: PlayerColor, pawnId: Int, steps: Int, backward: Bool = false, isBoostMove: Bool = false) {
         logPawnPositionsBeforeAndAfterMove(color: color, pawnId: pawnId, steps: steps)
         
         // Reset Mirchi arrows at the start of each turn
@@ -609,8 +609,8 @@ class LudoGame: ObservableObject {
             if isPawnMovingToAnotherSpotOnPath {
                 shouldGetAnotherRoll = movePawnToAnotherSpotOnPath(color: color, pawnIndex: pawnIndex, currentPath: currentPath, newIndex: newIndex, backward: backward)
 
-                // Decrement Mirchi moves if this was a backward move
-                if backward {
+                // Decrement Mirchi moves only if this was a mirchi-mode backward move, not a boost move
+                if backward && !isBoostMove {
                     mirchiMovesRemaining[color] = max(0, mirchiMovesRemaining[color, default: 0] - 1)
                 }
             } else if isPawnReachingHome {

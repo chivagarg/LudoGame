@@ -1142,7 +1142,7 @@ struct LudoBoardView: View {
                 
                 let steps = game.diceValue
                 animatePawnMovementForPath(pawn: pawn, color: color, from: currentPos, steps: steps, backward: true) {
-                    game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true)
+                    game.movePawn(color: color, pawnId: pawn.id, steps: steps, backward: true, isBoostMove: isMirchiBoostArmed)
                     isPathAnimating = false
                     isDiceRolling = false
                 }
