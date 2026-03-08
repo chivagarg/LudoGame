@@ -12,7 +12,13 @@ struct PlayerPanelView: View {
     @State private var localDiceRolling: Bool = false
 
     private func canUseBoost(for color: PlayerColor) -> Bool {
-        // Must be on your turn (boost can be armed anytime on your turn).
+        // `game.currentPlayer == color` ensures:
+        //   (a) you can only act on your own turn, and
+        //   (b) no human can tap their boost while it is an AI player's turn.
+        // `!aiControlledPlayers.contains(color)` prevents a human from tapping
+        //   an AI player's boost button regardless of whose turn it is.
+        // `tapBoost` in LudoGame repeats the `currentPlayer == color` guard as
+        //   a server-side safety net in case the UI check is ever bypassed.
         return game.currentPlayer == color
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy

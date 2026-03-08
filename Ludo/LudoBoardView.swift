@@ -278,8 +278,25 @@ struct LudoBoardView: View {
                       let steps = userInfo["steps"] as? Int,
                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
                 let backward = (userInfo["moveDirection"] as? String) == "backward"
+                // Detect whether the Red extra-backward-move boost is armed for this move.
+                //
+                // This handler fires for three code paths:
+                //   1. AI pawn selection  — `moveDirection` can be "backward" (boost applies here)
+                //   2. Human auto-move   — only one eligible pawn in non-Mirchi mode; `moveDirection`
+                //      is never "backward" in this path, so `isMirchiBoostArmed` is always false
+                //   3. Admin test-roll   — same auto-move logic; also never backward
+                //
+                // Because human players with multiple eligible pawns tap pawns directly (bypassing
+                // this notification entirely), the boost-consumption logic below only ever fires
+                // for AI backward moves in practice.
+                let isMirchiBoostArmed = backward
+                    && (game.boostAbility(for: color)?.kind == .extraBackwardMove)
+                    && (game.getBoostState(for: color) == .armed)
+                if isMirchiBoostArmed {
+                    game.consumeBoostOnPawnTapIfNeeded(color: color, isBackward: true)
+                }
                 animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps, backward: backward) {
-                    game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward)
+                    game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward, isBoostMove: isMirchiBoostArmed)
                     isPathAnimating = false
                     isDiceRolling = false
                 }

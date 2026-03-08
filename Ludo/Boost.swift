@@ -107,7 +107,8 @@ struct RerollToSixBoost: BoostAbility {
     func isCompatible(with avatarName: String) -> Bool {
         avatarName == PawnAssets.yellowMango || avatarName == PawnAssets.yellowPineapple
     }
-    func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
+    // AI callers are allowed — UI interactivity is gated separately in PlayerPanelView.canUseBoost.
+    func canArm(context: BoostContext) -> Bool { !context.isBusy }
 
     // Mango boost is consumed immediately on tap (reroll to 6).
     func onTap(currentState: BoostState) -> BoostState {
@@ -126,7 +127,8 @@ struct ExtraBackwardMoveBoost: BoostAbility {
     func isCompatible(with avatarName: String) -> Bool {
         avatarName == PawnAssets.redTomato || avatarName == PawnAssets.redAnar
     }
-    func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
+    // AI callers are allowed — UI interactivity is gated separately in PlayerPanelView.canUseBoost.
+    func canArm(context: BoostContext) -> Bool { !context.isBusy }
     func shouldConsumeOnPawnTap(context: BoostContext, currentState: BoostState) -> Bool {
         // Only consume if moving backward
         return currentState == .armed && context.isBackwardMove
@@ -143,8 +145,8 @@ struct SafeZoneBoost: BoostAbility {
         avatarName == PawnAssets.greenCapsicum || avatarName == PawnAssets.greenWatermelon
     }
     
-    // Can arm if it's the player's turn, game isn't busy, and not AI
-    func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
+    // AI callers are allowed — UI interactivity is gated separately in PlayerPanelView.canUseBoost.
+    func canArm(context: BoostContext) -> Bool { !context.isBusy }
     
     // This boost is consumed on CELL tap (handled in LudoGame), not pawn tap.
     // So we return false here to allow normal pawn selection/movement even when armed.
@@ -161,8 +163,8 @@ struct TrapBoost: BoostAbility {
         avatarName == PawnAssets.blueAubergine || avatarName == PawnAssets.blueJamun
     }
     
-    // Can arm if it's the player's turn, game isn't busy, and not AI
-    func canArm(context: BoostContext) -> Bool { !context.isBusy && !context.isAIControlled }
+    // AI callers are allowed — UI interactivity is gated separately in PlayerPanelView.canUseBoost.
+    func canArm(context: BoostContext) -> Bool { !context.isBusy }
     
     // This boost is consumed on CELL tap (handled in LudoGame), not pawn tap.
     // So we return false here to allow normal pawn selection/movement even when armed.

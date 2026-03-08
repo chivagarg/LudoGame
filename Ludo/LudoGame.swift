@@ -275,6 +275,12 @@ class LudoGame: ObservableObject {
             
             // If it's an AI's turn, let it make a move
         if aiControlledPlayers.contains(player) {
+            if let strategy = aiStrategies[player] {
+                // Give the strategy a chance to fire any boost ability before pawn selection.
+                // If it returns true (e.g. Mango forced a reroll), handlePostRoll was already
+                // re-entered with the new dice value — return immediately to avoid double-moves.
+                if strategy.useImmediateBoostIfNeeded(for: player, in: self) { return }
+            }
             if let strategy = aiStrategies[player],
                let pawnAndDirection = strategy.selectPawnMovementStrategy(from: eligiblePawns, for: player, in: self) {
                     let pawnId = pawnAndDirection.pawnId
@@ -501,25 +507,14 @@ class LudoGame: ObservableObject {
         // Ensure selected avatars are initialized correctly
         self.selectedAvatars = selectedAvatars
 
-        // Randomly assign a strategy to each AI player
+        // Assign a strategy based on the pawn type each AI player has chosen.
         self.aiStrategies = [:]
-        var isFirstAI = false
         for aiPlayer in aiPlayers {
-            // For testing, assign the new BackwardOnlyMoveStrategy to the first AI player.
-            if isFirstAI {
-                aiStrategies[aiPlayer] = BackwardOnlyMoveStrategy()
-                GameLogger.shared.log("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is BackwardOnly (for testing).")
-                //isFirstAI = false
-                continue
-            }
-
-            let possibleStrategies: [AILogicStrategy] = [RationalMoveStrategy(), AggressiveMoveStrategy()]
-            if let chosenStrategy = possibleStrategies.randomElement() {
-                aiStrategies[aiPlayer] = chosenStrategy
-                
-                let strategyName = (chosenStrategy is RationalMoveStrategy) ? "Rational" : "Aggressive"
-                GameLogger.shared.log("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) is \(strategyName).")
-            }
+            let avatarName = selectedAvatars[aiPlayer] ?? PawnAssets.defaultMarble(for: aiPlayer)
+            let strategy = aiStrategy(for: avatarName)
+            aiStrategies[aiPlayer] = strategy
+            let strategyName = String(describing: type(of: strategy))
+            GameLogger.shared.log("🤖 [AI SETUP] AI for \(aiPlayer.rawValue) (\(avatarName)) → \(strategyName).")
         }
         
         gameStarted = true
