@@ -302,7 +302,7 @@ class LudoGame: ObservableObject {
                                 let moveDirection = moveBackwards ? "backward" : "forward"
                                 if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId, isBackward: moveBackwards) {
                                     NotificationCenter.default.post(
-                                        name: NSNotification.Name("AnimatePawnMovement"),
+                                        name: .animatePawnMovement,
                                         object: nil,
                                         userInfo: [
                                             "color": self.currentPlayer,
@@ -334,7 +334,7 @@ class LudoGame: ObservableObject {
                             if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
                                 // Notify the view to animate the movement
                                 NotificationCenter.default.post(
-                                    name: NSNotification.Name("AnimatePawnMovement"),
+                                    name: .animatePawnMovement,
                                     object: nil,
                                     userInfo: [
                                         "color": self.currentPlayer,
@@ -399,7 +399,7 @@ class LudoGame: ObservableObject {
                             if let destinationIndex = self.getDestinationIndex(color: self.currentPlayer, pawnId: pawnId) {
                                 // Notify the view to animate the movement
                                 NotificationCenter.default.post(
-                                    name: NSNotification.Name("AnimatePawnMovement"),
+                                    name: .animatePawnMovement,
                                     object: nil,
                                     userInfo: [
                                         "color": self.currentPlayer,
@@ -1288,6 +1288,7 @@ class LudoGame: ObservableObject {
 }
 
 extension Notification.Name {
+    static let animatePawnMovement = Notification.Name("AnimatePawnMovement")
     static let animatePawnFromHome = Notification.Name("AnimatePawnFromHome")
     static let animatePawnCapture = Notification.Name("AnimatePawnCapture")
     static let pawnReachedHome = Notification.Name("PawnReachedHome")

@@ -265,33 +265,24 @@ struct LudoBoardView: View {
                 previousPawnsAtHome = newCount
             }
             .onAppear {
-                // Add observer for pawn movement animation
-                NotificationCenter.default.addObserver(
-                    forName: NSNotification.Name("AnimatePawnMovement"),
-                    object: nil,
-                    queue: .main
-                ) { notification in
-                    if let userInfo = notification.userInfo,
-                       let color = userInfo["color"] as? PlayerColor,
-                       let pawnId = userInfo["pawnId"] as? Int,
-                       let from = userInfo["from"] as? Int,
-                       let to = userInfo["to"] as? Int,
-                       let steps = userInfo["steps"] as? Int,
-                       let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) {
-                        let moveDirection = userInfo["moveDirection"] as? String
-                        let backward = (moveDirection == "backward")
-                        
-                        animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps, backward: backward) {
-                            game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward)
-                            isPathAnimating = false
-                            isDiceRolling = false
-                        }
-                    }
-                }
                 // Sync initial pawn count
                 previousPawnsAtHome = game.totalPawnsAtFinishingHome
                 
                 // No need to start particle timer here; it will start when particles are added
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .animatePawnMovement)) { notification in
+                guard let userInfo = notification.userInfo,
+                      let color = userInfo["color"] as? PlayerColor,
+                      let pawnId = userInfo["pawnId"] as? Int,
+                      let from = userInfo["from"] as? Int,
+                      let steps = userInfo["steps"] as? Int,
+                      let pawn = game.pawns[color]?.first(where: { $0.id == pawnId }) else { return }
+                let backward = (userInfo["moveDirection"] as? String) == "backward"
+                animatePawnMovementForPath(pawn: pawn, color: color, from: from, steps: steps, backward: backward) {
+                    game.movePawn(color: color, pawnId: pawnId, steps: steps, backward: backward)
+                    isPathAnimating = false
+                    isDiceRolling = false
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: .animatePawnFromHome)) { notification in
                 guard let userInfo = notification.userInfo,
