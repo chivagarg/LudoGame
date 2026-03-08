@@ -1,5 +1,52 @@
 import SwiftUI
 
+// MARK: - Reusable Marching Lights Border
+
+struct MarchingBorderModifier: ViewModifier {
+    let isActive: Bool
+    let cornerRadius: CGFloat
+    var color: Color = .purple
+
+    @State private var dashPhase: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(color.opacity(0.3), lineWidth: 7)
+                        .blur(radius: 4)
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(
+                            style: StrokeStyle(
+                                lineWidth: 2.5,
+                                lineCap: .round,
+                                lineJoin: .round,
+                                dash: [3, 6],
+                                dashPhase: dashPhase
+                            )
+                        )
+                        .foregroundColor(color.opacity(0.9))
+                        .shadow(color: color.opacity(0.7), radius: 3)
+                }
+                .opacity(isActive ? 1 : 0)
+            )
+            .onAppear {
+                withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
+                    dashPhase -= 9
+                }
+            }
+    }
+}
+
+extension View {
+    func marchingLightsBorder(isActive: Bool, cornerRadius: CGFloat, color: Color = .purple) -> some View {
+        modifier(MarchingBorderModifier(isActive: isActive, cornerRadius: cornerRadius, color: color))
+    }
+}
+
+// MARK: - Boost Icon Tile
+
 struct BoostIconTileView: View {
     let ability: (any BoostAbility)?
     let tileSize: CGFloat
@@ -11,8 +58,6 @@ struct BoostIconTileView: View {
     var isEnabled: Bool = true
     var highlightActiveBorder: Bool = false
     var inactiveBadgeColor: Color = .gray
-
-    @State private var dashPhase: CGFloat = 0
 
     private var cornerRadius: CGFloat { max(6, tileSize * 0.22) }
 
@@ -30,33 +75,10 @@ struct BoostIconTileView: View {
                 .frame(width: tileSize, height: tileSize)
                 .opacity(isUsed ? 0.5 : (isEnabled ? 1.0 : 0.65))
                 .scaleEffect(isActive ? 1.08 : 1.0)
-                .overlay(
-                    ZStack {
-                        // Soft glow halo behind the dots
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(Color.purple.opacity(0.3), lineWidth: 7)
-                            .blur(radius: 4)
-                        // Marching-lights dashed ring
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(
-                                style: StrokeStyle(
-                                    lineWidth: 2.5,
-                                    lineCap: .round,
-                                    lineJoin: .round,
-                                    dash: [3, 6],
-                                    dashPhase: dashPhase
-                                )
-                            )
-                            .foregroundColor(Color.purple.opacity(0.9))
-                            .shadow(color: Color.purple.opacity(0.7), radius: 3)
-                    }
-                    .opacity(highlightActiveBorder && isActive ? 1 : 0)
+                .marchingLightsBorder(
+                    isActive: highlightActiveBorder && isActive,
+                    cornerRadius: cornerRadius
                 )
-                .onAppear {
-                    withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
-                        dashPhase -= 9
-                    }
-                }
 
             let active = badgeValue >= 1
             Text("\(badgeValue)")

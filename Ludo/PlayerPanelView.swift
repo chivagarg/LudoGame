@@ -202,25 +202,20 @@ struct PlayerPanelView: View {
         let isMirchiActive = game.mirchiArrowActivated[color] == true
         let hasMirchiMoves = mirchiRemaining > 0
         let isEnabled = hasMirchiFeature && hasMirchiMoves
-        slotCard(
-            title: "Mirchi",
-            valueText: "",
-            badgeValue: max(0, mirchiRemaining),
-            badgeActiveThreshold: 1
-        ) {
+        slotCard(title: "Mirchi", valueText: "", drawContainer: false) {
             Button(action: {
                 guard isEnabled else { return }
                 game.mirchiArrowActivated[color]?.toggle()
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }) {
-                Image(PawnAssets.mirchiIndicator)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: iconSize, height: iconSize)
-                    .saturation(isMirchiActive ? 1.0 : 0.4)
-                    .opacity(isEnabled ? (isMirchiActive ? 1.0 : 0.75) : 0.45)
-                    .grayscale(isEnabled ? 0 : 1)
-                    .scaleEffect(isMirchiActive ? 1.08 : 1.0)
+                MirchiTileView(
+                    tileSize: slotSize,
+                    iconSize: iconSize,
+                    badgeValue: max(0, mirchiRemaining),
+                    badgeSize: badgeSize,
+                    isActive: isMirchiActive,
+                    isEnabled: isEnabled
+                )
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(!isEnabled)
