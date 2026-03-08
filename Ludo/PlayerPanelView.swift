@@ -202,6 +202,9 @@ struct PlayerPanelView: View {
         let isMirchiActive = game.mirchiArrowActivated[color] == true
         let hasMirchiMoves = mirchiRemaining > 0
         let isEnabled = hasMirchiFeature && hasMirchiMoves
+            && game.currentPlayer == color
+            && !game.aiControlledPlayers.contains(color)
+            && !game.isBusy
         slotCard(title: "Mirchi", valueText: "", drawContainer: false) {
             Button(action: {
                 guard isEnabled else { return }
@@ -324,6 +327,11 @@ struct PlayerPanelView: View {
                             onDiceTap()
                         }
                     }
+                )
+                .marchingLightsBorder(
+                    isActive: canRoll,
+                    cornerRadius: 12,
+                    color: color.primaryColor
                 )
                 .id(canRoll)
                 .scaleEffect(diceScale)
