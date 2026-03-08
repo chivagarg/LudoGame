@@ -38,8 +38,19 @@ struct StartGameView: View {
             }
 
             if showClaimSuccessModal, let pawnName = recentlyClaimedPawnName {
-                claimSuccessModal(pawnName: pawnName)
-                    .zIndex(200)
+                PawnUnlockModal(
+                    pawnName: pawnName,
+                    unlockCost: UnlockManager.unlockStepCost,
+                    coinBalance: game.coins,
+                    onDismiss: { dismissAndAdvanceUnlockModal() },
+                    onPlayNow: {
+                        unlockModalQueue.removeAll()
+                        withAnimation(.easeOut(duration: 0.2)) { showClaimSuccessModal = false }
+                        selectedMode = .mirchi
+                        withAnimation { step = 1 }
+                    }
+                )
+                .zIndex(200)
             }
         }
         .sheet(isPresented: $showSettings) {
@@ -269,82 +280,6 @@ struct StartGameView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.72))
         )
-    }
-
-    @ViewBuilder
-    private func claimSuccessModal(pawnName: String) -> some View {
-        let details = PawnCatalog.details(for: pawnName)
-
-        ZStack {
-            Color.black.opacity(0.38)
-                .ignoresSafeArea()
-
-            VStack(spacing: 14) {
-                HStack {
-                    Spacer()
-                    Button {
-                        dismissAndAdvanceUnlockModal()
-                    } label: {
-                        Image(systemName: "xmark.circle")
-                            .font(.system(size: 26, weight: .regular))
-                            .foregroundColor(.black.opacity(0.75))
-                    }
-                }
-
-                Text("You’ve unlocked \(details.title)!")
-                    .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(.black)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
-
-                Text(details.description)
-                    .boostDescriptionTextStyle()
-                    .foregroundColor(.black.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 420)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Image(pawnName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 230, height: 230)
-
-                Text("Find \(details.title) in the pawn selection in your next game!")
-                    .boostDescriptionTextStyle()
-                    .foregroundColor(.black.opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 420)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Button("Play now") {
-                    unlockModalQueue.removeAll()
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        showClaimSuccessModal = false
-                    }
-                    selectedMode = .mirchi
-                    withAnimation { step = 1 }
-                }
-                .font(.system(size: 19, weight: .medium))
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 0x7C/255, green: 0x5C/255, blue: 0xD6/255))
-                )
-                .padding(.top, 4)
-            }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 20)
-            .frame(maxWidth: 540)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white)
-            )
-            .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
-            .padding(.horizontal, 22)
-        }
     }
 
     private func autoClaimEligiblePawnsIfNeeded() {

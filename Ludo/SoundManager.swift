@@ -14,9 +14,11 @@ public class SoundManager {
         static let dice = "dice.wav"
         static let evilLaugh = "evillaugh.wav"
         static let yeah = "yeah.wav"
+        static let coins = "coins.wav"
     }
     
     private var audioPlayers: [String: AVAudioPlayer] = [:]
+    private var coinJanglePlayer: AVAudioPlayer?
     
     private init() {
         // Preload all sound effects using the constants
@@ -28,6 +30,7 @@ public class SoundManager {
         preloadSound(named: SoundFiles.dice)
         preloadSound(named: SoundFiles.evilLaugh)
         preloadSound(named: SoundFiles.yeah)
+        preloadSound(named: SoundFiles.coins)
     }
     
     private func preloadSound(named filename: String) {
@@ -100,5 +103,23 @@ public class SoundManager {
 
     public func playYeah() {
         playSound(SoundFiles.yeah)
+    }
+
+    // MARK: - Coin jangle (looped for coin drain animation)
+
+    public func startCoinJangle() {
+        guard let url = Bundle.main.url(forResource: "coins", withExtension: "wav") else { return }
+        do {
+            coinJanglePlayer = try AVAudioPlayer(contentsOf: url)
+            coinJanglePlayer?.numberOfLoops = -1
+            coinJanglePlayer?.volume = 0.85
+            coinJanglePlayer?.prepareToPlay()
+            coinJanglePlayer?.play()
+        } catch {}
+    }
+
+    public func stopCoinJangle() {
+        coinJanglePlayer?.stop()
+        coinJanglePlayer = nil
     }
 } 
