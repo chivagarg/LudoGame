@@ -146,13 +146,24 @@ struct BackwardOnlyMoveStrategy: AILogicStrategy {
 
 // MARK: - SmartMoveStrategy (Classic pawn AI)
 
-/// Primary AI strategy. Uses threat-aware pawn selection and a Mirchi budget.
+/// Primary AI strategy. Uses threat-aware pawn selection, trap/safe-zone awareness,
+/// path-progress-weighted Mirchi usage, and sprint logic for pawns close to home.
 /// Used for classic (Tier 0) pawns and as the base for boost-aware strategies.
 struct SmartMoveStrategy: AILogicStrategy {
 
     /// Minimum Mirchi moves to keep in reserve before spending one on a defensive retreat.
     /// Captures always bypass this reserve.
     private let mirchiDefenseReserve = 3
+
+    /// Minimum path-progress fraction (0–1) a pawn must have traveled before it's
+    /// worth spending a Mirchi to retreat it to safety. A pawn that's barely left home
+    /// is cheap to lose and expensive to rescue — save the Mirchi for advanced pawns.
+    /// 0.5 = at least halfway along the path.
+    private let mirchiRetreatMinProgress: Double = 0.5
+
+    /// When a pawn has fewer than this many steps remaining AND a 6 is rolled,
+    /// prioritise advancing it over bringing a new pawn out of home.
+    private let sprintToHomeThreshold = 25
 
     func selectPawnMovementStrategy(
         from eligiblePawns: Set<Int>,
@@ -164,14 +175,37 @@ struct SmartMoveStrategy: AILogicStrategy {
         let currentPath = game.path(for: player)
         guard !currentPath.isEmpty else { return (eligiblePawns.first!, false) }
 
+        let pathLen = currentPath.count
         let mirchiLeft = game.mirchiMovesRemaining[player, default: 0]
         let pawnsOnBoard = game.pawns[player]?.filter {
             $0.positionIndex != nil && $0.positionIndex != GameConstants.finishedPawnIndex
         }.count ?? 0
 
-        // 1. Forward capture
+        // Inline helpers -------------------------------------------------------
+
+        /// True if `pos` is a trap deployed by the blue boost — landing there sends us home.
+        func isTrap(_ pos: Position) -> Bool {
+            game.trappedZones.contains(pos)
+        }
+
+        /// Steps a pawn still needs to travel (lower = closer to finishing).
+        func stepsRemaining(positionIndex pos: Int) -> Int {
+            max(0, pathLen - 1 - pos)
+        }
+
+        /// Progress fraction [0, 1] for a pawn at `pos` along `currentPath`.
+        func progress(positionIndex pos: Int) -> Double {
+            guard pathLen > 1 else { return 1 }
+            return Double(pos) / Double(pathLen - 1)
+        }
+
+        // ----------------------------------------------------------------------
+
+        // 1. Forward capture — skip if destination is a trap (we'd send ourselves home too).
+        //    `isSafePosition` already covers both standard safe zones and custom green-boost zones.
         for pawnId in eligiblePawns {
             if let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+               !isTrap(dest),
                !game.isSafePosition(dest),
                isOpponentAt(position: dest, in: game, excluding: player) {
                 GameLogger.shared.log("🤖 [AI SMART] Forward capture → pawn \(pawnId).")
@@ -183,6 +217,7 @@ struct SmartMoveStrategy: AILogicStrategy {
         if game.gameMode == .mirchi, mirchiLeft > 0 {
             for pawnId in eligiblePawns where game.isValidBackwardMove(color: player, pawnId: pawnId) {
                 if let dest = aiBackwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                   !isTrap(dest),
                    !game.isSafePosition(dest),
                    isOpponentAt(position: dest, in: game, excluding: player) {
                     GameLogger.shared.log("🤖 [AI SMART] Backward capture → pawn \(pawnId).")
@@ -191,70 +226,112 @@ struct SmartMoveStrategy: AILogicStrategy {
             }
         }
 
-        // 3 & 4. Escape imminent threat (forward)
-        let threatened = eligiblePawns.filter { pawnId in
-            guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }) else { return false }
-            return isPawnThreatened(pawn: pawn, player: player, path: currentPath, game: game)
-        }
+        // 3 & 4. Escape imminent threat — prefer most-advanced threatened pawn.
+        let threatened = eligiblePawns
+            .compactMap { pawnId -> (pawnId: Int, pos: Int)? in
+                guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
+                      let pos = pawn.positionIndex else { return nil }
+                return isPawnThreatened(pawn: pawn, player: player, path: currentPath, game: game)
+                    ? (pawnId, pos) : nil
+            }
+            .sorted { $0.pos > $1.pos }  // most advanced first
+
         if !threatened.isEmpty {
-            // Prefer landing on safe zone
-            for pawnId in threatened {
+            // 3. Escape to a safe zone (covers custom green-boost safe zones automatically).
+            for (pawnId, _) in threatened {
                 if let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                   !isTrap(dest),
                    game.isSafePosition(dest) {
                     GameLogger.shared.log("🤖 [AI SMART] Escaping threat → safe zone, pawn \(pawnId).")
                     return (pawnId, false)
                 }
             }
-            // Any non-dangerous forward square
-            for pawnId in threatened {
+            // 4. Escape to any non-dangerous, non-trap square.
+            for (pawnId, _) in threatened {
                 if let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                   !isTrap(dest),
                    !isExposedToOpponentReach(position: dest, player: player, game: game) {
-                    GameLogger.shared.log("🤖 [AI SMART] Escaping threat → safe square, pawn \(pawnId).")
+                    GameLogger.shared.log("🤖 [AI SMART] Escaping threat → clear square, pawn \(pawnId).")
                     return (pawnId, false)
                 }
             }
         }
 
-        // 5. Bring pawn from home (≤1 on board)
+        // 5. Bring pawn from home when ≤1 on board and a 6 is rolled.
         if game.diceValue == 6, pawnsOnBoard <= 1 {
             for pawnId in eligiblePawns {
-                if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-                   pawn.positionIndex == nil {
+                if game.pawns[player]?.first(where: { $0.id == pawnId })?.positionIndex == nil {
                     GameLogger.shared.log("🤖 [AI SMART] Bringing pawn \(pawnId) from home (≤1 on board).")
                     return (pawnId, false)
                 }
             }
         }
 
-        // 6. Forward to a safe zone
+        // 6. Forward to any safe zone (standard or custom green-boost).
+        //    `isSafePosition` covers both; no separate opponent-reach check needed since
+        //    safe zones are immune to captures.
         for pawnId in eligiblePawns {
             if let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
-               game.isSafePosition(dest),
-               !isExposedToOpponentReach(position: dest, player: player, game: game) {
+               !isTrap(dest),
+               game.isSafePosition(dest) {
                 GameLogger.shared.log("🤖 [AI SMART] Moving pawn \(pawnId) to safe zone.")
                 return (pawnId, false)
             }
         }
 
-        // 7. Backward retreat to safe zone (Mirchi, threatened pawn, budget above reserve)
+        // 7. Backward retreat to safe zone (Mirchi).
+        //    Conditions: budget above reserve, pawn is threatened, AND pawn has traveled
+        //    at least `mirchiRetreatMinProgress` of the path — retreating an early-stage
+        //    pawn wastes a scarce Mirchi for little gain.
         if game.gameMode == .mirchi, mirchiLeft > mirchiDefenseReserve {
             for pawnId in eligiblePawns where game.isValidBackwardMove(color: player, pawnId: pawnId) {
                 guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-                      isPawnThreatened(pawn: pawn, player: player, path: currentPath, game: game) else { continue }
+                      let pos = pawn.positionIndex,
+                      isPawnThreatened(pawn: pawn, player: player, path: currentPath, game: game)
+                else { continue }
+
+                // Skip if pawn hasn't traveled far enough to justify the Mirchi cost.
+                guard progress(positionIndex: pos) >= mirchiRetreatMinProgress else {
+                    GameLogger.shared.log("🤖 [AI SMART] Skipping Mirchi retreat for pawn \(pawnId) — progress too low (\(Int(progress(positionIndex: pos) * 100))%).")
+                    continue
+                }
+
                 if let dest = aiBackwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                   !isTrap(dest),
                    game.isSafePosition(dest) {
-                    GameLogger.shared.log("🤖 [AI SMART] Backward retreat to safe zone, pawn \(pawnId).")
+                    GameLogger.shared.log("🤖 [AI SMART] Backward retreat to safe zone, pawn \(pawnId) (\(Int(progress(positionIndex: pos) * 100))% along path).")
                     return (pawnId, true)
                 }
             }
         }
 
-        // 8. Advance to a square not in opponent reach (most-forward first)
+        // 7.5 Sprint near-home pawn forward when a 6 is rolled.
+        //     A pawn within `sprintToHomeThreshold` steps of finishing is too valuable to
+        //     delay — advance it before bringing new pawns out of home.
+        if game.diceValue == 6 {
+            let sprints = eligiblePawns.compactMap { pawnId -> (pawnId: Int, stepsLeft: Int)? in
+                guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
+                      let pos = pawn.positionIndex, pos >= 0 else { return nil }
+                let left = stepsRemaining(positionIndex: pos)
+                guard left < sprintToHomeThreshold else { return nil }
+                guard let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                      !isTrap(dest) else { return nil }
+                return (pawnId, left)
+            }.sorted { $0.stepsLeft < $1.stepsLeft }  // closest to home first
+
+            if let sprint = sprints.first {
+                GameLogger.shared.log("🤖 [AI SMART] Sprinting pawn \(sprint.pawnId) home (\(sprint.stepsLeft) steps left).")
+                return (sprint.pawnId, false)
+            }
+        }
+
+        // 8. Advance to a square not in opponent reach and not a trap (most-forward first).
         let safeMoves = eligiblePawns.compactMap { pawnId -> (pawnId: Int, pos: Int)? in
             guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
                   let pos = pawn.positionIndex,
                   pos != GameConstants.finishedPawnIndex,
                   let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                  !isTrap(dest),
                   !isExposedToOpponentReach(position: dest, player: player, game: game) else { return nil }
             return (pawnId, pos)
         }.sorted { $0.pos > $1.pos }
@@ -264,25 +341,33 @@ struct SmartMoveStrategy: AILogicStrategy {
             return (best.pawnId, false)
         }
 
-        // 9. Bring pawn from home on 6 (≥2 already on board)
+        // 9. Bring pawn from home on 6 (≥2 already on board, no sprint candidate found).
         if game.diceValue == 6 {
             for pawnId in eligiblePawns {
-                if let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-                   pawn.positionIndex == nil {
+                if game.pawns[player]?.first(where: { $0.id == pawnId })?.positionIndex == nil {
                     GameLogger.shared.log("🤖 [AI SMART] Bringing pawn \(pawnId) from home (2+ on board).")
                     return (pawnId, false)
                 }
             }
         }
 
-        // 10. Advance most-forward pawn
+        // 10. Fallback: advance most-forward pawn, avoiding traps where possible.
         let ranked = eligiblePawns.sorted { idA, idB in
             let posA = game.pawns[player]?.first(where: { $0.id == idA })?.positionIndex ?? -1
             let posB = game.pawns[player]?.first(where: { $0.id == idB })?.positionIndex ?? -1
             return posA > posB
         }
+        // Prefer a trap-free move even in the fallback.
+        for pawnId in ranked {
+            if let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+               !isTrap(dest) {
+                GameLogger.shared.log("🤖 [AI SMART] Fallback: advance pawn \(pawnId) (trap-free).")
+                return (pawnId, false)
+            }
+        }
+        // Last resort — all destinations are traps; pick the most-forward pawn anyway.
         if let pawnId = ranked.first {
-            GameLogger.shared.log("🤖 [AI SMART] Fallback: advance most-forward pawn \(pawnId).")
+            GameLogger.shared.log("🤖 [AI SMART] Fallback: forced move pawn \(pawnId) (all destinations are traps).")
             return (pawnId, false)
         }
 
