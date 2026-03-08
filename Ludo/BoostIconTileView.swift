@@ -12,12 +12,16 @@ struct BoostIconTileView: View {
     var highlightActiveBorder: Bool = false
     var inactiveBadgeColor: Color = .gray
 
+    @State private var dashPhase: CGFloat = 0
+
+    private var cornerRadius: CGFloat { max(6, tileSize * 0.22) }
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            RoundedRectangle(cornerRadius: max(6, tileSize * 0.22))
+            RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(Color.white.opacity(0.95))
                 .overlay(
-                    RoundedRectangle(cornerRadius: max(6, tileSize * 0.22))
+                    RoundedRectangle(cornerRadius: cornerRadius)
                         .stroke(Color.black.opacity(0.08), lineWidth: 1)
                 )
                 .frame(width: tileSize, height: tileSize)
@@ -27,12 +31,32 @@ struct BoostIconTileView: View {
                 .opacity(isUsed ? 0.5 : (isEnabled ? 1.0 : 0.65))
                 .scaleEffect(isActive ? 1.08 : 1.0)
                 .overlay(
-                    RoundedRectangle(cornerRadius: max(6, tileSize * 0.22))
-                        .stroke(
-                            highlightActiveBorder && isActive ? Color.purple.opacity(0.8) : Color.clear,
-                            lineWidth: 2
-                        )
+                    ZStack {
+                        // Soft glow halo behind the dots
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .stroke(Color.purple.opacity(0.3), lineWidth: 7)
+                            .blur(radius: 4)
+                        // Marching-lights dashed ring
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .stroke(
+                                style: StrokeStyle(
+                                    lineWidth: 2.5,
+                                    lineCap: .round,
+                                    lineJoin: .round,
+                                    dash: [3, 6],
+                                    dashPhase: dashPhase
+                                )
+                            )
+                            .foregroundColor(Color.purple.opacity(0.9))
+                            .shadow(color: Color.purple.opacity(0.7), radius: 3)
+                    }
+                    .opacity(highlightActiveBorder && isActive ? 1 : 0)
                 )
+                .onAppear {
+                    withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
+                        dashPhase -= 9
+                    }
+                }
 
             let active = badgeValue >= 1
             Text("\(badgeValue)")
