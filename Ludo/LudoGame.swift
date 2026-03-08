@@ -1261,6 +1261,8 @@ class LudoGame: ObservableObject {
     func adminResetUnlocks() {
         guard isAdminMode else { return }
         UnlockManager.resetAllPawnUnlocks()
+        // Notify all observing views (e.g. PlayerSelectionViewV2) to re-read lock state.
+        objectWillChange.send()
     }
 
     // MARK: - Coin rewards

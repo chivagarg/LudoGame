@@ -14,6 +14,8 @@
 		58D54CF22F43A6C900CF3ACF /* BoostIconTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */; };
 		58D54CF42F43A6C900CF3ACF /* MirchiTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF32F43A6C900CF3ACF /* MirchiTileView.swift */; };
 		58D54CF62F43A6C900CF3ACF /* PawnUnlockModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF52F43A6C900CF3ACF /* PawnUnlockModal.swift */; };
+		58D54CF82F43A6C900CF3ACF /* CoinPurchaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF72F43A6C900CF3ACF /* CoinPurchaseConfig.swift */; };
+		58D54CFA2F43A6C900CF3ACF /* CoinPurchaseModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF92F43A6C900CF3ACF /* CoinPurchaseModal.swift */; };
 		58ED41672F0FA69F009414F6 /* PlayerSelectionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */; };
 		58ED41692F10FF01009414F6 /* MirchiPrimaryButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */; };
 		58ED416B2F13C4DD009414F6 /* Boost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58ED416A2F13C4DD009414F6 /* Boost.swift */; };
@@ -74,6 +76,8 @@
 		58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostIconTileView.swift; sourceTree = "<group>"; };
 		58D54CF32F43A6C900CF3ACF /* MirchiTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirchiTileView.swift; sourceTree = "<group>"; };
 		58D54CF52F43A6C900CF3ACF /* PawnUnlockModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PawnUnlockModal.swift; sourceTree = "<group>"; };
+		58D54CF72F43A6C900CF3ACF /* CoinPurchaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinPurchaseConfig.swift; sourceTree = "<group>"; };
+		58D54CF92F43A6C900CF3ACF /* CoinPurchaseModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinPurchaseModal.swift; sourceTree = "<group>"; };
 		58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSelectionViewV2.swift; sourceTree = "<group>"; };
 		58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirchiPrimaryButton.swift; sourceTree = "<group>"; };
 		58ED416A2F13C4DD009414F6 /* Boost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boost.swift; sourceTree = "<group>"; };
@@ -153,6 +157,8 @@
 				58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */,
 				58D54CF32F43A6C900CF3ACF /* MirchiTileView.swift */,
 				58D54CF52F43A6C900CF3ACF /* PawnUnlockModal.swift */,
+				58D54CF72F43A6C900CF3ACF /* CoinPurchaseConfig.swift */,
+				58D54CF92F43A6C900CF3ACF /* CoinPurchaseModal.swift */,
 				58ED416A2F13C4DD009414F6 /* Boost.swift */,
 				58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */,
 				58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */,
@@ -358,6 +364,8 @@
 				58D54CF22F43A6C900CF3ACF /* BoostIconTileView.swift in Sources */,
 				58D54CF42F43A6C900CF3ACF /* MirchiTileView.swift in Sources */,
 				58D54CF62F43A6C900CF3ACF /* PawnUnlockModal.swift in Sources */,
+				58D54CF82F43A6C900CF3ACF /* CoinPurchaseConfig.swift in Sources */,
+				58D54CFA2F43A6C900CF3ACF /* CoinPurchaseModal.swift in Sources */,
 				DA79440E2DFA871F00EE49FC /* SettingsTableView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

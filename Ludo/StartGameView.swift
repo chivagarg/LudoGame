@@ -16,6 +16,13 @@ struct StartGameView: View {
     @State private var recentlyClaimedPawnName: String? = nil
     @State private var unlockModalQueue: [String] = []
 
+    // Purchase flow
+    @State private var purchaseTargetPawn: String? = nil
+    @State private var showPurchaseModal: Bool = false
+    @State private var showPurchaseRevealModal: Bool = false
+    @State private var purchaseRevealPawn: String? = nil
+    @State private var purchaseRevealBalance: Int = 0
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -51,6 +58,46 @@ struct StartGameView: View {
                     }
                 )
                 .zIndex(200)
+            }
+
+            if showPurchaseModal, let pawnName = purchaseTargetPawn {
+                CoinPurchaseModal(
+                    pawnName: pawnName,
+                    currentCoinBalance: game.coins,
+                    onDismiss: {
+                        withAnimation(.easeOut(duration: 0.2)) { showPurchaseModal = false }
+                    },
+                    onPurchaseComplete: { finalBalance in
+                        withAnimation(.easeOut(duration: 0.2)) { showPurchaseModal = false }
+                        game.coins = finalBalance
+                        purchaseRevealPawn = pawnName
+                        purchaseRevealBalance = finalBalance
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                                showPurchaseRevealModal = true
+                            }
+                        }
+                    }
+                )
+                .zIndex(210)
+            }
+
+            if showPurchaseRevealModal, let pawnName = purchaseRevealPawn {
+                PawnUnlockModal(
+                    pawnName: pawnName,
+                    unlockCost: CoinPurchaseConfig.unlockCost(for: pawnName),
+                    coinBalance: purchaseRevealBalance,
+                    skipCashout: true,
+                    onDismiss: {
+                        withAnimation(.easeOut(duration: 0.2)) { showPurchaseRevealModal = false }
+                    },
+                    onPlayNow: {
+                        withAnimation(.easeOut(duration: 0.2)) { showPurchaseRevealModal = false }
+                        selectedMode = .mirchi
+                        withAnimation { step = 1 }
+                    }
+                )
+                .zIndex(220)
             }
         }
         .sheet(isPresented: $showSettings) {
@@ -239,20 +286,24 @@ struct StartGameView: View {
 
                 Spacer(minLength: 10)
 
-                Button("Unlock Now!") {}
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(Color(red: 0x7C/255, green: 0x5C/255, blue: 0xD6/255))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color(red: 0x8D/255, green: 0x74/255, blue: 0xD9/255), lineWidth: 1.2)
-                            )
-                    )
-                    .disabled(true)
+                Button("Unlock Now!") {
+                    purchaseTargetPawn = pawnName
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                        showPurchaseModal = true
+                    }
+                }
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color(red: 0x7C/255, green: 0x5C/255, blue: 0xD6/255))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(red: 0x8D/255, green: 0x74/255, blue: 0xD9/255), lineWidth: 1.2)
+                        )
+                )
             }
 
             if showProgress, let progressText {

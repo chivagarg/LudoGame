@@ -60,6 +60,7 @@ struct UnlockManager {
             .map { $0 }
     }
 
+    /// Coin cost to earn (free) unlock — always the flat step cost regardless of pawn.
     static func unlockCost(for pawnName: String) -> Int {
         unlockProgression.contains(pawnName) ? unlockStepCost : 0
     }
@@ -82,6 +83,19 @@ struct UnlockManager {
         unlockPawn(pawn)
         setCoinBalance(getCoinBalance() - unlockStepCost)
         return pawn
+    }
+
+    // MARK: - Purchase unlock (independent, any pawn, uses CoinPurchaseConfig cost)
+
+    /// Unlocks `pawnName` directly and deducts its purchase cost from the coin balance.
+    /// Does NOT require sequential order — any locked pawn can be purchased independently.
+    @discardableResult
+    static func purchaseUnlockPawn(_ pawnName: String) -> Bool {
+        let cost = CoinPurchaseConfig.unlockCost(for: pawnName)
+        guard getCoinBalance() >= cost else { return false }
+        unlockPawn(pawnName)
+        setCoinBalance(getCoinBalance() - cost)
+        return true
     }
 
     // MARK: - Coin system

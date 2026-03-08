@@ -18,6 +18,11 @@ struct PlayerSelectionViewV2: View {
         }
     )
     @State private var selectedPlayerColor: PlayerColor = .red
+    @State private var purchaseTargetPawn: String? = nil
+    @State private var showPawnPurchaseModal: Bool = false
+    @State private var showPawnRevealModal: Bool = false
+    @State private var revealPawnName: String? = nil
+    @State private var revealPawnBalance: Int = 0
     
     var activeColors: [PlayerColor] {
         switch playerCount {
@@ -83,6 +88,48 @@ struct PlayerSelectionViewV2: View {
 
                 backButtonOverlay
                 responsiveContent(in: geo)
+
+                if showPawnPurchaseModal, let pawnName = purchaseTargetPawn {
+                    CoinPurchaseModal(
+                        pawnName: pawnName,
+                        currentCoinBalance: game.coins,
+                        onDismiss: {
+                            withAnimation(.easeOut(duration: 0.2)) { showPawnPurchaseModal = false }
+                        },
+                        onPurchaseComplete: { finalBalance in
+                            game.coins = finalBalance
+                            selectedAvatars[selectedPlayerColor] = pawnName
+                            revealPawnName = pawnName
+                            revealPawnBalance = finalBalance
+                            withAnimation(.easeOut(duration: 0.2)) { showPawnPurchaseModal = false }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                                    showPawnRevealModal = true
+                                }
+                            }
+                        }
+                    )
+                    .zIndex(300)
+                    .transition(.opacity)
+                }
+
+                if showPawnRevealModal, let pawnName = revealPawnName {
+                    PawnUnlockModal(
+                        pawnName: pawnName,
+                        unlockCost: CoinPurchaseConfig.unlockCost(for: pawnName),
+                        coinBalance: revealPawnBalance,
+                        skipCashout: true,
+                        onDismiss: {
+                            withAnimation(.easeOut(duration: 0.2)) { showPawnRevealModal = false }
+                        },
+                        onPlayNow: {
+                            // Pawn is already selected — just close the modal.
+                            withAnimation(.easeOut(duration: 0.2)) { showPawnRevealModal = false }
+                        }
+                    )
+                    .zIndex(310)
+                    .transition(.opacity)
+                }
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
@@ -291,12 +338,22 @@ struct PlayerSelectionViewV2: View {
                 HStack(spacing: 16) {
                     ForEach(options, id: \.self) { avatarName in
                         let isSelected = (selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)) == avatarName
+                        let isLocked = !isAdminMode && UnlockManager.isPawnLocked(avatarName)
+                        let tileSize: CGFloat = m.rowCompact ? 68 : 80
+
                         Button {
-                            selectedAvatars[selectedPlayerColor] = avatarName
+                            if isLocked {
+                                purchaseTargetPawn = avatarName
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                                    showPawnPurchaseModal = true
+                                }
+                            } else {
+                                selectedAvatars[selectedPlayerColor] = avatarName
+                            }
                         } label: {
-                            ZStack {
+                            ZStack(alignment: .bottom) {
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(Color.white.opacity(0.9))
+                                    .fill(Color.white.opacity(isLocked ? 0.6 : 0.9))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
                                             .stroke(isSelected ? Color.purple.opacity(0.7) : Color.purple.opacity(0.15), lineWidth: isSelected ? 3 : 1)
@@ -305,11 +362,36 @@ struct PlayerSelectionViewV2: View {
                                 Image(avatarName)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .padding(10)
+                                    .padding(isLocked ? 14 : 10)
+                                    .saturation(isLocked ? 0 : 1)
+                                    .opacity(isLocked ? 0.45 : 1)
+
+                                // Lock badge — coin icon + cost
+                                if isLocked {
+                                    let cost = CoinPurchaseConfig.unlockCost(for: avatarName)
+                                    HStack(spacing: 3) {
+                                        Image("coin")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 12, height: 12)
+                                        Text(NumberFormatter.localizedString(
+                                            from: NSNumber(value: cost), number: .decimal))
+                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .foregroundColor(.black.opacity(0.85))
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(
+                                        Capsule()
+                                            .fill(Color.white.opacity(0.92))
+                                            .shadow(color: .black.opacity(0.18), radius: 3, x: 0, y: 1)
+                                    )
+                                    .padding(.bottom, 5)
+                                }
                             }
                         }
                         .buttonStyle(PlainButtonStyle())
-                        .frame(width: m.rowCompact ? 68 : 80, height: m.rowCompact ? 68 : 80)
+                        .frame(width: tileSize, height: tileSize)
                     }
                     Spacer(minLength: 0)
                 }

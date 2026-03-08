@@ -24,6 +24,9 @@ struct PawnUnlockModal: View {
     let pawnName: String
     let unlockCost: Int
     let coinBalance: Int   // post-deduction balance (coins already spent)
+    /// When `true`, skips the coin-drain animation and jumps straight to the pawn reveal.
+    /// Use this when coming from `CoinPurchaseModal`, which already showed the cashout.
+    var skipCashout: Bool = false
     let onDismiss: () -> Void
     let onPlayNow: () -> Void
 
@@ -39,12 +42,14 @@ struct PawnUnlockModal: View {
         pawnName: String,
         unlockCost: Int,
         coinBalance: Int,
+        skipCashout: Bool = false,
         onDismiss: @escaping () -> Void,
         onPlayNow: @escaping () -> Void
     ) {
         self.pawnName = pawnName
         self.unlockCost = unlockCost
         self.coinBalance = coinBalance
+        self.skipCashout = skipCashout
         self.onDismiss = onDismiss
         self.onPlayNow = onPlayNow
         // Start at the pre-deduction balance, drain to the post-deduction balance
@@ -175,6 +180,16 @@ struct PawnUnlockModal: View {
     // MARK: - Animation
 
     private func startCashoutAnimation() {
+        if skipCashout {
+            // Purchase modal already showed coins going up/down — jump straight to reveal.
+            revealPawn = true
+            SoundManager.shared.playPawnReachedHomeSound()
+            withAnimation(.spring(response: 0.48, dampingFraction: 0.52)) {
+                pawnScale = 1.0
+            }
+            return
+        }
+
         SoundManager.shared.startCoinJangle()
 
         // Coin spins three full turns over the drain duration
