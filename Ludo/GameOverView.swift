@@ -252,7 +252,7 @@ struct GameOverView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 44, height: 44)
-                Text("\(averageRolls[color] ?? 0, specifier: "%.1f") avg")
+                Text("\(averageRolls[color] ?? 0, specifier: "%.1f") avg roll")
                     .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundColor(.black.opacity(0.4))
             }
@@ -269,7 +269,7 @@ struct GameOverView: View {
             HStack(spacing: 5) {
                 if isKillBonus   { bonusPill(label: "TOP KILLS",  bonus: "+5", tint: .red) }
                 if isFirstKill   { bonusPill(label: "FIRST KILL", bonus: "+3", tint: Color(white: 0.2)) }
-                if isUnlucky     { bonusPill(label: "UNLUCKIEST", bonus: "+5", tint: .blue) }
+                if isUnlucky     { bonusPill(label: "UNLUCKIEST ROLLER", bonus: "+5", tint: .blue) }
             }
 
             // Score
@@ -302,10 +302,10 @@ struct GameOverView: View {
         HStack(spacing: 3) {
             Text(label)
                 .font(.system(size: 9, weight: .bold, design: .rounded))
-                .foregroundColor(tint)
+                .foregroundColor(.black)
             Text(bonus)
                 .font(.system(size: 9, weight: .heavy, design: .rounded))
-                .foregroundColor(.black.opacity(0.7))
+                .foregroundColor(.black)
         }
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
@@ -386,7 +386,7 @@ struct GameOverView: View {
         guard !showBonus, !bonusQueue.isEmpty else { return }
         currentBonus = bonusQueue.removeFirst()
         if currentBonus?.1 == "TOP KILLS"   { skullBonusConfetti += 1 }
-        if currentBonus?.1 == "UNLUCKIEST"  { unluckyConfetti += 1 }
+        if currentBonus?.1 == "UNLUCKIEST ROLLER"  { unluckyConfetti += 1 }
         withAnimation { showBonus = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             withAnimation { showBonus = false }
