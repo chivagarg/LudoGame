@@ -23,6 +23,7 @@ class LudoGame: ObservableObject {
     @Published var homeCompletionOrder: [PlayerColor] = []  // Track order of pawns reaching home
     @Published var totalPawnsAtFinishingHome: Int = 0  // Track total number of pawns that have reached home
     @Published var isAdminMode: Bool = false  // Whether admin mode is enabled
+    @Published var isPaused: Bool = false    // Whether the game is paused (pause menu open)
     @Published var isGameOver: Bool = false  // Whether the game is over
     @Published var finalRankings: [PlayerColor] = []  // Track final player rankings
     @Published var selectedPlayers: Set<PlayerColor> = []
@@ -844,9 +845,18 @@ class LudoGame: ObservableObject {
         return PlayerColor.allCases.sorted { (scores[$0] ?? 0) > (scores[$1] ?? 0) }
     }
 
+    func pauseGame() {
+        isPaused = true
+    }
+
+    func resumeGame() {
+        isPaused = false
+        handleAITurn()
+    }
+
     func handleAITurn() {
-        // Block AI from acting if the game is busy (e.g., animation in progress)
-        if isBusy { return }
+        // Block AI from acting if the game is busy or paused.
+        if isBusy || isPaused { return }
         if aiControlledPlayers.contains(currentPlayer) {
             GameLogger.shared.log("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
             // Add a delay to simulate the AI "thinking" before rolling
@@ -960,6 +970,7 @@ class LudoGame: ObservableObject {
         // Check for TRAP
         if trappedZones.contains(newPosition) {
             GameLogger.shared.log("⚠️ [TRAP] Pawn landed on trap at \(newPosition.row),\(newPosition.col)", level: .info)
+            SoundManager.shared.playEvilLaugh()
             // Trigger capture on self (the pawn gets "cut")
             if let pawn = pawns[color]?[pawnIndex] {
                 // Post notification to animate the pawn being captured (sent home)
@@ -1120,6 +1131,7 @@ class LudoGame: ObservableObject {
         let nextRemaining = currentRemaining - 1
         boostUsesRemaining[color] = nextRemaining
         boostState[color] = nextRemaining > 0 ? .available : .used
+        SoundManager.shared.playBoostSound()
     }
     
     func getBoostState(for color: PlayerColor) -> BoostState {

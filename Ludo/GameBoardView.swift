@@ -43,13 +43,16 @@ struct GameBoardView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button(action: { showPauseMenu = true }) {
+                    Button(action: {
+                        game.pauseGame()
+                        showPauseMenu = true
+                    }) {
                         Image(systemName: "pause.circle.fill")
                             .font(.largeTitle)
-                            .foregroundColor(.primary) // Adaptive color
+                            .foregroundColor(.primary)
                             .shadow(radius: 3)
                     }
-                    .offset(y: -12) // Move slightly higher to avoid accidental taps
+                    .offset(y: -12)
                     .padding()
                 }
                 Spacer()
@@ -59,18 +62,24 @@ struct GameBoardView: View {
             if showPauseMenu {
                 Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
-                    .onTapGesture { showPauseMenu = false }
+                    .onTapGesture {
+                        showPauseMenu = false
+                        game.resumeGame()
+                    }
 
                 PauseDialogView(
                     onResume: {
                         showPauseMenu = false
+                        game.resumeGame()
                     },
                     onRestart: {
                         showPauseMenu = false
+                        game.resumeGame()
                         game.startGame(selectedPlayers: game.selectedPlayers, aiPlayers: game.aiControlledPlayers, mode: game.gameMode)
                     },
                     onExit: {
                         showPauseMenu = false
+                        game.resumeGame()
                         game.gameStarted = false
                     }
                 )

@@ -11,6 +11,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1C /* LudoGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1D /* LudoGameView.swift */; };
 		1A1A1A1A1A1A1A1A1A1A1A1E /* LudoGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */; };
 		580FF5762F5D2567007E3F00 /* coins.wav in Resources */ = {isa = PBXBuildFile; fileRef = 580FF5752F5D2567007E3F00 /* coins.wav */; };
+		580FF5822F5E5D7B007E3F00 /* boost.wav in Resources */ = {isa = PBXBuildFile; fileRef = 580FF5812F5E5D7B007E3F00 /* boost.wav */; };
 		58D54CF22F43A6C900CF3ACF /* BoostIconTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */; };
 		58D54CF42F43A6C900CF3ACF /* MirchiTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF32F43A6C900CF3ACF /* MirchiTileView.swift */; };
 		58D54CF62F43A6C900CF3ACF /* PawnUnlockModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D54CF52F43A6C900CF3ACF /* PawnUnlockModal.swift */; };
@@ -73,6 +74,7 @@
 		1A1A1A1A1A1A1A1A1A1A1A1F /* LudoGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LudoGame.swift; sourceTree = "<group>"; };
 		1A1A1A1A1A1A1A1A1A1A1A20 /* Ludo Mirchi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Ludo Mirchi.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		580FF5752F5D2567007E3F00 /* coins.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = coins.wav; sourceTree = "<group>"; };
+		580FF5812F5E5D7B007E3F00 /* boost.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = boost.wav; sourceTree = "<group>"; };
 		58D54CF12F43A6C900CF3ACF /* BoostIconTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoostIconTileView.swift; sourceTree = "<group>"; };
 		58D54CF32F43A6C900CF3ACF /* MirchiTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirchiTileView.swift; sourceTree = "<group>"; };
 		58D54CF52F43A6C900CF3ACF /* PawnUnlockModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PawnUnlockModal.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				58D54CF52F43A6C900CF3ACF /* PawnUnlockModal.swift */,
 				58D54CF72F43A6C900CF3ACF /* CoinPurchaseConfig.swift */,
 				58D54CF92F43A6C900CF3ACF /* CoinPurchaseModal.swift */,
+				580FF5812F5E5D7B007E3F00 /* boost.wav */,
 				58ED416A2F13C4DD009414F6 /* Boost.swift */,
 				58ED41682F10FF01009414F6 /* MirchiPrimaryButton.swift */,
 				58ED41662F0FA69F009414F6 /* PlayerSelectionViewV2.swift */,
@@ -311,6 +314,7 @@
 				DAE12AB22E4347E600862C75 /* yeah.wav in Resources */,
 				580FF5762F5D2567007E3F00 /* coins.wav in Resources */,
 				DA7944262E03D27200EE49FC /* Assets.xcassets in Resources */,
+				580FF5822F5E5D7B007E3F00 /* boost.wav in Resources */,
 				DAFC6FD52DEA05DC00073666 /* dice.wav in Resources */,
 				DA7944392E0750EE00EE49FC /* hop.wav in Resources */,
 				DA79443A2E0750EE00EE49FC /* hopReverse.wav in Resources */,

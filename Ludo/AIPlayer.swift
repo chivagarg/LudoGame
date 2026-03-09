@@ -59,19 +59,32 @@ func aiBackwardDest(pawnId: Int, player: PlayerColor, path: [Position], game: Lu
     return path[newIndex]
 }
 
-/// True if any opponent can reach `position` in exactly 1–6 forward rolls along their own path.
+/// True if any opponent can reach `position` in 1–6 rolls along their own path.
+/// In Mirchi mode, opponents with remaining mirchi moves can also reach the position
+/// by moving *backward*, so both directions are checked when applicable.
 func isExposedToOpponentReach(position: Position, player: PlayerColor, game: LudoGame) -> Bool {
     guard !game.isSafePosition(position) else { return false }
+    let isMirchi = game.gameMode == .mirchi
     for (opponentColor, opponentPawns) in game.pawns where opponentColor != player {
         let opponentPath = game.path(for: opponentColor)
         guard !opponentPath.isEmpty else { continue }
+        let opponentMirchi = isMirchi ? game.mirchiMovesRemaining[opponentColor, default: 0] : 0
         for opponentPawn in opponentPawns {
             guard let oppIdx = opponentPawn.positionIndex,
                   oppIdx >= 0, oppIdx < opponentPath.count else { continue }
+            // Forward reach (always checked)
             for roll in 1...6 {
                 let targetIdx = oppIdx + roll
                 guard targetIdx < opponentPath.count else { break }
                 if opponentPath[targetIdx] == position { return true }
+            }
+            // Backward reach — only relevant when the opponent has mirchi budget
+            if opponentMirchi > 0 {
+                for roll in 1...6 {
+                    let targetIdx = oppIdx - roll
+                    guard targetIdx >= 0 else { break }
+                    if opponentPath[targetIdx] == position { return true }
+                }
             }
         }
     }
@@ -257,17 +270,40 @@ struct SmartMoveStrategy: AILogicStrategy {
             }
         }
 
-        // 5. Bring pawn from home when ≤1 on board and a 6 is rolled.
-        if game.diceValue == 6, pawnsOnBoard <= 1 {
+        // 5. Sprint near-home pawn forward when a 6 is rolled.
+        //    A pawn this close to finishing is more valuable than fresh optionality, so
+        //    sprint it before pulling a new pawn out of home.
+        if game.diceValue == 6 {
+            let sprints = eligiblePawns.compactMap { pawnId -> (pawnId: Int, stepsLeft: Int)? in
+                guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
+                      let pos = pawn.positionIndex, pos >= 0 else { return nil }
+                let left = stepsRemaining(positionIndex: pos)
+                guard left < sprintToHomeThreshold else { return nil }
+                guard let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
+                      !isTrap(dest) else { return nil }
+                return (pawnId, left)
+            }.sorted { $0.stepsLeft < $1.stepsLeft }  // closest to home first
+
+            if let sprint = sprints.first {
+                GameLogger.shared.log("🤖 [AI SMART] Sprinting pawn \(sprint.pawnId) home (\(sprint.stepsLeft) steps left).")
+                return (sprint.pawnId, false)
+            }
+        }
+
+        // 6. Bring pawn from home on a 6.
+        //    Rolling a 6 is rare — almost always worth creating board optionality by
+        //    freeing a pawn from home, unless a sprint or threat-escape above took
+        //    priority for that 6.
+        if game.diceValue == 6 {
             for pawnId in eligiblePawns {
                 if game.pawns[player]?.first(where: { $0.id == pawnId })?.positionIndex == nil {
-                    GameLogger.shared.log("🤖 [AI SMART] Bringing pawn \(pawnId) from home (≤1 on board).")
+                    GameLogger.shared.log("🤖 [AI SMART] Bringing pawn \(pawnId) from home (6 rolled).")
                     return (pawnId, false)
                 }
             }
         }
 
-        // 6. Forward to any safe zone (standard or custom green-boost).
+        // 7. Forward to any safe zone (standard or custom green-boost).
         //    `isSafePosition` covers both; no separate opponent-reach check needed since
         //    safe zones are immune to captures.
         for pawnId in eligiblePawns {
@@ -279,7 +315,7 @@ struct SmartMoveStrategy: AILogicStrategy {
             }
         }
 
-        // 7. Backward retreat to safe zone (Mirchi).
+        // 8. Backward retreat to safe zone (Mirchi).
         //    Conditions: budget above reserve, pawn is threatened, AND pawn has traveled
         //    at least `mirchiRetreatMinProgress` of the path — retreating an early-stage
         //    pawn wastes a scarce Mirchi for little gain.
@@ -305,27 +341,8 @@ struct SmartMoveStrategy: AILogicStrategy {
             }
         }
 
-        // 7.5 Sprint near-home pawn forward when a 6 is rolled.
-        //     A pawn within `sprintToHomeThreshold` steps of finishing is too valuable to
-        //     delay — advance it before bringing new pawns out of home.
-        if game.diceValue == 6 {
-            let sprints = eligiblePawns.compactMap { pawnId -> (pawnId: Int, stepsLeft: Int)? in
-                guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
-                      let pos = pawn.positionIndex, pos >= 0 else { return nil }
-                let left = stepsRemaining(positionIndex: pos)
-                guard left < sprintToHomeThreshold else { return nil }
-                guard let dest = aiForwardDest(pawnId: pawnId, player: player, path: currentPath, game: game),
-                      !isTrap(dest) else { return nil }
-                return (pawnId, left)
-            }.sorted { $0.stepsLeft < $1.stepsLeft }  // closest to home first
-
-            if let sprint = sprints.first {
-                GameLogger.shared.log("🤖 [AI SMART] Sprinting pawn \(sprint.pawnId) home (\(sprint.stepsLeft) steps left).")
-                return (sprint.pawnId, false)
-            }
-        }
-
-        // 8. Advance to a square not in opponent reach and not a trap (most-forward first).
+        // 9. Advance to a square not in opponent reach and not a trap (most-forward first).
+        //    `isExposedToOpponentReach` now also considers opponents' backward Mirchi reach.
         let safeMoves = eligiblePawns.compactMap { pawnId -> (pawnId: Int, pos: Int)? in
             guard let pawn = game.pawns[player]?.first(where: { $0.id == pawnId }),
                   let pos = pawn.positionIndex,
@@ -339,16 +356,6 @@ struct SmartMoveStrategy: AILogicStrategy {
         if let best = safeMoves.first {
             GameLogger.shared.log("🤖 [AI SMART] Advancing pawn \(best.pawnId) to safe forward square.")
             return (best.pawnId, false)
-        }
-
-        // 9. Bring pawn from home on 6 (≥2 already on board, no sprint candidate found).
-        if game.diceValue == 6 {
-            for pawnId in eligiblePawns {
-                if game.pawns[player]?.first(where: { $0.id == pawnId })?.positionIndex == nil {
-                    GameLogger.shared.log("🤖 [AI SMART] Bringing pawn \(pawnId) from home (2+ on board).")
-                    return (pawnId, false)
-                }
-            }
         }
 
         // 10. Fallback: advance most-forward pawn, avoiding traps where possible.

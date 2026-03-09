@@ -138,14 +138,20 @@ struct PlayerSelectionViewV2: View {
 
     private var backButtonOverlay: some View {
         VStack {
+            Spacer().frame(height: 56)
             HStack {
                 Button(action: onBack) {
-                    Image(systemName: "arrow.left.circle.fill")
-                        .font(.largeTitle)
-                        .foregroundColor(.white)
-                        .shadow(radius: 2)
+                    ZStack {
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 52, height: 52)
+                            .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
-                .padding()
+                .padding(.leading, 20)
                 Spacer()
             }
             Spacer()

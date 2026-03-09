@@ -15,6 +15,7 @@ public class SoundManager {
         static let evilLaugh = "evillaugh.wav"
         static let yeah = "yeah.wav"
         static let coins = "coins.wav"
+        static let boost = "boost.wav"
     }
     
     private var audioPlayers: [String: AVAudioPlayer] = [:]
@@ -31,6 +32,7 @@ public class SoundManager {
         preloadSound(named: SoundFiles.evilLaugh)
         preloadSound(named: SoundFiles.yeah)
         preloadSound(named: SoundFiles.coins)
+        preloadSound(named: SoundFiles.boost)
     }
     
     private func preloadSound(named filename: String) {
@@ -103,6 +105,18 @@ public class SoundManager {
 
     public func playYeah() {
         playSound(SoundFiles.yeah)
+    }
+
+    // MARK: - Boost sound (capped at 3 seconds)
+
+    public func playBoostSound() {
+        guard let player = audioPlayers[SoundFiles.boost] else { return }
+        player.currentTime = 0
+        player.play()
+        // The file may be long — stop playback after 3 seconds.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak player] in
+            player?.stop()
+        }
     }
 
     // MARK: - Coin jangle (looped for coin drain animation)
