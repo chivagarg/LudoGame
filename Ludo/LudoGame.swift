@@ -12,6 +12,8 @@ struct Position: Equatable, Hashable {
 }
 
 class LudoGame: ObservableObject {
+    private static let firstRunMirchiGamesStartedKey = "firstRunMirchiGamesStartedKey"
+    private static let firstRunMirchiMaxShows = 3
     
     @Published var currentPlayer: PlayerColor = .red
     @Published var diceValue: Int = 1
@@ -35,6 +37,7 @@ class LudoGame: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var errorIconAssetName: String? = nil
     @Published var showError: Bool = false
+    @Published var showMirchiModeIph: Bool = false
     
     // Custom safe zones created by players via boosts.
     // Stores positions that are now considered safe for all players.
@@ -520,6 +523,7 @@ class LudoGame: ObservableObject {
         }
         
         gameStarted = true
+        markGameStartedForMirchiIph()
         currentPlayer = selectedPlayers.first! // Set current player to the first selected player (assuming at least one selected)
         eligiblePawns.removeAll()
         currentRollPlayer = nil
@@ -1146,6 +1150,7 @@ class LudoGame: ObservableObject {
     func resetGame() {
         gameStarted = false
         isGameOver = false
+        showMirchiModeIph = false
         didAwardCoinsForCurrentGame = false
         coinBalanceBeforeLastAward = coins
         lastCoinAward = 0
@@ -1314,6 +1319,43 @@ class LudoGame: ObservableObject {
         UnlockManager.resetAllPawnUnlocks()
         // Notify all observing views (e.g. PlayerSelectionViewV2) to re-read lock state.
         objectWillChange.send()
+    }
+
+    /// Admin-only utility to reset app gameplay state to a fresh-install-like state.
+    /// Includes unlocks, coins, first-run IPH counters, and current game session state.
+    func adminResetToFirstRun() {
+        guard isAdminMode else { return }
+        UnlockManager.resetAllPawnUnlocks()
+        UnlockManager.setCoinBalance(0)
+        coins = 0
+        coinBalanceBeforeLastAward = 0
+        lastCoinAward = 0
+        UserDefaults.standard.set(0, forKey: Self.firstRunMirchiGamesStartedKey)
+        selectedAvatars = [
+            .red: PawnAssets.redMarble,
+            .green: PawnAssets.greenMarble,
+            .yellow: PawnAssets.yellowMarble,
+            .blue: PawnAssets.blueMarble
+        ]
+        selectedPlayers.removeAll()
+        aiControlledPlayers.removeAll()
+        errorMessage = nil
+        errorIconAssetName = nil
+        showError = false
+        showMirchiModeIph = false
+        resetGame()
+        objectWillChange.send()
+    }
+
+    func dismissMirchiModeIph() {
+        showMirchiModeIph = false
+    }
+
+    private func markGameStartedForMirchiIph() {
+        let current = UserDefaults.standard.integer(forKey: Self.firstRunMirchiGamesStartedKey)
+        let updated = current + 1
+        UserDefaults.standard.set(updated, forKey: Self.firstRunMirchiGamesStartedKey)
+        showMirchiModeIph = updated <= Self.firstRunMirchiMaxShows
     }
 
     // MARK: - Coin rewards

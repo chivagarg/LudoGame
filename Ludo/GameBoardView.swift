@@ -28,6 +28,9 @@ struct GameBoardView: View {
                             },
                             onResetUnlocks: {
                                 game.adminResetUnlocks()
+                            },
+                            onResetToFirstRun: {
+                                game.adminResetToFirstRun()
                             }
                         )
                         .frame(height: adminToolbarHeight)
@@ -84,6 +87,18 @@ struct GameBoardView: View {
                     }
                 )
                 .frame(width: 360)
+            }
+
+            if game.showMirchiModeIph {
+                InProductHelpBubbleView(
+                    icon: .mirchiMode,
+                    title: GameCopy.StartGame.mirchiModeIphTitle,
+                    message: GameCopy.StartGame.mirchiModeIphMessage,
+                    onClose: {
+                        game.dismissMirchiModeIph()
+                    }
+                )
+                .zIndex(10)
             }
         }
     }

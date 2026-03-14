@@ -8,6 +8,7 @@ struct AdminControlsView: View {
     let onEndGame: ([PlayerColor: Int]) -> Void
     let onSetCoins: (Int) -> Void
     let onResetUnlocks: () -> Void
+    let onResetToFirstRun: () -> Void
     
     @State private var scoreInputs: [PlayerColor: String] = [:]
     @State private var coinInput: String = ""
@@ -124,6 +125,16 @@ struct AdminControlsView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(Color.black)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+
+                Button(GameCopy.Admin.resetToFirstRun) {
+                    onResetToFirstRun()
+                }
+                .font(.footnote.bold())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.indigo)
                 .foregroundColor(.white)
                 .cornerRadius(8)
 

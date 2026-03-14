@@ -9,7 +9,7 @@ enum GameCopy {
         static let unlockNow = "Unlock Now!"
         static let invalidMoveTitle = "Invalid Move"
     }
-
+				
     enum DeploymentErrors {
         static let ineligibleSafeZone = "This spot is ineligible to deploy (Safe Zone). Select an unoccupied spot on the board."
         static let ineligibleStartingHome = "This spot is ineligible to deploy (Starting Home). Select an unoccupied spot on the board."
@@ -29,6 +29,8 @@ enum GameCopy {
         static let unlockProgressTitle = "You’re on your way to unlocking a new pawn!"
         static let nextUp = "Next up"
         static let allUnlocked = "All pawns unlocked!"
+        static let mirchiModeIphTitle = "Mirchi Mode"
+        static let mirchiModeIphMessage = "Each player gets 5 chances to hop backwards during the game. Activate mirchi mode by tapping this button before selecting a pawn on your turn."
 
         static func almostThere(_ progressText: String) -> String {
             "Almost there! \(progressText)"
@@ -115,6 +117,7 @@ enum GameCopy {
         static let set = "Set"
         static let endGame = "End Game"
         static let resetUnlocks = "Reset Unlocks"
+        static let resetToFirstRun = "Reset To First Run"
         static let shareLogSubject = "Ludo Game Log"
         static let shareLogMessage = "Here is the log from the last Ludo game session."
     }

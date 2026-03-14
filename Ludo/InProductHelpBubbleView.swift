@@ -3,6 +3,7 @@ import SwiftUI
 enum HelpBubbleIcon {
     case image(String)
     case system(String)
+    case mirchiMode
 }
 
 /// Generic in-product help modal with dimmed overlay.
@@ -72,6 +73,28 @@ struct InProductHelpBubbleView: View {
     @ViewBuilder
     private var iconTile: some View {
         switch icon {
+        case .mirchiMode:
+            ZStack {
+                Circle()
+                    .fill(PlayerColor.red.secondaryColor.opacity(0.95))
+                    .overlay(
+                        Circle().stroke(PlayerColor.red.primaryColor.opacity(0.45), lineWidth: 3)
+                    )
+                    .shadow(color: .black.opacity(0.12), radius: 5, x: 0, y: 3)
+                    .frame(width: 74, height: 74)
+
+                Image(PawnAssets.backRed)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 30, height: 30)
+                    .offset(x: -11, y: -6)
+
+                Image(PawnAssets.mirchiIndicator)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+                    .offset(x: 12, y: 10)
+            }
         case .image(let name):
             if let ability = boostAbility(for: name) {
                 BoostIconTileView(
