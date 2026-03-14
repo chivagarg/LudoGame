@@ -18,42 +18,33 @@ private struct PurchaseAnimatableNumber: View, Animatable {
 // MARK: - Coin purchase modal
 
 /// Shown when the user taps "Unlock Now!" on a locked pawn card.
-/// Displays the target pawn, its cost, and the coins-to-buy calculation.
-/// On mock purchase:
-///   Phase 1 — balance counts UP by the purchased coin amount.
-///   Phase 2 — balance counts DOWN by the unlock cost.
-/// Then closes and hands off to PawnUnlockModal for the pawn reveal.
+/// Displays the target pawn and direct purchase CTA.
+/// Temporary mock behavior: tapping buy instantly unlocks the pawn.
 struct CoinPurchaseModal: View {
     let pawnName: String
     let currentCoinBalance: Int          // balance at the moment modal opens
     let onDismiss: () -> Void
-    /// Called when the full purchase+cashout animation finishes.
-    /// Provides the final coin balance so the caller can persist it and show PawnUnlockModal.
-    let onPurchaseComplete: (_ finalBalance: Int) -> Void
+    /// Called when direct mock unlock completes.
+    let onPurchaseComplete: () -> Void
 
     private let details: PawnDetails
     private let unlockCost: Int
-    private let coinsToBuy: Int
-    private let finalBalance: Int        // balance after buy + unlock deduction
 
     // Animation state
     @State private var animatedBalance: Double
     @State private var phase: PurchasePhase = .preview
-    @State private var coinRotation: Double = 0
-    @State private var coinScale: CGFloat = 1.0
     @State private var pawnFloat: CGFloat = 0
 
     private enum PurchasePhase {
         case preview      // showing purchase card, waiting for tap
-        case buying       // counting UP
-        case spending     // counting DOWN
+        case unlocking
     }
 
     init(
         pawnName: String,
         currentCoinBalance: Int,
         onDismiss: @escaping () -> Void,
-        onPurchaseComplete: @escaping (_ finalBalance: Int) -> Void
+        onPurchaseComplete: @escaping () -> Void
     ) {
         self.pawnName = pawnName
         self.currentCoinBalance = currentCoinBalance
@@ -61,10 +52,6 @@ struct CoinPurchaseModal: View {
         self.onPurchaseComplete = onPurchaseComplete
         self.details = PawnCatalog.details(for: pawnName)
         self.unlockCost = CoinPurchaseConfig.unlockCost(for: pawnName)
-        self.coinsToBuy = CoinPurchaseConfig.coinsToBuy(
-            currentBalance: currentCoinBalance, pawnName: pawnName)
-        self.finalBalance = currentCoinBalance + CoinPurchaseConfig.coinsToBuy(
-            currentBalance: currentCoinBalance, pawnName: pawnName) - CoinPurchaseConfig.unlockCost(for: pawnName)
         self._animatedBalance = State(initialValue: Double(currentCoinBalance))
     }
 
@@ -84,6 +71,7 @@ struct CoinPurchaseModal: View {
 
                 // Coin balance display (animates during purchase)
                 coinBalanceRow
+                neededCoinsLine
 
                 Divider().padding(.horizontal, 8)
 
@@ -150,8 +138,6 @@ struct CoinPurchaseModal: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 32, height: 32)
-                .scaleEffect(coinScale)
-                .rotationEffect(.degrees(coinRotation))
 
             PurchaseAnimatableNumber(value: animatedBalance)
                 .font(.system(size: 36, weight: .black, design: .rounded))
@@ -166,16 +152,6 @@ struct CoinPurchaseModal: View {
 
     private var purchaseInfoBlock: some View {
         VStack(spacing: 12) {
-            // How many coins needed summary
-            let needed = CoinPurchaseConfig.coinsNeeded(
-                currentBalance: currentCoinBalance, pawnName: pawnName)
-            if needed > 0 {
-                Text("You need \(formattedCoins(needed)) more coins to unlock \(details.title).")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-            }
-
             // Buy button
             let buyLabel = buyButtonLabel
             Button(action: startMockPurchase) {
@@ -193,19 +169,23 @@ struct CoinPurchaseModal: View {
         }
     }
 
+    private var neededCoinsLine: some View {
+        let needed = max(0, unlockCost - currentCoinBalance)
+        return Text("You need \(formattedCoins(needed)) more coins to unlock this pawn. Keep playing, or you can buy now to unlock immediately.")
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(.gray)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 460)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     private var buyButtonLabel: String {
-        if coinsToBuy == 0 {
-            // Already has enough coins — direct unlock
-            return "Unlock \(details.title) now"
-        }
-        let price = CoinPurchaseConfig.formattedPrice(
-            currentBalance: currentCoinBalance, pawnName: pawnName)
-        let formatted = formattedCoins(coinsToBuy)
-        return "Buy \(formatted) coins for \(price)"
+        let price = CoinPurchaseConfig.formattedDirectUnlockPrice(pawnName: pawnName)
+        return "Buy and unlock now for \(price)"
     }
 
     private var phaseLabel: some View {
-        Text(phase == .buying ? "Topping up coins…" : "Unlocking \(details.title)…")
+        Text("Unlocking \(details.title)…")
             .font(.system(size: 15, weight: .semibold, design: .rounded))
             .foregroundColor(.gray)
             .padding(.vertical, 8)
@@ -214,7 +194,7 @@ struct CoinPurchaseModal: View {
     // MARK: - Helpers
 
     private func formattedCoins(_ value: Int) -> String {
-        NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+        NumberFormatter.localizedString(from: NSNumber(value: max(0, value)), number: .decimal)
     }
 
     // MARK: - Animation
@@ -234,60 +214,14 @@ struct CoinPurchaseModal: View {
     }
 
     private func startMockPurchase() {
-        let topUpAmount = coinsToBuy
-        let topUpDuration: Double = topUpAmount > 0 ? 2.0 : 0.0
-        let pauseBetweenPhases: Double = 2.0
-        let spendDuration: Double = 2.0
-
         // Switch pawn to excited hop as soon as the purchase starts.
         startExcitedHop()
-
-        // --- Phase 1: buy coins (balance goes UP) ---
         withAnimation(.easeInOut(duration: 0.15)) {
-            phase = .buying
+            phase = .unlocking
         }
 
-        if topUpAmount > 0 {
-            // Persist the topped-up balance immediately so game.coins stays live.
-            UnlockManager.addCoins(topUpAmount)
-
-            SoundManager.shared.startCoinJangle()
-
-            withAnimation(.linear(duration: topUpDuration)) {
-                animatedBalance = Double(currentCoinBalance + topUpAmount)
-            }
-            withAnimation(.linear(duration: topUpDuration)) {
-                coinRotation = 720
-            }
-            withAnimation(.easeInOut(duration: 0.25).repeatCount(7, autoreverses: true)) {
-                coinScale = 1.2
-            }
-        }
-
-        // --- Phase 2: spend coins to unlock (balance goes DOWN) ---
-        // Extra 2-second pause between the top-up finishing and the spend starting.
-        DispatchQueue.main.asyncAfter(deadline: .now() + topUpDuration + pauseBetweenPhases) {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                phase = .spending
-            }
-
-            // Deduct and unlock immediately so state is consistent.
-            UnlockManager.purchaseUnlockPawn(pawnName)
-
-            if topUpAmount == 0 { SoundManager.shared.startCoinJangle() }
-
-            withAnimation(.linear(duration: spendDuration)) {
-                animatedBalance = Double(finalBalance)
-            }
-            withAnimation(.linear(duration: spendDuration)) {
-                coinRotation += 720
-            }
-
-            // --- Finish: close modal, hand off to PawnUnlockModal ---
-            DispatchQueue.main.asyncAfter(deadline: .now() + spendDuration + 0.15) {
-                SoundManager.shared.stopCoinJangle()
-                onPurchaseComplete(finalBalance)
-            }
-        }
+        // Temporary mock payment: unlock immediately, no coin top-up/cashout flow.
+        UnlockManager.unlockPawn(pawnName)
+        onPurchaseComplete()
     }
 }

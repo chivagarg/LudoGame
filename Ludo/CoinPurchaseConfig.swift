@@ -58,4 +58,23 @@ enum CoinPurchaseConfig {
         let price = totalPrice(currentBalance: currentBalance, pawnName: pawnName)
         return String(format: "$%.2f", price)
     }
+
+    // MARK: - Direct unlock pricing (no coin top-up flow)
+
+    /// Number of purchasable units implied by a pawn's unlock cost.
+    /// Example: 2500 coin-equivalent cost => 3 units.
+    static func unitsForDirectUnlock(pawnName: String) -> Int {
+        let cost = unlockCost(for: pawnName)
+        return max(1, (cost + coinsPerUnit - 1) / coinsPerUnit)
+    }
+
+    /// Direct purchase price for unlocking a pawn now.
+    static func directUnlockPrice(pawnName: String) -> Double {
+        Double(unitsForDirectUnlock(pawnName: pawnName)) * pricePerUnit
+    }
+
+    /// Formatted direct unlock price string, e.g. "$2.97".
+    static func formattedDirectUnlockPrice(pawnName: String) -> String {
+        String(format: "$%.2f", directUnlockPrice(pawnName: pawnName))
+    }
 }

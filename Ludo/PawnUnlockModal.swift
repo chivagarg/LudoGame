@@ -35,6 +35,7 @@ struct PawnUnlockModal: View {
     @State private var animatedBalance: Double
     @State private var revealPawn: Bool = false
     @State private var pawnScale: CGFloat = 0.2
+    @State private var showcaseTilt: Double = 0
     @State private var coinRotation: Double = 0
     @State private var coinScale: CGFloat = 1.0
 
@@ -151,13 +152,46 @@ struct PawnUnlockModal: View {
 
     /// Phase 1 — pawn bounces in.
     private var pawnReveal: some View {
-        Image(pawnName)
-            .resizable()
-            .scaledToFit()
-            .frame(width: 230, height: 230)
-            .scaleEffect(pawnScale)
-            .opacity(revealPawn ? 1 : 0)
-            .animation(.easeIn(duration: 0.2), value: revealPawn)
+        HStack(spacing: 16) {
+            Image(pawnName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 190, height: 190)
+                .rotationEffect(.degrees(showcaseTilt))
+                .shadow(color: .black.opacity(0.14), radius: 8, x: 0, y: 5)
+
+            if let boostAsset = boostAssetName {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.96))
+                        .overlay(
+                            Circle()
+                                .stroke(Color.purple.opacity(0.35), lineWidth: 3)
+                        )
+                        .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 3)
+                        .frame(width: 90, height: 90)
+
+                    Image(boostAsset)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 54, height: 54)
+                }
+                .rotationEffect(.degrees(-showcaseTilt))
+            }
+        }
+        .scaleEffect(pawnScale)
+        .opacity(revealPawn ? 1 : 0)
+        .animation(.easeIn(duration: 0.2), value: revealPawn)
+    }
+
+    private var boostAssetName: String? {
+        guard let ability = BoostRegistry.ability(for: pawnName) else { return nil }
+        switch ability.kind {
+        case .rerollToSix: return PawnAssets.boostDice
+        case .extraBackwardMove: return PawnAssets.boostMirchi
+        case .safeZone: return PawnAssets.boostShield
+        case .trap: return PawnAssets.boostTrap
+        }
     }
 
     private var playNowButton: some View {
@@ -187,6 +221,9 @@ struct PawnUnlockModal: View {
             withAnimation(.spring(response: 0.48, dampingFraction: 0.52)) {
                 pawnScale = 1.0
             }
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                showcaseTilt = 7
+            }
             return
         }
 
@@ -213,6 +250,9 @@ struct PawnUnlockModal: View {
             }
             withAnimation(.spring(response: 0.48, dampingFraction: 0.52)) {
                 pawnScale = 1.0
+            }
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                showcaseTilt = 7
             }
         }
     }

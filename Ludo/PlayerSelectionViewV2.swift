@@ -96,11 +96,10 @@ struct PlayerSelectionViewV2: View {
                         onDismiss: {
                             withAnimation(.easeOut(duration: 0.2)) { showPawnPurchaseModal = false }
                         },
-                        onPurchaseComplete: { finalBalance in
-                            game.coins = finalBalance
+                        onPurchaseComplete: {
                             selectedAvatars[selectedPlayerColor] = pawnName
                             revealPawnName = pawnName
-                            revealPawnBalance = finalBalance
+                            revealPawnBalance = game.coins
                             withAnimation(.easeOut(duration: 0.2)) { showPawnPurchaseModal = false }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                                 withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {

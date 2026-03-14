@@ -67,11 +67,10 @@ struct StartGameView: View {
                     onDismiss: {
                         withAnimation(.easeOut(duration: 0.2)) { showPurchaseModal = false }
                     },
-                    onPurchaseComplete: { finalBalance in
+                    onPurchaseComplete: {
                         withAnimation(.easeOut(duration: 0.2)) { showPurchaseModal = false }
-                        game.coins = finalBalance
                         purchaseRevealPawn = pawnName
-                        purchaseRevealBalance = finalBalance
+                        purchaseRevealBalance = game.coins
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
                                 showPurchaseRevealModal = true
@@ -186,7 +185,7 @@ struct StartGameView: View {
                             .minimumScaleFactor(0.7)
                             .lineLimit(1)
 
-                        Text("Each player get’s 5 mirchi’s to hop backwards. Catch your opponents before they catch you.")
+                        Text("Each player gets 5 mirchis to hop backwards. Catch your opponents before they catch you.")
                             .font(isCompact ? .callout : .body)
                             .foregroundColor(.black.opacity(0.7))
                             .fixedSize(horizontal: false, vertical: true)
