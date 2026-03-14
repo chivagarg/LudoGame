@@ -1379,11 +1379,46 @@ class LudoGame: ObservableObject {
         handleAITurn()
     }
 
+    func showBoostHelpIphForPlayerPanel(color: PlayerColor) {
+        guard canShowPanelIph(for: color) else { return }
+        let avatarName = selectedAvatar(for: color)
+        guard PawnAssets.hasBoost(for: avatarName) else { return }
+        guard let boostIcon = boostIconAssetName(for: avatarName) else { return }
+
+        let details = PawnCatalog.details(for: avatarName)
+        let uses = max(1, PawnAssets.boostUses(for: avatarName))
+        pawnBoostIphPayload = PawnBoostIphPayload(
+            pawnName: avatarName,
+            boostIconAssetName: boostIcon,
+            badgeValue: uses,
+            title: GameCopy.PawnBoostIph.title(details.title),
+            message: GameCopy.PawnBoostIph.message(boostDescription: details.description, uses: uses)
+        )
+    }
+
+    func showMirchiModeHelpIphForPlayerPanel(color: PlayerColor) {
+        guard canShowPanelIph(for: color) else { return }
+        guard gameMode == .mirchi else { return }
+        showMirchiModeIph = true
+    }
+
     private func markGameStartedForMirchiIph() {
         let current = UserDefaults.standard.integer(forKey: Self.firstRunMirchiGamesStartedKey)
         let updated = current + 1
         UserDefaults.standard.set(updated, forKey: Self.firstRunMirchiGamesStartedKey)
         showMirchiModeIph = updated <= Self.firstRunMirchiMaxShows
+    }
+
+    private func canShowPanelIph(for color: PlayerColor) -> Bool {
+        gameStarted
+            && currentPlayer == color
+            && !aiControlledPlayers.contains(color)
+            && !isBusy
+            && !isPaused
+            && !isGameOver
+            && !showError
+            && pawnBoostIphPayload == nil
+            && !showMirchiModeIph
     }
 
     private func maybePresentPawnBoostIphForCurrentTurn() {

@@ -82,7 +82,7 @@ struct PlayerPanelView: View {
     }
 
     private var actionLabelHeight: CGFloat {
-        max(18, panelInnerHeight * 0.18)
+        max(30, panelInnerHeight * 0.32)
     }
 
     private var badgeSize: CGFloat {
@@ -97,20 +97,64 @@ struct PlayerPanelView: View {
         min(1.0, max(0.5, diceSize / 56.0))
     }
 
+    private var canOpenBoostHelpIph: Bool {
+        game.currentPlayer == color
+            && !game.aiControlledPlayers.contains(color)
+            && !game.isBusy
+            && PawnAssets.hasBoost(for: game.selectedAvatar(for: color))
+    }
+
+    private var canOpenMirchiHelpIph: Bool {
+        game.currentPlayer == color
+            && !game.aiControlledPlayers.contains(color)
+            && !game.isBusy
+            && hasMirchiFeature
+    }
+
     @ViewBuilder
-    private func actionSlot<Content: View>(label: String, width: CGFloat, content: () -> Content) -> some View {
+    private func actionLabel(title: String, showHelp: Bool, helpEnabled: Bool, onHelpTap: @escaping () -> Void) -> some View {
+        VStack(spacing: 2) {
+            Text(title)
+                .font(.system(size: actionLabelFontSize, weight: .semibold, design: .rounded))
+                .foregroundColor(.black.opacity(0.85))
+                .lineLimit(1)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
+            if showHelp {
+                Button(action: onHelpTap) {
+                    Image("iph-exclamation")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: max(15, actionLabelFontSize * 1.7), height: max(15, actionLabelFontSize * 1.7))
+                        .opacity(helpEnabled ? 1.0 : 0.35)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(!helpEnabled)
+            }
+        }
+        .frame(height: actionLabelHeight)
+    }
+
+    @ViewBuilder
+    private func actionSlot<Content: View>(
+        label: String,
+        width: CGFloat,
+        showHelp: Bool = false,
+        helpEnabled: Bool = false,
+        onHelpTap: @escaping () -> Void = {},
+        content: () -> Content
+    ) -> some View {
         VStack {
             Spacer(minLength: 0)
             VStack(spacing: max(2, panelHeight * 0.02)) {
                 content()
                     .frame(height: actionSlotSize)
-                Text(label)
-                    .font(.system(size: actionLabelFontSize, weight: .semibold, design: .rounded))
-                    .foregroundColor(.black.opacity(0.85))
-                    .lineLimit(1)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.7)
-                    .frame(height: actionLabelHeight)
+                actionLabel(
+                    title: label,
+                    showHelp: showHelp,
+                    helpEnabled: helpEnabled,
+                    onHelpTap: onHelpTap
+                )
             }
             Spacer(minLength: 0)
         }
@@ -123,7 +167,13 @@ struct PlayerPanelView: View {
         let isUsed = state == .used || boostRemaining <= 0
         let isActive = state == .armed
         let isEnabled = !isUsed && canUseBoost(for: color) && game.boostAbility(for: color) != nil
-        actionSlot(label: "Boost", width: boostSectionWidth) {
+        actionSlot(
+            label: "Boost",
+            width: boostSectionWidth,
+            showHelp: PawnAssets.hasBoost(for: game.selectedAvatar(for: color)),
+            helpEnabled: canOpenBoostHelpIph,
+            onHelpTap: { game.showBoostHelpIphForPlayerPanel(color: color) }
+        ) {
             Button(action: {
                 guard isEnabled else { return }
                 game.tapBoost(color: color)
@@ -156,7 +206,13 @@ struct PlayerPanelView: View {
             && game.currentPlayer == color
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy
-        actionSlot(label: "Backward hop", width: mirchiSectionWidth) {
+        actionSlot(
+            label: "Move backward",
+            width: mirchiSectionWidth,
+            showHelp: hasMirchiFeature,
+            helpEnabled: canOpenMirchiHelpIph,
+            onHelpTap: { game.showMirchiModeHelpIphForPlayerPanel(color: color) }
+        ) {
             Button(action: {
                 guard isEnabled else { return }
                 game.mirchiArrowActivated[color]?.toggle()
