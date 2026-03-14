@@ -57,6 +57,7 @@ struct BoostIconTileView: View {
     var isActive: Bool = false
     var isEnabled: Bool = true
     var highlightActiveBorder: Bool = false
+    var showBadge: Bool = true
     var inactiveBadgeColor: Color = .gray
     var highlightColor: Color = .purple
     var backgroundColor: Color = .white
@@ -83,15 +84,17 @@ struct BoostIconTileView: View {
                     color: highlightColor
                 )
 
-            let active = badgeValue >= 1
-            Text("\(badgeValue)")
-                .font(.system(size: badgeSize * 0.56, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .frame(width: badgeSize, height: badgeSize)
-                .background(Circle().fill(active ? Color.red : inactiveBadgeColor))
-                // Keep badge fully inside tile bounds on compact layouts.
-                .padding(.top, max(1, tileSize * 0.03))
-                .padding(.trailing, max(1, tileSize * 0.03))
+            if showBadge {
+                let active = badgeValue >= 1
+                Text("\(badgeValue)")
+                    .font(.system(size: badgeSize * 0.56, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                    .frame(width: badgeSize, height: badgeSize)
+                    .background(Circle().fill(active ? Color.red : inactiveBadgeColor))
+                    // Keep badge fully inside tile bounds on compact layouts.
+                    .padding(.top, max(1, tileSize * 0.03))
+                    .padding(.trailing, max(1, tileSize * 0.03))
+            }
         }
         .frame(width: tileSize, height: tileSize)
     }

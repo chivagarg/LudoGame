@@ -33,6 +33,7 @@ class LudoGame: ObservableObject {
     
     // Error state for UI feedback
     @Published var errorMessage: String? = nil
+    @Published var errorIconAssetName: String? = nil
     @Published var showError: Bool = false
     
     // Custom safe zones created by players via boosts.
@@ -641,11 +642,19 @@ class LudoGame: ObservableObject {
         guard let ability = boostAbility(for: currentPlayer) else { return }
         
         let position = Position(row: row, col: col)
+        let deployErrorIcon: String? = {
+            switch ability.kind {
+            case .safeZone: return PawnAssets.boostShield
+            case .trap: return PawnAssets.boostTrap
+            default: return nil
+            }
+        }()
 
         // Constraint: Cannot deploy on any safe position (Start, Finish, Home, Stars, or existing Shield)
         // reusing isSafePosition automatically factors in all these cases.
         if isSafePosition(position) {
             errorMessage = GameCopy.DeploymentErrors.ineligibleSafeZone
+            errorIconAssetName = deployErrorIcon
             showError = true
             return
         }
@@ -653,6 +662,7 @@ class LudoGame: ObservableObject {
         // Constraint: Cannot deploy in starting home areas (colored corners)
         if isStartingHomeArea(position) {
             errorMessage = GameCopy.DeploymentErrors.ineligibleStartingHome
+            errorIconAssetName = deployErrorIcon
             showError = true
             return
         }
@@ -660,6 +670,7 @@ class LudoGame: ObservableObject {
         // Constraint: Cannot deploy on a Trap
         if trappedZones.contains(position) {
             errorMessage = GameCopy.DeploymentErrors.ineligibleTrapPresent
+            errorIconAssetName = deployErrorIcon
             showError = true
             return
         }
@@ -671,6 +682,7 @@ class LudoGame: ObservableObject {
                 if let index = pawn.positionIndex, index >= 0, index < playerPath.count {
                     if playerPath[index] == position {
                         errorMessage = GameCopy.DeploymentErrors.ineligibleOccupied
+                        errorIconAssetName = deployErrorIcon
                         showError = true
                         return
                     }

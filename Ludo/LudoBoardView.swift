@@ -217,42 +217,25 @@ struct LudoBoardView: View {
                 
                 // Error Overlay
                 if game.showError {
-                    ZStack {
-                        Color.black.opacity(0.4)
-                            .edgesIgnoringSafeArea(.all)
-                            .onTapGesture { game.showError = false }
-                        
-                        VStack(spacing: 20) {
-                            Text(GameCopy.Common.invalidMoveTitle)
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-                            
-                            Text(game.errorMessage ?? "")
-                                .font(.body)
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.horizontal)
-                            
-                            Button(action: {
-                                game.showError = false
-                            }) {
-                                Text(GameCopy.Common.ok)
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.blue)
-                                    .cornerRadius(10)
+                    InProductHelpBubbleView(
+                        icon: {
+                            if let asset = game.errorIconAssetName {
+                                return .image(asset)
                             }
+                            return .system("exclamationmark.circle.fill")
+                        }(),
+                        title: GameCopy.Common.invalidMoveTitle,
+                        message: game.errorMessage ?? "",
+                        primaryButtonTitle: GameCopy.Common.ok,
+                        onPrimaryAction: {
+                            game.errorIconAssetName = nil
+                            game.showError = false
+                        },
+                        onClose: {
+                            game.errorIconAssetName = nil
+                            game.showError = false
                         }
-                        .padding(24)
-                        .frame(width: 300)
-                        .background(Color.white) // Opaque white background
-                        .cornerRadius(16)
-                        .shadow(radius: 20)
-                    }
+                    )
                     .zIndex(100) // Ensure it's on top
                     .transition(.opacity)
                 }
