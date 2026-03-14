@@ -58,17 +58,18 @@ struct BoostIconTileView: View {
     var isEnabled: Bool = true
     var highlightActiveBorder: Bool = false
     var inactiveBadgeColor: Color = .gray
+    var highlightColor: Color = .purple
 
-    private var cornerRadius: CGFloat { max(6, tileSize * 0.22) }
+    private var cornerRadius: CGFloat { tileSize / 2 }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            RoundedRectangle(cornerRadius: cornerRadius)
+            Circle()
                 .fill(Color.white.opacity(0.95))
                 .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                    Circle().stroke(highlightColor.opacity(0.45), lineWidth: max(1, tileSize * 0.045))
                 )
+                .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
                 .frame(width: tileSize, height: tileSize)
 
             iconBody()

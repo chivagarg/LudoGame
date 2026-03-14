@@ -36,138 +36,85 @@ struct PlayerPanelView: View {
         game.gameMode == .mirchi
     }
 
-    private var slotSize: CGFloat {
-        min(slotSizeFromHeight, slotSizeFromWidth)
-    }
-
     private var horizontalPadding: CGFloat {
         max(4, panelWidth * 0.012)
     }
 
-    // 3 equal columns: Tools / Dice / Score
-    private var thirdWidth: CGFloat {
-        max(0, (panelWidth - (horizontalPadding * 2)) / 3.0)
+    private var verticalPadding: CGFloat {
+        max(6, panelHeight * 0.08)
     }
 
-    private var sectionInnerSpacing: CGFloat {
-        max(2, thirdWidth * 0.05)
+    private var panelInnerWidth: CGFloat {
+        max(1, panelWidth - (horizontalPadding * 2))
     }
 
-    private var sectionHorizontalInset: CGFloat {
-        max(2, thirdWidth * 0.05)
+    private var panelInnerHeight: CGFloat {
+        max(1, panelHeight - (verticalPadding * 2))
     }
 
-    private var notchWidth: CGFloat {
-        max(28, min(thirdWidth * 0.86, panelHeight * 0.72))
+    // Panel interior proportions: Boost 30% | Dice 40% | Mirchi 30%
+    private var boostSectionWidth: CGFloat { panelInnerWidth * 0.30 }
+    private var diceSectionWidth: CGFloat { panelInnerWidth * 0.40 }
+    private var mirchiSectionWidth: CGFloat { panelInnerWidth * 0.30 }
+
+    private var actionSlotSize: CGFloat {
+        min(boostSectionWidth * 0.84, panelInnerHeight * 0.78)
     }
 
-    private var sectionContentWidth: CGFloat {
-        max(0, thirdWidth - (sectionHorizontalInset * 2))
+    private var sideButtonSize: CGFloat {
+        actionSlotSize * 0.84
     }
 
-    private var slotSizeFromWidth: CGFloat {
-        max(14, (sectionContentWidth - sectionInnerSpacing) / 2)
+    private var diceSize: CGFloat {
+        min(diceSectionWidth * 0.96, panelInnerHeight * 0.98)
     }
 
-    private var slotSizeFromHeight: CGFloat {
-        min(44, max(20, panelHeight * 0.34))
+    private var scoreIconSize: CGFloat {
+        min(28, max(16, panelHeight * 0.22))
     }
 
-    private var iconSize: CGFloat {
-        slotSize * 0.72
+    private var actionLabelFontSize: CGFloat { min(12, max(8, panelHeight * 0.09)) }
+
+    private var scoreLabelFontSize: CGFloat { min(14, max(10, panelHeight * 0.11)) }
+
+    private var scoreValueFontSize: CGFloat {
+        min(18, max(12, panelHeight * 0.15))
     }
 
-    private var labelFontSize: CGFloat {
-        min(14, max(8, panelHeight * 0.13))
-    }
-
-    private var valueFontSize: CGFloat {
-        min(15, max(9, panelHeight * 0.16))
+    private var actionLabelHeight: CGFloat {
+        max(18, panelInnerHeight * 0.18)
     }
 
     private var badgeSize: CGFloat {
-        min(22, max(12, slotSize * 0.36))
+        min(24, max(12, actionSlotSize * 0.26))
     }
 
-    private var sectionTitleSize: CGFloat {
-        min(14, max(8, panelHeight * 0.13))
+    private var outsideScoreGap: CGFloat {
+        max(8, panelHeight * 0.08)
     }
 
     private var diceScale: CGFloat {
-        min(0.8, max(0.38, notchWidth / 56.0))
+        min(1.0, max(0.5, diceSize / 56.0))
     }
 
     @ViewBuilder
-    private func slotCard<Content: View>(
-        title: String,
-        valueText: String,
-        badgeValue: Int? = nil,
-        badgeActiveThreshold: Int = 1,
-        valueColor: Color = .black,
-        drawContainer: Bool = true,
-        content: () -> Content
-    ) -> some View {
-        VStack(spacing: max(2, panelHeight * 0.03)) {
-            ZStack(alignment: .topTrailing) {
-                if drawContainer {
-                    RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
-                        .fill(Color.white.opacity(0.95))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: max(6, slotSize * 0.22))
-                                .stroke(Color.black.opacity(0.08), lineWidth: 1)
-                        )
-                        .frame(width: slotSize, height: slotSize)
-                }
-
+    private func actionSlot<Content: View>(label: String, width: CGFloat, content: () -> Content) -> some View {
+        VStack {
+            Spacer(minLength: 0)
+            VStack(spacing: max(2, panelHeight * 0.02)) {
                 content()
-                    .frame(width: slotSize, height: slotSize)
-
-                if let badgeValue {
-                    let active = badgeValue >= badgeActiveThreshold
-                    Text("\(badgeValue)")
-                        .font(.system(size: badgeSize * 0.56, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                        .frame(width: badgeSize, height: badgeSize)
-                        .background(Circle().fill(active ? Color.red : Color.gray))
-                        // Keep badge fully inside slot bounds on compact devices.
-                        .padding(.top, max(1, slotSize * 0.03))
-                        .padding(.trailing, max(1, slotSize * 0.03))
-                }
-            }
-
-            Text(title)
-                .font(.system(size: labelFontSize, weight: .semibold, design: .rounded))
-                .foregroundColor(.black.opacity(0.85))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            if !valueText.isEmpty {
-                Text(valueText)
-                    .font(.system(size: valueFontSize, weight: .bold, design: .rounded))
-                    .foregroundColor(valueColor)
+                    .frame(height: actionSlotSize)
+                Text(label)
+                    .font(.system(size: actionLabelFontSize, weight: .semibold, design: .rounded))
+                    .foregroundColor(.black.opacity(0.85))
                     .lineLimit(1)
+                    .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.7)
+                    .frame(height: actionLabelHeight)
             }
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
-    }
-
-    @ViewBuilder
-    private func valueOnlySlot<Content: View>(
-        valueText: String,
-        valueColor: Color = .black,
-        content: () -> Content
-    ) -> some View {
-        VStack(spacing: max(2, panelHeight * 0.03)) {
-            content()
-                .frame(width: slotSize, height: slotSize)
-
-            Text(valueText)
-                .font(.system(size: valueFontSize, weight: .bold, design: .rounded))
-                .foregroundColor(valueColor)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
+        .frame(width: width, height: panelInnerHeight)
     }
 
     @ViewBuilder
@@ -176,11 +123,7 @@ struct PlayerPanelView: View {
         let isUsed = state == .used || boostRemaining <= 0
         let isActive = state == .armed
         let isEnabled = !isUsed && canUseBoost(for: color) && game.boostAbility(for: color) != nil
-        slotCard(
-            title: "Boost",
-            valueText: "",
-            drawContainer: false
-        ) {
+        actionSlot(label: "Boost", width: boostSectionWidth) {
             Button(action: {
                 guard isEnabled else { return }
                 game.tapBoost(color: color)
@@ -188,14 +131,15 @@ struct PlayerPanelView: View {
             }) {
                 BoostIconTileView(
                     ability: game.boostAbility(for: color),
-                    tileSize: slotSize,
-                    iconSize: iconSize,
+                    tileSize: sideButtonSize,
+                    iconSize: sideButtonSize * 0.5,
                     badgeValue: max(0, boostRemaining),
                     badgeSize: badgeSize,
                     isUsed: isUsed,
                     isActive: isActive,
                     isEnabled: isEnabled,
-                    highlightActiveBorder: true
+                    highlightActiveBorder: true,
+                    highlightColor: color.primaryColor
                 )
             }
             .buttonStyle(PlainButtonStyle())
@@ -211,19 +155,20 @@ struct PlayerPanelView: View {
             && game.currentPlayer == color
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy
-        slotCard(title: "Mirchi", valueText: "", drawContainer: false) {
+        actionSlot(label: "Backward hop", width: mirchiSectionWidth) {
             Button(action: {
                 guard isEnabled else { return }
                 game.mirchiArrowActivated[color]?.toggle()
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }) {
                 MirchiTileView(
-                    tileSize: slotSize,
-                    iconSize: iconSize,
+                    tileSize: sideButtonSize,
+                    iconSize: sideButtonSize * 0.5,
                     badgeValue: max(0, mirchiRemaining),
                     badgeSize: badgeSize,
                     isActive: isMirchiActive,
-                    isEnabled: isEnabled
+                    isEnabled: isEnabled,
+                    highlightColor: color.primaryColor
                 )
             }
             .buttonStyle(PlainButtonStyle())
@@ -232,39 +177,43 @@ struct PlayerPanelView: View {
     }
 
     @ViewBuilder
+    private func scoreRowSlot(label: String, value: Int, icon: some View) -> some View {
+        VStack(spacing: max(2, panelHeight * 0.016)) {
+            Text(label)
+                .font(.system(size: scoreLabelFontSize, weight: .semibold, design: .rounded))
+                .foregroundColor(.black.opacity(0.85))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            HStack(spacing: 6) {
+                icon
+                    .frame(width: scoreIconSize, height: scoreIconSize)
+                Text("\(value)")
+                    .font(.system(size: scoreValueFontSize, weight: .bold, design: .rounded))
+                    .foregroundColor(.black)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
     private func pawnScoreSlot() -> some View {
         let avatarName = game.selectedAvatar(for: color)
-        valueOnlySlot(
-            valueText: "\(game.scores[color] ?? 0)"
-        ) {
-            AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
-                .frame(width: iconSize, height: iconSize)
-        }
+        scoreRowSlot(
+            label: "Total points",
+            value: game.scores[color] ?? 0,
+            icon: AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
+        )
     }
 
     @ViewBuilder
     private func killsSlot() -> some View {
-        valueOnlySlot(
-            valueText: "\(game.killCounts[color] ?? 0)"
-        ) {
-            Image("skull_cute")
+        scoreRowSlot(
+            label: "Total kills",
+            value: game.killCounts[color] ?? 0,
+            icon: Image("skull_cute")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: iconSize, height: iconSize)
-        }
-    }
-
-    @ViewBuilder
-    private func sectionTitle(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: sectionTitleSize, weight: .heavy, design: .rounded))
-            .foregroundColor(color.primaryColor.opacity(0.9))
-            .padding(.horizontal, max(4, panelHeight * 0.06))
-            .padding(.vertical, max(1, panelHeight * 0.02))
-            .background(
-                RoundedRectangle(cornerRadius: max(6, panelHeight * 0.12))
-                    .fill(Color.white.opacity(0.75))
-            )
+        )
     }
 
     private var canRoll: Bool {
@@ -278,85 +227,61 @@ struct PlayerPanelView: View {
     }
 
     @ViewBuilder
-    private func toolsSlots() -> some View {
-        HStack(spacing: sectionInnerSpacing) {
-            boostSlot()
-            mirchiSlot()
-        }
-    }
+    private func diceSlot() -> some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.97))
+                    .overlay(Circle().stroke(color.primaryColor.opacity(0.45), lineWidth: max(1, panelHeight * 0.03)))
+                    .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
+                    .frame(width: diceSize, height: diceSize)
 
-    @ViewBuilder
-    private func scoreSlots() -> some View {
-        HStack(spacing: sectionInnerSpacing) {
-            pawnScoreSlot()
-            killsSlot()
-        }
-    }
-
-    @ViewBuilder
-    private func leftSection() -> some View {
-        VStack(spacing: max(2, panelHeight * 0.03)) {
-            sectionTitle("Tools")
-            toolsSlots()
-        }
-        .padding(.horizontal, sectionHorizontalInset)
-        .frame(width: thirdWidth, alignment: .center)
-    }
-
-    @ViewBuilder
-    private func rightSection() -> some View {
-        VStack(spacing: max(2, panelHeight * 0.03)) {
-            sectionTitle("Score")
-            scoreSlots()
-        }
-        .padding(.horizontal, sectionHorizontalInset)
-        .frame(width: thirdWidth, alignment: .center)
-    }
-
-    @ViewBuilder
-    private func diceNotch() -> some View {
-        ZStack {
-            Circle()
-                .fill(Color.white.opacity(0.97))
-                .overlay(Circle().stroke(color.primaryColor.opacity(0.45), lineWidth: max(1, panelHeight * 0.03)))
-                .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
-                .frame(width: notchWidth * 0.88, height: notchWidth * 0.88)
-
-            if showDice {
-                DiceView(
-                    value: diceValue,
-                    isRolling: isDiceRolling || localDiceRolling,
-                    shouldPulse: canRoll,
-                    onTap: {
-                        if !game.aiControlledPlayers.contains(color) {
-                            onDiceTap()
+                if showDice {
+                    DiceView(
+                        value: diceValue,
+                        isRolling: isDiceRolling || localDiceRolling,
+                        shouldPulse: canRoll,
+                        onTap: {
+                            if !game.aiControlledPlayers.contains(color) {
+                                onDiceTap()
+                            }
                         }
-                    }
-                )
-                .marchingLightsBorder(
-                    isActive: canRoll,
-                    cornerRadius: 12,
-                    color: color.primaryColor
-                )
-                .id(canRoll)
-                .scaleEffect(diceScale)
+                    )
+                    .marchingLightsBorder(
+                        isActive: canRoll,
+                        cornerRadius: 12,
+                        color: color.primaryColor
+                    )
+                    .id(canRoll)
+                    .scaleEffect(diceScale)
+                }
             }
         }
-        .frame(width: thirdWidth, alignment: .center)
+        .frame(width: diceSectionWidth, height: panelInnerHeight, alignment: .center)
     }
 
     @ViewBuilder
     private func panelContent() -> some View {
         HStack(spacing: 0) {
-            leftSection()
-            diceNotch()
-            rightSection()
+            boostSlot()
+            diceSlot()
+            mirchiSlot()
         }
         .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, max(2, panelHeight * 0.03))
+        .padding(.vertical, verticalPadding)
     }
 
-    var body: some View {
+    @ViewBuilder
+    private func scoreContentOutsidePanel() -> some View {
+        HStack(spacing: max(8, panelWidth * 0.04)) {
+            pawnScoreSlot()
+            killsSlot()
+        }
+        .padding(.horizontal, max(8, panelWidth * 0.08))
+    }
+
+    @ViewBuilder
+    private func panelShell() -> some View {
         ZStack {
             if game.selectedPlayers.contains(color) {
                 RoundedRectangle(cornerRadius: max(12, panelHeight * 0.22))
@@ -369,20 +294,27 @@ struct PlayerPanelView: View {
             }
         }
         .frame(width: panelWidth, height: panelHeight)
-        // Enforce exact 6-cell panel bounds (content must not visually spill outside).
         .clipShape(RoundedRectangle(cornerRadius: max(12, panelHeight * 0.22)))
-        // Base border for selected players
         .overlay(
             RoundedRectangle(cornerRadius: max(12, panelHeight * 0.22))
                 .stroke(game.selectedPlayers.contains(color) ? color.toSwiftUIColor(for: color) : Color.clear, lineWidth: 2)
         )
-        // Additional halo to highlight current player
         .overlay(
             RoundedRectangle(cornerRadius: max(13, panelHeight * 0.24))
                 .stroke(game.currentPlayer == color ? color.toSwiftUIColor(for: color) : Color.clear, lineWidth: max(2, panelHeight * 0.04))
                 .shadow(color: color.toSwiftUIColor(for: color).opacity(game.currentPlayer == color ? 0.7 : 0), radius: 6)
         )
         .shadow(color: .black.opacity(game.selectedPlayers.contains(color) ? 0.3 : 0), radius: 5, x: 0, y: 5)
+    }
+
+    var body: some View {
+        panelShell()
+            .overlay(alignment: .top) {
+                if game.selectedPlayers.contains(color) {
+                    scoreContentOutsidePanel()
+                        .padding(.top, panelHeight + outsideScoreGap)
+                }
+            }
         .onChange(of: game.rollID) { _ in
             if showDice && !isDiceRolling && !localDiceRolling {
                 localDiceRolling = true

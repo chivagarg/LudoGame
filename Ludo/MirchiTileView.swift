@@ -8,17 +8,18 @@ struct MirchiTileView: View {
     var isActive: Bool = false
     var isEnabled: Bool = true
     var inactiveBadgeColor: Color = .gray
+    var highlightColor: Color = .red
 
-    private var cornerRadius: CGFloat { max(6, tileSize * 0.22) }
+    private var cornerRadius: CGFloat { tileSize / 2 }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            RoundedRectangle(cornerRadius: cornerRadius)
+            Circle()
                 .fill(Color.white.opacity(0.95))
                 .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                    Circle().stroke(highlightColor.opacity(0.45), lineWidth: max(1, tileSize * 0.045))
                 )
+                .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
                 .frame(width: tileSize, height: tileSize)
 
             Image(PawnAssets.mirchiIndicator)
@@ -30,7 +31,7 @@ struct MirchiTileView: View {
                 .opacity(isEnabled ? (isActive ? 1.0 : 0.75) : 0.45)
                 .grayscale(isEnabled ? 0 : 1)
                 .scaleEffect(isActive ? 1.08 : 1.0)
-                .marchingLightsBorder(isActive: isActive, cornerRadius: cornerRadius, color: .red)
+                .marchingLightsBorder(isActive: isActive, cornerRadius: cornerRadius, color: highlightColor)
 
             let active = badgeValue >= 1
             Text("\(badgeValue)")
