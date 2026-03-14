@@ -557,15 +557,24 @@ struct LudoBoardView: View {
         return ZStack {
             cellBackground(row: row, col: col, cellSize: cellSize)
             
-            // Add Trap Overlay
+            // Add Trap Overlay (custom blue boost)
             if game.trappedZones.contains(Position(row: row, col: col)) {
-                Image(systemName: "flame.fill")
-                    .foregroundColor(.red)
-                    .font(.system(size: cellSize * 0.5))
+                Image(PawnAssets.boostTrap)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: cellSize * 0.62, height: cellSize * 0.62)
                     .allowsHitTesting(false)
             }
-            // Add Star Overlay for generic star spaces OR custom safe zones
-            else if isStarSpace(row: row, col: col) || game.customSafeZones.contains(Position(row: row, col: col)) {
+            // Add Shield Overlay for custom safe zones (green boost)
+            else if game.customSafeZones.contains(Position(row: row, col: col)) {
+                Image(PawnAssets.boostShield)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: cellSize * 0.62, height: cellSize * 0.62)
+                    .allowsHitTesting(false)
+            }
+            // Add star overlay for built-in star spaces only
+            else if isStarSpace(row: row, col: col) {
                 Image(systemName: "star.fill")
                     .foregroundColor(.white.opacity(0.8))
                     .font(.system(size: cellSize * 0.4))
@@ -648,12 +657,6 @@ struct LudoBoardView: View {
                 // Blue Safe Zone
                 } else if col == 7 && (9...13).contains(row) {
                     Rectangle().fill(PlayerColor.blue.primaryColor)
-                } else if game.customSafeZones.contains(Position(row: row, col: col)) {
-                    // Color code custom safe zones based on quadrant
-                    if row <= 7 && col <= 7 { Rectangle().fill(PlayerColor.red.secondaryColor) }
-                    else if row <= 7 && col > 7 { Rectangle().fill(PlayerColor.green.secondaryColor) }
-                    else if row > 7 && col <= 7 { Rectangle().fill(PlayerColor.blue.secondaryColor) }
-                    else { Rectangle().fill(PlayerColor.yellow.secondaryColor) }
                 } else {
                     // Path cells
                     Rectangle().fill(Color.white)

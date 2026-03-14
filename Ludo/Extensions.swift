@@ -124,6 +124,12 @@ public enum PawnAssets {
     // Generic/Other
     static let alien = "avatar_alien"
     static let mirchiIndicator = "mirchi" // UI icon for mirchi moves, not the pawn itself
+
+    // Boost button assets
+    static let boostDice = "boost-dice"      // Yellow reroll boost
+    static let boostTrap = "boost-trap"      // Blue trap boost
+    static let boostShield = "boost-shield"  // Green safe-zone boost
+    static let boostMirchi = "boost-mirchi"  // Red backward-hop boost
     
     // Splash
     static let mirchiSplash = "pawn_mirchi_splash"

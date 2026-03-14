@@ -9,13 +9,14 @@ struct MirchiTileView: View {
     var isEnabled: Bool = true
     var inactiveBadgeColor: Color = .gray
     var highlightColor: Color = .red
+    var backgroundColor: Color = .white
 
     private var cornerRadius: CGFloat { tileSize / 2 }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Circle()
-                .fill(Color.white.opacity(0.95))
+                .fill(backgroundColor.opacity(0.95))
                 .overlay(
                     Circle().stroke(highlightColor.opacity(0.45), lineWidth: max(1, tileSize * 0.045))
                 )

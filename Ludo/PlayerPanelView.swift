@@ -86,7 +86,7 @@ struct PlayerPanelView: View {
     }
 
     private var badgeSize: CGFloat {
-        min(24, max(12, actionSlotSize * 0.26))
+        min(30, max(16, actionSlotSize * 0.34))
     }
 
     private var outsideScoreGap: CGFloat {
@@ -139,7 +139,8 @@ struct PlayerPanelView: View {
                     isActive: isActive,
                     isEnabled: isEnabled,
                     highlightActiveBorder: true,
-                    highlightColor: color.primaryColor
+                    highlightColor: color.primaryColor,
+                    backgroundColor: color.secondaryColor
                 )
             }
             .buttonStyle(PlainButtonStyle())
@@ -168,7 +169,8 @@ struct PlayerPanelView: View {
                     badgeSize: badgeSize,
                     isActive: isMirchiActive,
                     isEnabled: isEnabled,
-                    highlightColor: color.primaryColor
+                    highlightColor: color.primaryColor,
+                    backgroundColor: color.secondaryColor
                 )
             }
             .buttonStyle(PlainButtonStyle())
