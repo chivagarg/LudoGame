@@ -174,18 +174,18 @@ struct StartGameView: View {
             .overlay(
                 HStack {
                     VStack(alignment: .leading, spacing: isCompact ? 8 : 10) {
-                        Text("It's time to play")
+                        Text(GameCopy.StartGame.heroKicker)
                             .font(isCompact ? .headline : .title3)
                             .fontWeight(.semibold)
                             .foregroundColor(.black)
 
-                        Text("Ludo Mirchi!")
+                        Text(GameCopy.StartGame.heroTitle)
                             .font(.system(size: heroTitleSize, weight: .black))
                             .foregroundColor(.black)
                             .minimumScaleFactor(0.7)
                             .lineLimit(1)
 
-                        Text("Each player gets 5 mirchis to hop backwards. Catch your opponents before they catch you.")
+                        Text(GameCopy.StartGame.heroDescription)
                             .font(isCompact ? .callout : .body)
                             .foregroundColor(.black.opacity(0.7))
                             .fixedSize(horizontal: false, vertical: true)
@@ -216,7 +216,7 @@ struct StartGameView: View {
             let progressFraction = min(1.0, CGFloat(progress.current) / CGFloat(max(1, progress.target)))
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("You’re on your way to unlocking a new pawn!")
+                Text(GameCopy.StartGame.unlockProgressTitle)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.black)
 
@@ -224,7 +224,7 @@ struct StartGameView: View {
 
                 let nextTwo = Array(upcoming.dropFirst().prefix(2))
                 if !nextTwo.isEmpty {
-                    Text("Next up")
+                    Text(GameCopy.StartGame.nextUp)
                         .font(.system(size: 30, weight: .regular))
                         .foregroundColor(.black.opacity(0.9))
                         .padding(.top, 4)
@@ -235,7 +235,7 @@ struct StartGameView: View {
                 }
             }
         } else {
-            Text("All pawns unlocked!")
+            Text(GameCopy.StartGame.allUnlocked)
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.black)
         }
@@ -285,7 +285,7 @@ struct StartGameView: View {
 
                 Spacer(minLength: 10)
 
-                Button("Unlock Now!") {
+                Button(GameCopy.Common.unlockNow) {
                     purchaseTargetPawn = pawnName
                     withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
                         showPurchaseModal = true
@@ -306,7 +306,7 @@ struct StartGameView: View {
             }
 
             if showProgress, let progressText {
-                Text("Almost there! \(progressText)")
+                Text(GameCopy.StartGame.almostThere(progressText))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.gray)
                     .padding(.top, 2)

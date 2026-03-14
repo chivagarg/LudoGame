@@ -223,7 +223,7 @@ struct LudoBoardView: View {
                             .onTapGesture { game.showError = false }
                         
                         VStack(spacing: 20) {
-                            Text("Invalid Move")
+                            Text(GameCopy.Common.invalidMoveTitle)
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
@@ -238,7 +238,7 @@ struct LudoBoardView: View {
                             Button(action: {
                                 game.showError = false
                             }) {
-                                Text("OK")
+                                Text(GameCopy.Common.ok)
                                     .font(.headline)
                                     .foregroundColor(.white)
                                     .padding()

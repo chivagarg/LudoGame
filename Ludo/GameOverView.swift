@@ -112,7 +112,7 @@ struct GameOverView: View {
                                 .foregroundColor(.white)
                                 .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 3)
                         }
-                        Text("+\(max(0, game.lastCoinAward)) coins earned")
+                        Text(GameCopy.GameOver.coinsEarned(game.lastCoinAward))
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .foregroundColor(.white.opacity(0.85))
                     }
@@ -171,12 +171,12 @@ struct GameOverView: View {
 
     private var headlineBlock: some View {
         VStack(spacing: 4) {
-            Text("Game Over")
+            Text(GameCopy.GameOver.title)
                 .font(.custom("BeVietnamPro-Bold", size: 48))
                 .foregroundColor(.black)
                 .minimumScaleFactor(0.75)
                 .lineLimit(1)
-            Text("Final Standings")
+            Text(GameCopy.GameOver.subtitle)
                 .font(.custom("Inter-Regular", size: 15))
                 .foregroundColor(.black.opacity(0.45))
         }
@@ -187,7 +187,7 @@ struct GameOverView: View {
     private func winnerCard(winner: PlayerColor, geo: GeometryProxy) -> some View {
         VStack(spacing: 12) {
             // Winner badge pill
-            Text("Winner")
+            Text(GameCopy.GameOver.winner)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundColor(winner.primaryColor)
                 .padding(.horizontal, 14)
@@ -252,7 +252,7 @@ struct GameOverView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 44, height: 44)
-                Text("\(averageRolls[color] ?? 0, specifier: "%.1f") avg roll")
+                Text(GameCopy.GameOver.avgRoll(averageRolls[color] ?? 0))
                     .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundColor(.black.opacity(0.4))
             }
@@ -273,7 +273,7 @@ struct GameOverView: View {
             }
 
             // Score
-            Text("\(displayScore) pts")
+            Text(GameCopy.GameOver.points(displayScore))
                 .font(.system(size: 17, weight: .bold, design: .rounded))
                 .foregroundColor(.black)
                 .frame(minWidth: 60, alignment: .trailing)
@@ -327,7 +327,7 @@ struct GameOverView: View {
             }
 
             Button(action: onExitGame) {
-                Text("Exit Game")
+                Text(GameCopy.GameOver.exitGame)
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 0x7C/255, green: 0x5C/255, blue: 0xD6/255))

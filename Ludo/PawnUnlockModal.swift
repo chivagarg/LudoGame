@@ -75,7 +75,7 @@ struct PawnUnlockModal: View {
                 .frame(height: 240)
 
                 if revealPawn {
-                    Text("Find \(details.title) in the pawn selection in your next game!")
+                    Text(GameCopy.PawnUnlockModal.whereToFind(details.title))
                         .boostDescriptionTextStyle()
                         .foregroundColor(.black.opacity(0.7))
                         .multilineTextAlignment(.center)
@@ -112,7 +112,7 @@ struct PawnUnlockModal: View {
 
     private var titleBlock: some View {
         VStack(spacing: 8) {
-            Text("You've unlocked \(details.title)!")
+            Text(GameCopy.PawnUnlockModal.unlockedTitle(details.title))
                 .font(.system(size: 40, weight: .bold))
                 .foregroundColor(.black)
                 .multilineTextAlignment(.center)
@@ -142,7 +142,7 @@ struct PawnUnlockModal: View {
                 .font(.system(size: 44, weight: .black, design: .rounded))
                 .foregroundColor(.orange)
 
-            Text("coins")
+            Text(GameCopy.Common.coins)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundColor(.gray)
         }
@@ -195,7 +195,7 @@ struct PawnUnlockModal: View {
     }
 
     private var playNowButton: some View {
-        Button("Play now") {
+        Button(GameCopy.Common.playNow) {
             onPlayNow()
         }
         .font(.system(size: 19, weight: .medium))

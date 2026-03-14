@@ -17,7 +17,7 @@ struct SettingsTableView: View {
     }
     
     private var header: some View {
-        Text("Game Settings")
+        Text(GameCopy.Settings.title)
             .font(.headline)
             .foregroundColor(.blue)
             .padding(.bottom, 8)
@@ -38,11 +38,11 @@ struct SettingsTableView: View {
     
     private var tableHeader: some View {
         HStack {
-            Text("Mode")
+            Text(GameCopy.Settings.mode)
                 .font(.subheadline)
                 .foregroundColor(.green)
             Spacer()
-            Text("Status")
+            Text(GameCopy.Settings.status)
                 .font(.subheadline)
                 .foregroundColor(.yellow)
         }
@@ -53,7 +53,7 @@ struct SettingsTableView: View {
     
     private var adminModeRow: some View {
         HStack {
-            Text("Admin Mode")
+            Text(GameCopy.Settings.adminMode)
                 .font(.body)
                 .foregroundColor(PlayerColor.red.primaryColor)
             Spacer()

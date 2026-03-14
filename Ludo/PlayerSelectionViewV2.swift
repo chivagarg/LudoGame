@@ -284,7 +284,7 @@ struct PlayerSelectionViewV2: View {
     private func leftColumn(metrics m: LayoutMetrics) -> some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Game options")
+                Text(GameCopy.PlayerSelection.gameOptions)
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
@@ -294,7 +294,7 @@ struct PlayerSelectionViewV2: View {
                         Button(action: {
                             withAnimation { playerCount = count }
                         }) {
-                            Text("\(count) Players")
+                            Text(GameCopy.PlayerSelection.playersCount(count))
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .frame(maxWidth: .infinity)
@@ -307,7 +307,7 @@ struct PlayerSelectionViewV2: View {
                 .cornerRadius(8)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.purple.opacity(0.3), lineWidth: 1))
 
-                Text("Select your pawns")
+                Text(GameCopy.PlayerSelection.selectPawns)
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.black)
@@ -325,13 +325,13 @@ struct PlayerSelectionViewV2: View {
             .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
 
             VStack(alignment: .leading, spacing: 16) {
-                Text("\(selectedPlayerDisplayName) pawn")
+                Text(GameCopy.PlayerSelection.selectedPawnTitle(selectedPlayerDisplayName))
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
 
                 HStack {
-                    Text("Pawns")
+                    Text(GameCopy.PlayerSelection.pawnsTab)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
                         .background(Color.purple.opacity(0.1))
@@ -454,7 +454,7 @@ struct PlayerSelectionViewV2: View {
             Group {
                 if m.rowCompact {
                     VStack(spacing: 4) {
-                        Text("Robot")
+                        Text(GameCopy.Common.robot)
                             .font(.caption)
                             .foregroundColor(.black.opacity(0.7))
                         Toggle("", isOn: Binding(
@@ -474,7 +474,7 @@ struct PlayerSelectionViewV2: View {
                         .labelsHidden()
                         .toggleStyle(SwitchToggleStyle(tint: .purple))
 
-                        Text("Robot")
+                        Text(GameCopy.Common.robot)
                             .font(.subheadline)
                             .foregroundColor(.black.opacity(0.7))
                     }

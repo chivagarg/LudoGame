@@ -9,14 +9,14 @@ struct SplashScreenView: View {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
                 HStack(alignment: .firstTextBaseline, spacing: 0) {
-                    Text("m")
+                    Text(GameCopy.Splash.leading)
                     Image(PawnAssets.mirchiSplash)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(height: fontSize)
                         .padding(.horizontal, -fontSize * 0.15)
                         .offset(y: fontSize * 0.15 + (isBouncing ? -fontSize * 0.2 : 0))
-                    Text("rchi labs")
+                    Text(GameCopy.Splash.trailing)
                 }
                 .font(.custom("Chalkboard SE", size: fontSize))
                 .foregroundColor(.red)

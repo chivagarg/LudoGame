@@ -143,7 +143,7 @@ struct CoinPurchaseModal: View {
                 .font(.system(size: 36, weight: .black, design: .rounded))
                 .foregroundColor(.orange)
 
-            Text("coins")
+            Text(GameCopy.Common.coins)
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(.gray)
         }
@@ -171,7 +171,7 @@ struct CoinPurchaseModal: View {
 
     private var neededCoinsLine: some View {
         let needed = max(0, unlockCost - currentCoinBalance)
-        return Text("You need \(formattedCoins(needed)) more coins to unlock this pawn. Keep playing, or you can buy now to unlock immediately.")
+        return Text(GameCopy.CoinPurchaseModal.neededCoins(formattedCoins(needed)))
             .font(.system(size: 13, weight: .medium))
             .foregroundColor(.gray)
             .multilineTextAlignment(.center)
@@ -181,11 +181,11 @@ struct CoinPurchaseModal: View {
 
     private var buyButtonLabel: String {
         let price = CoinPurchaseConfig.formattedDirectUnlockPrice(pawnName: pawnName)
-        return "Buy and unlock now for \(price)"
+        return GameCopy.CoinPurchaseModal.buyAndUnlockNow(price: price)
     }
 
     private var phaseLabel: some View {
-        Text("Unlocking \(details.title)…")
+        Text(GameCopy.CoinPurchaseModal.unlocking(details.title))
             .font(.system(size: 15, weight: .semibold, design: .rounded))
             .foregroundColor(.gray)
             .padding(.vertical, 8)

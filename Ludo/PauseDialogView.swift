@@ -7,9 +7,9 @@ struct PauseDialogView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            dialogButton(label: "Resume", systemImage: "play.fill", color: .blue, action: onResume)
-            dialogButton(label: "Restart", systemImage: "arrow.clockwise", color: .orange, action: onRestart)
-            dialogButton(label: "Exit Game", systemImage: "rectangle.portrait.and.arrow.right", color: .red, action: onExit)
+            dialogButton(label: GameCopy.PauseDialog.resume, systemImage: "play.fill", color: .blue, action: onResume)
+            dialogButton(label: GameCopy.PauseDialog.restart, systemImage: "arrow.clockwise", color: .orange, action: onRestart)
+            dialogButton(label: GameCopy.PauseDialog.exitGame, systemImage: "rectangle.portrait.and.arrow.right", color: .red, action: onExit)
         }
         .padding(32)
         .background(RoundedRectangle(cornerRadius: 24).fill(Color.white))

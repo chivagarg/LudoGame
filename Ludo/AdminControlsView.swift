@@ -78,13 +78,13 @@ struct AdminControlsView: View {
                         .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.95)))
 
                         HStack(spacing: 6) {
-                            TextField("Coins", text: $coinInput)
+                            TextField(GameCopy.Admin.coinsPlaceholder, text: $coinInput)
                                 .keyboardType(.numberPad)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .font(.footnote)
                                 .frame(width: 74)
 
-                            Button("Set") {
+                            Button(GameCopy.Admin.set) {
                                 let amount = max(0, Int(coinInput.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0)
                                 onSetCoins(amount)
                                 coinInput = String(amount)
@@ -107,7 +107,7 @@ struct AdminControlsView: View {
 
             // Keep critical actions always visible on compact screens.
             HStack(spacing: 8) {
-                Button("End Game") {
+                Button(GameCopy.Admin.endGame) {
                     onEndGame(parsedScores())
                 }
                 .font(.footnote.bold())
@@ -117,7 +117,7 @@ struct AdminControlsView: View {
                 .foregroundColor(.white)
                 .cornerRadius(8)
 
-                Button("Reset Unlocks") {
+                Button(GameCopy.Admin.resetUnlocks) {
                     onResetUnlocks()
                 }
                 .font(.footnote.bold())
@@ -131,8 +131,8 @@ struct AdminControlsView: View {
                     if #available(iOS 16.0, *) {
                         ShareLink(
                             item: logFileURL,
-                            subject: Text("Ludo Game Log"),
-                            message: Text("Here is the log from the last Ludo game session."),
+                            subject: Text(GameCopy.Admin.shareLogSubject),
+                            message: Text(GameCopy.Admin.shareLogMessage),
                             label: {
                                 Image(systemName: "square.and.arrow.up")
                                     .font(.footnote.bold())

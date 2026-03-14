@@ -645,21 +645,21 @@ class LudoGame: ObservableObject {
         // Constraint: Cannot deploy on any safe position (Start, Finish, Home, Stars, or existing Shield)
         // reusing isSafePosition automatically factors in all these cases.
         if isSafePosition(position) {
-            errorMessage = "This spot is ineligible to deploy (Safe Zone)"
+            errorMessage = GameCopy.DeploymentErrors.ineligibleSafeZone
             showError = true
             return
         }
         
         // Constraint: Cannot deploy in starting home areas (colored corners)
         if isStartingHomeArea(position) {
-            errorMessage = "This spot is ineligible to deploy (Starting Home)"
+            errorMessage = GameCopy.DeploymentErrors.ineligibleStartingHome
             showError = true
             return
         }
         
         // Constraint: Cannot deploy on a Trap
         if trappedZones.contains(position) {
-            errorMessage = "This spot is ineligible to deploy (Trap is present)"
+            errorMessage = GameCopy.DeploymentErrors.ineligibleTrapPresent
             showError = true
             return
         }
@@ -670,7 +670,7 @@ class LudoGame: ObservableObject {
             for pawn in playerPawns {
                 if let index = pawn.positionIndex, index >= 0, index < playerPath.count {
                     if playerPath[index] == position {
-                        errorMessage = "This spot is ineligible to deploy (Occupied by Pawn)"
+                        errorMessage = GameCopy.DeploymentErrors.ineligibleOccupied
                         showError = true
                         return
                     }
