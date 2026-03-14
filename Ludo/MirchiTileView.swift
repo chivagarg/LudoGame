@@ -5,6 +5,7 @@ struct MirchiTileView: View {
     let iconSize: CGFloat
     let badgeValue: Int
     let badgeSize: CGFloat
+    let backArrowAssetName: String
     var isActive: Bool = false
     var isEnabled: Bool = true
     var inactiveBadgeColor: Color = .gray
@@ -23,10 +24,19 @@ struct MirchiTileView: View {
                 .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
                 .frame(width: tileSize, height: tileSize)
 
-            Image(PawnAssets.mirchiIndicator)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: iconSize, height: iconSize)
+            ZStack {
+                Image(backArrowAssetName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize * 0.56, height: iconSize * 0.56)
+                    .offset(x: -iconSize * 0.22, y: -iconSize * 0.12)
+
+                Image(PawnAssets.mirchiIndicator)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize * 1.04, height: iconSize * 1.04)
+                    .offset(x: iconSize * 0.22, y: iconSize * 0.14)
+            }
                 .frame(width: tileSize, height: tileSize)
                 .saturation(isActive ? 1.0 : 0.4)
                 .opacity(isEnabled ? (isActive ? 1.0 : 0.75) : 0.45)

@@ -167,6 +167,7 @@ struct PlayerPanelView: View {
                     iconSize: sideButtonSize * 0.5,
                     badgeValue: max(0, mirchiRemaining),
                     badgeSize: badgeSize,
+                    backArrowAssetName: PawnAssets.backArrow(for: color),
                     isActive: isMirchiActive,
                     isEnabled: isEnabled,
                     highlightColor: color.primaryColor,

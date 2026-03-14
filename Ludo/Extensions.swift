@@ -130,6 +130,12 @@ public enum PawnAssets {
     static let boostTrap = "boost-trap"      // Blue trap boost
     static let boostShield = "boost-shield"  // Green safe-zone boost
     static let boostMirchi = "boost-mirchi"  // Red backward-hop boost
+
+    // Mirchi backward-arrow overlays by player color
+    static let backRed = "back-red"
+    static let backGreen = "back-green"
+    static let backYellow = "back-yellow"
+    static let backBlue = "back-blue"
     
     // Splash
     static let mirchiSplash = "pawn_mirchi_splash"
@@ -163,6 +169,15 @@ public enum PawnAssets {
 
     static func hasBoost(for avatarName: String) -> Bool {
         boostUses(for: avatarName) > 0
+    }
+
+    static func backArrow(for color: PlayerColor) -> String {
+        switch color {
+        case .red: return backRed
+        case .green: return backGreen
+        case .yellow: return backYellow
+        case .blue: return backBlue
+        }
     }
 }
 
