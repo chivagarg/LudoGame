@@ -123,6 +123,13 @@ enum GameCopy {
         static let exitGame = "Exit Game"
     }
 
+    enum PlayerPanel {
+        static let boostLabel = "Boost"
+        static let mirchiModeLabel = "Mirchi mode"
+        static let totalPointsLabel = "Total points"
+        static let totalKillsLabel = "Total kills"
+    }
+
     enum Admin {
         static let coinsPlaceholder = "Coins"
         static let set = "Set"

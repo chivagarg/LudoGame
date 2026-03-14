@@ -168,7 +168,7 @@ struct PlayerPanelView: View {
         let isActive = state == .armed
         let isEnabled = !isUsed && canUseBoost(for: color) && game.boostAbility(for: color) != nil
         actionSlot(
-            label: "Boost",
+            label: GameCopy.PlayerPanel.boostLabel,
             width: boostSectionWidth,
             showHelp: PawnAssets.hasBoost(for: game.selectedAvatar(for: color)),
             helpEnabled: canOpenBoostHelpIph,
@@ -207,7 +207,7 @@ struct PlayerPanelView: View {
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy
         actionSlot(
-            label: "Move backward",
+            label: GameCopy.PlayerPanel.mirchiModeLabel,
             width: mirchiSectionWidth,
             showHelp: hasMirchiFeature,
             helpEnabled: canOpenMirchiHelpIph,
@@ -258,7 +258,7 @@ struct PlayerPanelView: View {
     private func pawnScoreSlot() -> some View {
         let avatarName = game.selectedAvatar(for: color)
         scoreRowSlot(
-            label: "Total points",
+            label: GameCopy.PlayerPanel.totalPointsLabel,
             value: game.scores[color] ?? 0,
             icon: AvatarIcon(avatarName: avatarName, playerColor: color.primaryColor)
         )
@@ -267,7 +267,7 @@ struct PlayerPanelView: View {
     @ViewBuilder
     private func killsSlot() -> some View {
         scoreRowSlot(
-            label: "Total kills",
+            label: GameCopy.PlayerPanel.totalKillsLabel,
             value: game.killCounts[color] ?? 0,
             icon: Image("skull_cute")
                 .resizable()
