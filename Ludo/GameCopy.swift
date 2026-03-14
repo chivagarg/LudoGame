@@ -11,14 +11,14 @@ enum GameCopy {
     }
 
     enum DeploymentErrors {
-        static let ineligibleSafeZone = "This spot is ineligible to deploy (Safe Zone)"
-        static let ineligibleStartingHome = "This spot is ineligible to deploy (Starting Home)"
-        static let ineligibleTrapPresent = "This spot is ineligible to deploy (Trap is present)"
-        static let ineligibleOccupied = "This spot is ineligible to deploy (Occupied by Pawn)"
+        static let ineligibleSafeZone = "This spot is ineligible to deploy (Safe Zone). Select an unoccupied spot on the board."
+        static let ineligibleStartingHome = "This spot is ineligible to deploy (Starting Home). Select an unoccupied spot on the board."
+        static let ineligibleTrapPresent = "This spot is ineligible to deploy (Trap is present). Select an unoccupied spot on the board."
+        static let ineligibleOccupied = "This spot is ineligible to deploy (Occupied by Pawn). Select an unoccupied spot on the board."
     }
 
     enum MirchiErrors {
-        static let cannotGoPastStart = "You cannot move backward past the starting position."
+        static let cannotGoPastStart = "You cannot move backward past the starting position. Disable the Mirchi to move forward."
         static let cannotMoveBackwardInEndingStrip = "You cannot move backward while this pawn is in the ending safety strip."
     }
 
