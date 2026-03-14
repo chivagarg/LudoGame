@@ -12,6 +12,7 @@ struct InProductHelpBubbleView: View {
     let icon: HelpBubbleIcon
     let title: String
     let message: String
+    var iconBadgeValue: Int? = nil
     var primaryButtonTitle: String? = nil
     var onPrimaryAction: (() -> Void)? = nil
     let onClose: () -> Void
@@ -101,13 +102,13 @@ struct InProductHelpBubbleView: View {
                     ability: ability,
                     tileSize: 74,
                     iconSize: 46,
-                    badgeValue: 0,
-                    badgeSize: 0,
+                    badgeValue: iconBadgeValue ?? 0,
+                    badgeSize: 24,
                     isUsed: false,
                     isActive: false,
                     isEnabled: true,
                     highlightActiveBorder: false,
-                    showBadge: false,
+                    showBadge: iconBadgeValue != nil,
                     highlightColor: highlightColor(for: name),
                     backgroundColor: .white
                 )

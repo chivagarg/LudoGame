@@ -11,9 +11,19 @@ struct Position: Equatable, Hashable {
     var col: Int
 }
 
+struct PawnBoostIphPayload: Equatable {
+    let pawnName: String
+    let boostIconAssetName: String
+    let badgeValue: Int
+    let title: String
+    let message: String
+}
+
 class LudoGame: ObservableObject {
     private static let firstRunMirchiGamesStartedKey = "firstRunMirchiGamesStartedKey"
     private static let firstRunMirchiMaxShows = 3
+    private static let pawnBoostIphShowCountPrefix = "pawnBoostIphShowCount."
+    private static let pawnBoostIphMaxShows = 3
     
     @Published var currentPlayer: PlayerColor = .red
     @Published var diceValue: Int = 1
@@ -38,6 +48,9 @@ class LudoGame: ObservableObject {
     @Published var errorIconAssetName: String? = nil
     @Published var showError: Bool = false
     @Published var showMirchiModeIph: Bool = false
+    @Published var pawnBoostIphPayload: PawnBoostIphPayload? = nil
+
+    private var shownPawnBoostIphThisGame: Set<String> = []
     
     // Custom safe zones created by players via boosts.
     // Stores positions that are now considered safe for all players.
@@ -464,6 +477,7 @@ class LudoGame: ObservableObject {
         // Note: If the loop completed because all selected players are done, currentPlayer will be the same.
         currentPlayer = nextPlayer
         GameLogger.shared.log("🔄 [TURN] New current player is \(currentPlayer.rawValue)")
+        maybePresentPawnBoostIphForCurrentTurn()
 
         // State clearing logic (kept consistent with original placement)
         if clearRoll {
@@ -525,6 +539,8 @@ class LudoGame: ObservableObject {
         gameStarted = true
         markGameStartedForMirchiIph()
         currentPlayer = selectedPlayers.first! // Set current player to the first selected player (assuming at least one selected)
+        shownPawnBoostIphThisGame.removeAll()
+        pawnBoostIphPayload = nil
         eligiblePawns.removeAll()
         currentRollPlayer = nil
         isGameOver = false
@@ -559,6 +575,7 @@ class LudoGame: ObservableObject {
             allPawns[color] = (0..<GameConstants.pawnsPerPlayer).map { PawnState(id: $0, color: color, positionIndex: GameConstants.homePawnIndex) }
         }
         self.pawns = allPawns
+        maybePresentPawnBoostIphForCurrentTurn()
         
         handleAITurn()
     }
@@ -904,7 +921,7 @@ class LudoGame: ObservableObject {
 
     func handleAITurn() {
         // Block AI from acting if the game is busy or paused.
-        if isBusy || isPaused { return }
+        if isBusy || isPaused || showMirchiModeIph || pawnBoostIphPayload != nil { return }
         if aiControlledPlayers.contains(currentPlayer) {
             GameLogger.shared.log("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
             // Add a delay to simulate the AI "thinking" before rolling
@@ -1151,6 +1168,8 @@ class LudoGame: ObservableObject {
         gameStarted = false
         isGameOver = false
         showMirchiModeIph = false
+        pawnBoostIphPayload = nil
+        shownPawnBoostIphThisGame.removeAll()
         didAwardCoinsForCurrentGame = false
         coinBalanceBeforeLastAward = coins
         lastCoinAward = 0
@@ -1326,6 +1345,7 @@ class LudoGame: ObservableObject {
     func adminResetToFirstRun() {
         guard isAdminMode else { return }
         UnlockManager.resetAllPawnUnlocks()
+        clearAllPawnBoostIphCounters()
         UnlockManager.setCoinBalance(0)
         coins = 0
         coinBalanceBeforeLastAward = 0
@@ -1343,12 +1363,20 @@ class LudoGame: ObservableObject {
         errorIconAssetName = nil
         showError = false
         showMirchiModeIph = false
+        pawnBoostIphPayload = nil
+        shownPawnBoostIphThisGame.removeAll()
         resetGame()
         objectWillChange.send()
     }
 
     func dismissMirchiModeIph() {
         showMirchiModeIph = false
+        handleAITurn()
+    }
+
+    func dismissPawnBoostIph() {
+        pawnBoostIphPayload = nil
+        handleAITurn()
     }
 
     private func markGameStartedForMirchiIph() {
@@ -1356,6 +1384,56 @@ class LudoGame: ObservableObject {
         let updated = current + 1
         UserDefaults.standard.set(updated, forKey: Self.firstRunMirchiGamesStartedKey)
         showMirchiModeIph = updated <= Self.firstRunMirchiMaxShows
+    }
+
+    private func maybePresentPawnBoostIphForCurrentTurn() {
+        guard pawnBoostIphPayload == nil else { return }
+        let avatarName = selectedAvatar(for: currentPlayer)
+        guard PawnAssets.hasBoost(for: avatarName) else { return }
+        guard !UnlockManager.isPawnLocked(avatarName) else { return }
+        guard !shownPawnBoostIphThisGame.contains(avatarName) else { return }
+
+        let shownCount = pawnBoostIphShowCount(for: avatarName)
+        guard shownCount < Self.pawnBoostIphMaxShows else { return }
+        guard let boostIcon = boostIconAssetName(for: avatarName) else { return }
+
+        let details = PawnCatalog.details(for: avatarName)
+        let uses = max(1, PawnAssets.boostUses(for: avatarName))
+        pawnBoostIphPayload = PawnBoostIphPayload(
+            pawnName: avatarName,
+            boostIconAssetName: boostIcon,
+            badgeValue: uses,
+            title: GameCopy.PawnBoostIph.title(details.title),
+            message: GameCopy.PawnBoostIph.message(boostDescription: details.description, uses: uses)
+        )
+        shownPawnBoostIphThisGame.insert(avatarName)
+        setPawnBoostIphShowCount(shownCount + 1, for: avatarName)
+    }
+
+    private func boostIconAssetName(for avatarName: String) -> String? {
+        guard let ability = BoostRegistry.ability(for: avatarName) else { return nil }
+        switch ability.kind {
+        case .rerollToSix: return PawnAssets.boostDice
+        case .extraBackwardMove: return PawnAssets.boostMirchi
+        case .safeZone: return PawnAssets.boostShield
+        case .trap: return PawnAssets.boostTrap
+        }
+    }
+
+    private func pawnBoostIphShowCount(for pawnName: String) -> Int {
+        UserDefaults.standard.integer(forKey: Self.pawnBoostIphShowCountPrefix + pawnName)
+    }
+
+    private func setPawnBoostIphShowCount(_ count: Int, for pawnName: String) {
+        UserDefaults.standard.set(max(0, count), forKey: Self.pawnBoostIphShowCountPrefix + pawnName)
+    }
+
+    private func clearAllPawnBoostIphCounters() {
+        let defaults = UserDefaults.standard
+        let keys = defaults.dictionaryRepresentation().keys
+        for key in keys where key.hasPrefix(Self.pawnBoostIphShowCountPrefix) {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     // MARK: - Coin rewards

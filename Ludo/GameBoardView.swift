@@ -99,6 +99,17 @@ struct GameBoardView: View {
                     }
                 )
                 .zIndex(10)
+            } else if let boostIph = game.pawnBoostIphPayload {
+                InProductHelpBubbleView(
+                    icon: .image(boostIph.boostIconAssetName),
+                    title: boostIph.title,
+                    message: boostIph.message,
+                    iconBadgeValue: boostIph.badgeValue,
+                    onClose: {
+                        game.dismissPawnBoostIph()
+                    }
+                )
+                .zIndex(10)
             }
         }
     }

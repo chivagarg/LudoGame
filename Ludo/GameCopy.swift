@@ -75,6 +75,17 @@ enum GameCopy {
         }
     }
 
+    enum PawnBoostIph {
+        static func title(_ pawnTitle: String) -> String {
+            "\(pawnTitle) Boost"
+        }
+
+        static func message(boostDescription: String, uses: Int) -> String {
+            let usesLine = uses == 1 ? "You can use this boost once per game." : "You can use this boost \(uses) times per game."
+            return "\(boostDescription) Tap the Boost button on your turn to use it. \(usesLine)"
+        }
+    }
+
     enum GameOver {
         static let title = "Game Over"
         static let subtitle = "Final Standings"
