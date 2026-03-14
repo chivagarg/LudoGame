@@ -830,6 +830,38 @@ class LudoGame: ObservableObject {
         // Ensure the move does not go past the start of the path
         return positionIndex - diceValue >= GameConstants.startingPathIndex
     }
+
+    /// Returns an IPH-friendly error message when a backward move is invalid for a
+    /// user-facing reason we want to explain in the help bubble.
+    /// Returns nil when the move is valid OR when the failure reason should stay silent.
+    func backwardMoveHelpMessage(color: PlayerColor, pawnId: Int, isBoost: Bool = false) -> String? {
+        // Reuse the same core preconditions as `isValidBackwardMove`.
+        guard color == currentPlayer,
+              color == currentRollPlayer,
+              eligiblePawns.contains(pawnId),
+              (isBoost || mirchiMovesRemaining[color, default: 0] > 0),
+              let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
+              let positionIndex = pawn.positionIndex,
+              positionIndex >= GameConstants.startingPathIndex else {
+            return nil
+        }
+
+        let currentPath = path(for: color)
+        let currentPosition = currentPath[positionIndex]
+        let inEndingSafetyStrip = Self.redSafeZone.contains(currentPosition) ||
+                                  Self.greenSafeZone.contains(currentPosition) ||
+                                  Self.yellowSafeZone.contains(currentPosition) ||
+                                  Self.blueSafeZone.contains(currentPosition)
+        if inEndingSafetyStrip {
+            return GameCopy.MirchiErrors.cannotMoveBackwardInEndingStrip
+        }
+
+        if positionIndex - diceValue < GameConstants.startingPathIndex {
+            return GameCopy.MirchiErrors.cannotGoPastStart
+        }
+
+        return nil
+    }
     
     // Function to get the destination index for a move
     func getDestinationIndex(color: PlayerColor, pawnId: Int, isBackward: Bool = false) -> Int? {

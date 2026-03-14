@@ -1143,7 +1143,12 @@ struct LudoBoardView: View {
             } else {
                 // Backward move requested but invalid.
                 // We do NOT fall through to forward move, as that would be confusing.
-                // Just log it.
+                // Show IPH for user-facing invalid Mirchi backward reasons.
+                if let message = game.backwardMoveHelpMessage(color: color, pawnId: pawn.id, isBoost: isMirchiBoostArmed) {
+                    game.errorMessage = message
+                    game.errorIconAssetName = PawnAssets.boostMirchi
+                    game.showError = true
+                }
                 GameLogger.shared.log("🌶️ [MIRCHI] Backward move invalid for pawn \(pawn.id)", level: .debug)
             }
         } else {

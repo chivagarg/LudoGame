@@ -17,6 +17,11 @@ enum GameCopy {
         static let ineligibleOccupied = "This spot is ineligible to deploy (Occupied by Pawn)"
     }
 
+    enum MirchiErrors {
+        static let cannotGoPastStart = "You cannot move backward past the starting position."
+        static let cannotMoveBackwardInEndingStrip = "You cannot move backward while this pawn is in the ending safety strip."
+    }
+
     enum StartGame {
         static let heroKicker = "It's time to play"
         static let heroTitle = "Ludo Mirchi!"
