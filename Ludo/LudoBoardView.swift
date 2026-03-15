@@ -28,10 +28,13 @@ struct LudoBoardView: View {
     @State private var isAnimatingHomeToStart = false
     @State private var isAnimatingCapture = false
     @State private var previousPawnsAtHome = 0
+    @State private var homeBandShowsSecondary = false
     
     // MARK: - Trail Animation State
     @State private var trailParticles: [TrailParticle] = []
     @State private var particleTimer: Timer? = nil // Timer for particle aging
+    
+    private let homeBandFlashTimer = Timer.publish(every: 0.8, on: .main, in: .common).autoconnect()
     
     private let pawnResizeFactor: CGFloat = 1.0
     private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.90 }
@@ -252,6 +255,9 @@ struct LudoBoardView: View {
                 previousPawnsAtHome = game.totalPawnsAtFinishingHome
                 
                 // No need to start particle timer here; it will start when particles are added
+            }
+            .onReceive(homeBandFlashTimer) { _ in
+                homeBandShowsSecondary.toggle()
             }
             .onReceive(NotificationCenter.default.publisher(for: .animatePawnMovement)) { notification in
                 guard let userInfo = notification.userInfo,
@@ -657,10 +663,15 @@ struct LudoBoardView: View {
     @ViewBuilder
     private func renderHomeOverlay(color: PlayerColor, cellSize: CGFloat) -> some View {
         let homeSize = cellSize * 6
+        let bandColor: Color = {
+            guard game.currentPlayer == color else { return color.primaryColor }
+            return homeBandShowsSecondary ? color.secondaryColor : color.primaryColor
+        }()
+        
         ZStack(alignment: .topLeading) { // Align content to top-leading for explicit positioning
             // 1. Square band (full background)
             Rectangle()
-                .fill(color.primaryColor)
+                .fill(bandColor)
             
             // 2. White inner square (inset by 0.5 * cellSize to create the band)
             Rectangle()
@@ -691,6 +702,8 @@ struct LudoBoardView: View {
             }
         }
         .frame(width: homeSize, height: homeSize)
+        .animation(.easeInOut(duration: 0.2), value: homeBandShowsSecondary)
+        .animation(.easeInOut(duration: 0.2), value: game.currentPlayer)
         .allowsHitTesting(false) // Allow taps to pass through to grid cells
     }
 
