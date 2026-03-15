@@ -435,6 +435,24 @@ struct LudoBoardView: View {
             // Draw the center piece in the background of the whole board
             renderCenterCell(row: 7, col: 7, cellSize: cellSize)
                 .position(x: boardSize / 2, y: boardSize / 2)
+            
+            // Draw Home Overlays
+            // Red (Top-Left)
+            renderHomeOverlay(color: .red, cellSize: cellSize)
+                .position(x: (cellSize * 6) / 2, y: (cellSize * 6) / 2)
+            
+            // Green (Top-Right)
+            renderHomeOverlay(color: .green, cellSize: cellSize)
+                .position(x: (cellSize * 9) + (cellSize * 6) / 2, y: (cellSize * 6) / 2)
+            
+            // Blue (Bottom-Left)
+            renderHomeOverlay(color: .blue, cellSize: cellSize)
+                .position(x: (cellSize * 6) / 2, y: (cellSize * 9) + (cellSize * 6) / 2)
+            
+            // Yellow (Bottom-Right)
+            renderHomeOverlay(color: .yellow, cellSize: cellSize)
+                .position(x: (cellSize * 9) + (cellSize * 6) / 2, y: (cellSize * 9) + (cellSize * 6) / 2)
+
 
             VStack(spacing: 0) {
                 ForEach(0..<gridSize, id: \.self) { row in
@@ -586,48 +604,19 @@ struct LudoBoardView: View {
         } else {
             ZStack {
                 if row < 6 && col < 6 {
-                    if (row == 1 || row == 4) && (col == 1 || col == 4) {
-                        // White background
-                        Rectangle().fill(PlayerColor.red.primaryColor)
-                        // Circular starting pad instead of square
-                        Circle()
-                            .fill(PlayerColor.red.secondaryColor)
-                            .padding(cellSize * 0.01)
-                    } else {
-                        Rectangle().fill(PlayerColor.red.primaryColor)
-                    }
+                    // Red Home Area: Replaced by renderRedHomeOverlay
+                    // Return EmptyView (transparent) so overlay shows through
+                    // while maintaining hit testing area if needed
+                    Color.clear
                 // Green Home Area
                 } else if row < 6 && col > 8 {
-                    if (row == 1 || row == 4) && (col == 10 || col == 13) {
-                        // Primary background
-                        Rectangle().fill(PlayerColor.green.primaryColor)
-                        // Circular starting pad
-                        Circle()
-                            .fill(PlayerColor.green.secondaryColor)
-                            .padding(cellSize * 0.01)
-                    } else {
-                        Rectangle().fill(PlayerColor.green.primaryColor)
-                    }
+                    Color.clear
                 // Blue Home Area
                 } else if row > 8 && col < 6 {
-                    if (row == 10 || row == 13) && (col == 1 || col == 4) {
-                        Rectangle().fill(PlayerColor.blue.primaryColor)
-                        Circle()
-                            .fill(PlayerColor.blue.secondaryColor)
-                            .padding(cellSize * 0.01)
-                    } else {
-                        Rectangle().fill(PlayerColor.blue.primaryColor)
-                    }
+                    Color.clear
                 // Yellow Home Area
                 } else if row > 8 && col > 8 {
-                    if (row == 10 || row == 13) && (col == 10 || col == 13) {
-                        Rectangle().fill(PlayerColor.yellow.primaryColor)
-                        Circle()
-                            .fill(PlayerColor.yellow.secondaryColor)
-                            .padding(cellSize * 0.01)
-                    } else {
-                        Rectangle().fill(PlayerColor.yellow.primaryColor)
-                    }
+                    Color.clear
                 // Red Safe Zone
                 } else if row == 7 && (1...5).contains(col) {
                     Rectangle().fill(PlayerColor.red.primaryColor)
@@ -663,6 +652,46 @@ struct LudoBoardView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func renderHomeOverlay(color: PlayerColor, cellSize: CGFloat) -> some View {
+        let homeSize = cellSize * 6
+        ZStack(alignment: .topLeading) { // Align content to top-leading for explicit positioning
+            // 1. Square band (full background)
+            Rectangle()
+                .fill(color.primaryColor)
+            
+            // 2. White inner square (inset by 0.5 * cellSize to create the band)
+            Rectangle()
+                .fill(Color.white)
+                .frame(width: homeSize - cellSize, height: homeSize - cellSize) // 0.5 cellSize inset on all sides = 1 cellSize total reduction
+                .position(x: homeSize / 2, y: homeSize / 2) // Center it
+            
+            // 3. Four circular starting positions
+            // Positions relative to the 6x6 grid top-left corner:
+            // (1,1), (1,4), (4,1), (4,4)
+            // Center coordinates in points:
+            // col * cellSize + cellSize/2
+            
+            let positions: [(row: Int, col: Int)] = [
+                (1, 1), (1, 4), (4, 1), (4, 4)
+            ]
+            
+            ForEach(0..<positions.count, id: \.self) { index in
+                let pos = positions[index]
+                let x = CGFloat(pos.col) * cellSize + cellSize / 2
+                let y = CGFloat(pos.row) * cellSize + cellSize / 2
+                
+                // Circle size: standard cell size with padding, similar to original but on white bg
+                Circle()
+                    .fill(color.secondaryColor)
+                    .frame(width: cellSize * 0.8, height: cellSize * 0.8)
+                    .position(x: x, y: y)
+            }
+        }
+        .frame(width: homeSize, height: homeSize)
+        .allowsHitTesting(false) // Allow taps to pass through to grid cells
     }
 
     @ViewBuilder
