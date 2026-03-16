@@ -340,11 +340,14 @@ struct PlayerSelectionViewV2: View {
                 }
 
                 let options = avatarOptions(for: selectedPlayerColor)
-                HStack(spacing: 16) {
+                let tileSize: CGFloat = m.rowCompact ? 68 : 80
+                let gridColumns = [
+                    GridItem(.adaptive(minimum: tileSize, maximum: tileSize), spacing: 16, alignment: .leading)
+                ]
+                LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 16) {
                     ForEach(options, id: \.self) { avatarName in
                         let isSelected = (selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)) == avatarName
                         let isLocked = !isAdminMode && UnlockManager.isPawnLocked(avatarName)
-                        let tileSize: CGFloat = m.rowCompact ? 68 : 80
 
                         Button {
                             if isLocked {
@@ -367,7 +370,8 @@ struct PlayerSelectionViewV2: View {
                                 Image(avatarName)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .padding(isLocked ? 14 : 10)
+                                    .frame(width: tileSize * 0.76, height: tileSize * 0.76)
+                                    .padding(isLocked ? 8 : 6)
                                     .saturation(isLocked ? 0 : 1)
                                     .opacity(isLocked ? 0.45 : 1)
 
@@ -398,9 +402,8 @@ struct PlayerSelectionViewV2: View {
                         .buttonStyle(PlainButtonStyle())
                         .frame(width: tileSize, height: tileSize)
                     }
-                    Spacer(minLength: 0)
                 }
-                .frame(height: m.rowCompact ? 120 : 150)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, m.cardHorizontalPadding)
             .padding(.vertical, m.cardVerticalPadding)
@@ -499,38 +502,39 @@ struct PlayerSelectionViewV2: View {
     private func rightColumn(metrics m: LayoutMetrics) -> some View {
         // Reserve an internal gutter so right-side content never hugs/clips the screen edge.
         let rightContentWidth = max(170, m.rightWidth - 48)
-        let rightScale = max(0.46, min(1.0, rightContentWidth / 360.0))
         let isTightRightPanel = m.rowCompact || rightContentWidth < 420
+        let previewFrameSize = min(rightContentWidth * (isTightRightPanel ? 0.84 : 0.9), isTightRightPanel ? 290 : 360)
+        let previewImageSize = previewFrameSize * 0.9
 
         VStack(spacing: 0) {
             let details = PawnCatalog.details(for: selectedAvatarNameForSelectedPlayer)
             let isBoostedPawn = details.hasBoost
-            let imageWidthFactor: CGFloat = isBoostedPawn ? (isTightRightPanel ? 0.60 : 0.72) : (isTightRightPanel ? 0.72 : 0.86)
-            let descriptionScale: CGFloat = isBoostedPawn ? 0.76 : 0.9
             let boostSymbolScale: CGFloat = 0.78
 
-            Image(selectedAvatarNameForSelectedPlayer)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: rightContentWidth * imageWidthFactor)
-                .padding(m.rightImagePadding)
-                .shadow(color: .black.opacity(0.18), radius: isBoostedPawn ? 10 : 16, x: 0, y: 8)
-                // Force image to fit within available width
-                .frame(maxWidth: .infinity, alignment: .center)
+            ZStack {
+                Image(selectedAvatarNameForSelectedPlayer)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: previewImageSize, height: previewImageSize)
+                    .shadow(color: .black.opacity(0.18), radius: isBoostedPawn ? 10 : 16, x: 0, y: 8)
+            }
+            .frame(width: previewFrameSize, height: previewFrameSize)
+            .padding(m.rightImagePadding)
+            .frame(maxWidth: .infinity, alignment: .center)
 #if DEBUG
-                .background(
-                    GeometryReader { proxy in
-                        Color.clear
-                            .onAppear {
-                                let f = proxy.frame(in: .global)
-                                print("[PlayerSelectionViewV2.debug] PawnImage frame=\(f), size=\(proxy.size)")
-                            }
-                            .onChange(of: proxy.size) { _ in
-                                let f = proxy.frame(in: .global)
-                                print("[PlayerSelectionViewV2.debug] PawnImage changed frame=\(f), size=\(proxy.size)")
-                            }
-                    }
-                )
+            .background(
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear {
+                            let f = proxy.frame(in: .global)
+                            print("[PlayerSelectionViewV2.debug] PawnImage frame=\(f), size=\(proxy.size)")
+                        }
+                        .onChange(of: proxy.size) { _ in
+                            let f = proxy.frame(in: .global)
+                            print("[PlayerSelectionViewV2.debug] PawnImage changed frame=\(f), size=\(proxy.size)")
+                        }
+                }
+            )
 #endif
 
             VStack(spacing: 12) {
