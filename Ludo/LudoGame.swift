@@ -51,6 +51,8 @@ class LudoGame: ObservableObject {
     @Published var showError: Bool = false
     @Published var showMirchiModeIph: Bool = false
     @Published var pawnBoostIphPayload: PawnBoostIphPayload? = nil
+    /// When non-nil, show "Boost unavailable" IPH with this pawn avatar (Level 0).
+    @Published var boostUnavailableIphAvatarName: String? = nil
 
     private var shownPawnBoostIphThisGame: Set<String> = []
     
@@ -925,7 +927,7 @@ class LudoGame: ObservableObject {
 
     func handleAITurn() {
         // Block AI from acting if the game is busy or paused.
-        if isBusy || isPaused || showMirchiModeIph || pawnBoostIphPayload != nil { return }
+        if isBusy || isPaused || showMirchiModeIph || pawnBoostIphPayload != nil || boostUnavailableIphAvatarName != nil { return }
         if aiControlledPlayers.contains(currentPlayer) {
             GameLogger.shared.log("🤖 [AI] Handling AI turn for \(currentPlayer.rawValue)...")
             // Add a delay to simulate the AI "thinking" before rolling
@@ -1173,6 +1175,7 @@ class LudoGame: ObservableObject {
         isGameOver = false
         showMirchiModeIph = false
         pawnBoostIphPayload = nil
+        boostUnavailableIphAvatarName = nil
         shownPawnBoostIphThisGame.removeAll()
         didAwardCoinsForCurrentGame = false
         coinBalanceBeforeLastAward = coins
@@ -1377,6 +1380,7 @@ class LudoGame: ObservableObject {
         showError = false
         showMirchiModeIph = false
         pawnBoostIphPayload = nil
+        boostUnavailableIphAvatarName = nil
         shownPawnBoostIphThisGame.removeAll()
         resetGame()
         objectWillChange.send()
@@ -1392,21 +1396,27 @@ class LudoGame: ObservableObject {
         handleAITurn()
     }
 
+    func dismissBoostUnavailableIph() {
+        boostUnavailableIphAvatarName = nil
+        handleAITurn()
+    }
+
     func showBoostHelpIphForPlayerPanel(color: PlayerColor) {
         guard canShowPanelIph(for: color) else { return }
         let avatarName = selectedAvatar(for: color)
-        guard PawnAssets.hasBoost(for: avatarName) else { return }
-        guard let boostIcon = boostIconAssetName(for: avatarName) else { return }
-
-        let details = PawnCatalog.details(for: avatarName)
-        let uses = max(1, PawnAssets.boostUses(for: avatarName))
-        pawnBoostIphPayload = PawnBoostIphPayload(
-            pawnName: avatarName,
-            boostIconAssetName: boostIcon,
-            badgeValue: uses,
-            title: GameCopy.PawnBoostIph.title(details.title),
-            message: GameCopy.PawnBoostIph.message(boostDescription: details.description, uses: uses)
-        )
+        if PawnAssets.hasBoost(for: avatarName), let boostIcon = boostIconAssetName(for: avatarName) {
+            let details = PawnCatalog.details(for: avatarName)
+            let uses = max(1, PawnAssets.boostUses(for: avatarName))
+            pawnBoostIphPayload = PawnBoostIphPayload(
+                pawnName: avatarName,
+                boostIconAssetName: boostIcon,
+                badgeValue: uses,
+                title: GameCopy.PawnBoostIph.title(details.title),
+                message: GameCopy.PawnBoostIph.message(boostDescription: details.description, uses: uses)
+            )
+        } else {
+            boostUnavailableIphAvatarName = avatarName
+        }
     }
 
     func showMirchiModeHelpIphForPlayerPanel(color: PlayerColor) {
@@ -1431,6 +1441,7 @@ class LudoGame: ObservableObject {
             && !isGameOver
             && !showError
             && pawnBoostIphPayload == nil
+            && boostUnavailableIphAvatarName == nil
             && !showMirchiModeIph
     }
 

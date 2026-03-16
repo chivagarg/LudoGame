@@ -110,6 +110,16 @@ struct GameBoardView: View {
                     }
                 )
                 .zIndex(10)
+            } else if let avatarName = game.boostUnavailableIphAvatarName {
+                InProductHelpBubbleView(
+                    icon: .image(avatarName),
+                    title: GameCopy.BoostUnavailableIph.title,
+                    message: GameCopy.BoostUnavailableIph.message,
+                    onClose: {
+                        game.dismissBoostUnavailableIph()
+                    }
+                )
+                .zIndex(10)
             }
         }
     }

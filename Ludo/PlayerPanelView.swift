@@ -101,7 +101,6 @@ struct PlayerPanelView: View {
         game.currentPlayer == color
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy
-            && PawnAssets.hasBoost(for: game.selectedAvatar(for: color))
     }
 
     private var canOpenMirchiHelpIph: Bool {
@@ -170,7 +169,7 @@ struct PlayerPanelView: View {
         actionSlot(
             label: GameCopy.PlayerPanel.boostLabel,
             width: boostSectionWidth,
-            showHelp: PawnAssets.hasBoost(for: game.selectedAvatar(for: color)),
+            showHelp: true,
             helpEnabled: canOpenBoostHelpIph,
             onHelpTap: { game.showBoostHelpIphForPlayerPanel(color: color) }
         ) {

@@ -75,6 +75,11 @@ enum GameCopy {
         }
     }
 
+    enum BoostUnavailableIph {
+        static let title = "Boost unavailable"
+        static let message = "Boosts are special powers that only certain pawns have (this pawn doesn't). Keep playing to unlock pawns with boost abilities."
+    }
+
     enum PawnBoostIph {
         static func title(_ pawnTitle: String) -> String {
             "\(pawnTitle) Boost"
