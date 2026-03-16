@@ -215,7 +215,7 @@ struct PlayerPanelView: View {
         ) {
             Button(action: {
                 guard isEnabled else { return }
-                game.mirchiArrowActivated[color]?.toggle()
+                game.toggleMirchiMode(for: color)
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }) {
                 MirchiTileView(

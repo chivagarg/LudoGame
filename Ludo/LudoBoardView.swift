@@ -664,7 +664,7 @@ struct LudoBoardView: View {
     private func renderHomeOverlay(color: PlayerColor, cellSize: CGFloat) -> some View {
         let homeSize = cellSize * 6
         let bandColor: Color = {
-            guard game.currentPlayer == color else { return color.primaryColor }
+            guard game.currentPlayer == color, !game.currentPlayerHasEngagedThisTurn else { return color.primaryColor }
             return homeBandShowsSecondary ? color.secondaryColor : color.primaryColor
         }()
         
@@ -704,6 +704,7 @@ struct LudoBoardView: View {
         .frame(width: homeSize, height: homeSize)
         .animation(.easeInOut(duration: 0.2), value: homeBandShowsSecondary)
         .animation(.easeInOut(duration: 0.2), value: game.currentPlayer)
+        .animation(.easeInOut(duration: 0.2), value: game.currentPlayerHasEngagedThisTurn)
         .allowsHitTesting(false) // Allow taps to pass through to grid cells
     }
 

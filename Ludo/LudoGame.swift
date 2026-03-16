@@ -42,6 +42,8 @@ class LudoGame: ObservableObject {
     @Published var aiControlledPlayers: Set<PlayerColor> = []
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
+    /// When true, the current player's home band stops blinking (they rolled, toggled boost, or toggled mirchi).
+    @Published var currentPlayerHasEngagedThisTurn: Bool = false
     
     // Error state for UI feedback
     @Published var errorMessage: String? = nil
@@ -269,7 +271,7 @@ class LudoGame: ObservableObject {
             GameLogger.shared.log("🎲 [GUARD FAILED] Roll prevented. Pawns: \(eligiblePawns.count), Roll Player: \(currentRollPlayer?.rawValue ?? "nil")")
             return
         }
-        
+        currentPlayerHasEngagedThisTurn = true
         diceValue = getDiceRoll()
         // Track roll history
         var rolls = diceRollHistory[currentPlayer] ?? []
@@ -450,6 +452,7 @@ class LudoGame: ObservableObject {
     
     func nextTurn(clearRoll: Bool = true) {
         GameLogger.shared.log("🔄 [TURN] Advancing turn from \(currentPlayer.rawValue)...")
+        currentPlayerHasEngagedThisTurn = false
 
         // Get all selected players in the order of PlayerColor.allCases
         let orderedPlayers = PlayerColor.allCases.filter { selectedPlayers.contains($0) }
@@ -539,6 +542,7 @@ class LudoGame: ObservableObject {
         gameStarted = true
         markGameStartedForMirchiIph()
         currentPlayer = selectedPlayers.first! // Set current player to the first selected player (assuming at least one selected)
+        currentPlayerHasEngagedThisTurn = false
         shownPawnBoostIphThisGame.removeAll()
         pawnBoostIphPayload = nil
         eligiblePawns.removeAll()
@@ -1212,6 +1216,7 @@ class LudoGame: ObservableObject {
     func tapBoost(color: PlayerColor) {
         guard let ability = boostAbility(for: color) else { return }
         guard currentPlayer == color else { return }
+        currentPlayerHasEngagedThisTurn = true
         let context = BoostContext(
             currentPlayer: currentPlayer,
             isBusy: isBusy,
@@ -1234,6 +1239,14 @@ class LudoGame: ObservableObject {
             boostState[color] = nextState
             ability.performOnTap(game: self, color: color, context: context)
         }
+    }
+    
+    /// Toggle mirchi (backward) mode for the given color. Used by the player panel; stops home band blinking.
+    func toggleMirchiMode(for color: PlayerColor) {
+        guard color == currentPlayer else { return }
+        let current = mirchiArrowActivated[color] ?? false
+        mirchiArrowActivated[color] = !current
+        currentPlayerHasEngagedThisTurn = true
     }
     
     func consumeBoostOnPawnTapIfNeeded(color: PlayerColor, isBackward: Bool = false) {
