@@ -3,10 +3,13 @@ import Foundation
 struct UnlockManager {
     private static let unlockedPawnsKey = "unlockedPawnsKey"
     private static let coinBalanceKey = "coinBalanceKey"
-    static let unlockStepCost = 2500
 
-    // Level 1 first (R, Y, G, B), then Level 2 in same sequence.
+    // Level 0 variants first, then Level 1 (R, Y, G, B), then Level 2 in same sequence.
     static let unlockProgression: [String] = [
+        PawnAssets.redStrawberry,
+        PawnAssets.yellowBanana,
+        PawnAssets.greenKiwi,
+        PawnAssets.blueGrape,
         PawnAssets.redTomato,
         PawnAssets.yellowMango,
         PawnAssets.greenCapsicum,
@@ -41,8 +44,8 @@ struct UnlockManager {
     }
 
     static func isPawnLocked(_ pawnName: String) -> Bool {
-        // Level 0 pawns are always available.
-        guard PawnAssets.hasBoost(for: pawnName) else { return false }
+        // Only pawns present in progression are lockable; default marbles remain always available.
+        guard unlockProgression.contains(pawnName) else { return false }
         return !getUnlockedPawns().contains(pawnName)
     }
 
@@ -60,20 +63,25 @@ struct UnlockManager {
             .map { $0 }
     }
 
-    /// Coin cost to earn (free) unlock — always the flat step cost regardless of pawn.
+    /// Coin cost to earn (free) unlock for a specific pawn.
     static func unlockCost(for pawnName: String) -> Int {
-        unlockProgression.contains(pawnName) ? unlockStepCost : 0
+        guard unlockProgression.contains(pawnName) else { return 0 }
+        return CoinPurchaseConfig.unlockCost(for: pawnName)
     }
 
     static func progressTowardNextClaim(for coinBalance: Int? = nil) -> (current: Int, target: Int) {
         let coins = max(0, coinBalance ?? getCoinBalance())
-        let target = ((coins / unlockStepCost) + 1) * unlockStepCost
-        return (coins, max(unlockStepCost, target))
+        guard let nextPawn = getNextUnlockablePawn() else {
+            return (coins, max(1, coins))
+        }
+        let target = unlockCost(for: nextPawn)
+        return (coins, max(1, target))
     }
 
     static func canClaimNextPawn(for coinBalance: Int? = nil) -> Bool {
         let coins = max(0, coinBalance ?? getCoinBalance())
-        return getNextUnlockablePawn() != nil && coins >= unlockStepCost
+        guard let nextPawn = getNextUnlockablePawn() else { return false }
+        return coins >= unlockCost(for: nextPawn)
     }
 
     @discardableResult
@@ -81,7 +89,7 @@ struct UnlockManager {
         guard let pawn = getNextUnlockablePawn() else { return nil }
         guard canClaimNextPawn() else { return nil }
         unlockPawn(pawn)
-        setCoinBalance(getCoinBalance() - unlockStepCost)
+        setCoinBalance(getCoinBalance() - unlockCost(for: pawn))
         return pawn
     }
 

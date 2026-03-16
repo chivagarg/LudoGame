@@ -100,6 +100,7 @@ public enum PawnAssets {
 
     // Red
     static let redMarble = "pawn_red_marble_filled"
+    static let redStrawberry = "pawn_red_strawberry"
     @available(*, deprecated, message: "Use redTomato instead")
     static let redMirchi = "pawn_red_mirchi"
     static let redTomato = "pawn_red_tomato"
@@ -107,17 +108,20 @@ public enum PawnAssets {
     
     // Yellow
     static let yellowMarble = "pawn_yellow_marble_filled"
+    static let yellowBanana = "pawn_yellow_banana"
     static let yellowMango = "pawn_yellow_mango"
     static let yellowPineapple = "pawn_yellow_pineapple"
     
     // Green
     static let greenMarble = "pawn_green_marble_filled"
+    static let greenKiwi = "pawn_green_kiwi"
     static let greenMango = "pawn_mango_green"
     static let greenCapsicum = "pawn_green_capsicum"
     static let greenWatermelon = "pawn_green_watermelon"
     
     // Blue
     static let blueMarble = "pawn_blue_marble_filled"
+    static let blueGrape = "pawn_blue_grape"
     static let blueAubergine = "pawn_blue_aubergine"
     static let blueJamun = "pawn_blue_jamun"
     
@@ -195,11 +199,23 @@ enum PawnCatalog {
                 description: "Gain an extra hop backwards (total of 6) for the duration of your game.",
                 hasBoost: true
             )
+        } else if avatarName == PawnAssets.redStrawberry {
+            return PawnDetails(
+                title: "Berry Bhai",
+                description: "Have fun crushing it with Berry Bhai.",
+                hasBoost: false
+            )
         } else if avatarName == PawnAssets.redAnar {
             return PawnDetails(
                 title: "Anar Kali",
                 description: "Gain 2 extra hop backwards (total of 6) for the duration of your game.",
                 hasBoost: true
+            )
+        } else if avatarName == PawnAssets.yellowBanana {
+            return PawnDetails(
+                title: "Mr. Anana",
+                description: "Slide your way to victory with Mr. Anana.",
+                hasBoost: false
             )
         } else if avatarName == PawnAssets.yellowMango {
             return PawnDetails(
@@ -207,11 +223,23 @@ enum PawnCatalog {
                 description: "Roll a 6 any time!",
                 hasBoost: true
             )
+        } else if avatarName == PawnAssets.greenKiwi {
+            return PawnDetails(
+                title: "Khatta Kiwi",
+                description: "Zing past the chaos with Khatta Kiwi.",
+                hasBoost: false
+            )
         } else if avatarName == PawnAssets.yellowPineapple {
             return PawnDetails(
                 title: "Pina Anna",
                 description: "Roll a 6 any time, twice!",
                 hasBoost: true
+            )
+        } else if avatarName == PawnAssets.blueGrape {
+            return PawnDetails(
+                title: "Angoor Ji",
+                description: "Roll smooth and rule the board with Angoor Ji.",
+                hasBoost: false
             )
         } else if avatarName == PawnAssets.greenCapsicum {
             return PawnDetails(

@@ -47,7 +47,7 @@ struct StartGameView: View {
             if showClaimSuccessModal, let pawnName = recentlyClaimedPawnName {
                 PawnUnlockModal(
                     pawnName: pawnName,
-                    unlockCost: UnlockManager.unlockStepCost,
+                    unlockCost: UnlockManager.unlockCost(for: pawnName),
                     coinBalance: game.coins,
                     onDismiss: { dismissAndAdvanceUnlockModal() },
                     onPlayNow: {

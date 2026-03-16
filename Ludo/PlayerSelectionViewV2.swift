@@ -41,13 +41,13 @@ struct PlayerSelectionViewV2: View {
     private func avatarOptions(for color: PlayerColor) -> [String] {
         switch color {
         case .red:
-            return [PawnAssets.redMarble, PawnAssets.redTomato, PawnAssets.redAnar]
+            return [PawnAssets.redMarble, PawnAssets.redStrawberry, PawnAssets.redTomato, PawnAssets.redAnar]
         case .green:
-            return [PawnAssets.greenMarble, PawnAssets.greenCapsicum, PawnAssets.greenWatermelon]
+            return [PawnAssets.greenMarble, PawnAssets.greenKiwi, PawnAssets.greenCapsicum, PawnAssets.greenWatermelon]
         case .yellow:
-            return [PawnAssets.yellowMarble, PawnAssets.yellowMango, PawnAssets.yellowPineapple]
+            return [PawnAssets.yellowMarble, PawnAssets.yellowBanana, PawnAssets.yellowMango, PawnAssets.yellowPineapple]
         case .blue:
-            return [PawnAssets.blueMarble, PawnAssets.blueAubergine, PawnAssets.blueJamun]
+            return [PawnAssets.blueMarble, PawnAssets.blueGrape, PawnAssets.blueAubergine, PawnAssets.blueJamun]
         }
     }
 

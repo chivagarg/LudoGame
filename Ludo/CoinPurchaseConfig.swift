@@ -12,14 +12,21 @@ enum CoinPurchaseConfig {
     /// Cost (in coins) to unlock each specific pawn via purchase.
     /// All unspecified pawns in the progression default to `defaultUnlockCost`.
     private static let perPawnCost: [String: Int] = [
+        // Level 0 variants
+        PawnAssets.redStrawberry:   1000,
+        PawnAssets.yellowBanana:    1000,
+        PawnAssets.greenKiwi:       1000,
+        PawnAssets.blueGrape:       1000,
+        // Level 1
         PawnAssets.redTomato:       2500,
         PawnAssets.yellowMango:     2500,
         PawnAssets.greenCapsicum:   2500,
         PawnAssets.blueAubergine:   2500,
-        PawnAssets.redAnar:         2500,
-        PawnAssets.yellowPineapple: 2500,
-        PawnAssets.greenWatermelon: 2500,
-        PawnAssets.blueJamun:       2500,
+        // Level 2
+        PawnAssets.redAnar:         3000,
+        PawnAssets.yellowPineapple: 3000,
+        PawnAssets.greenWatermelon: 3000,
+        PawnAssets.blueJamun:       3000,
     ]
 
     static let defaultUnlockCost: Int = 2500
@@ -61,19 +68,16 @@ enum CoinPurchaseConfig {
 
     // MARK: - Direct unlock pricing (no coin top-up flow)
 
-    /// Number of purchasable units implied by a pawn's unlock cost.
-    /// Example: 2500 coin-equivalent cost => 3 units.
-    static func unitsForDirectUnlock(pawnName: String) -> Int {
-        let cost = unlockCost(for: pawnName)
-        return max(1, (cost + coinsPerUnit - 1) / coinsPerUnit)
-    }
-
-    /// Direct purchase price for unlocking a pawn now.
+    /// Fixed USD price for direct unlock by pawn tier. Coin balance is unchanged on purchase.
     static func directUnlockPrice(pawnName: String) -> Double {
-        Double(unitsForDirectUnlock(pawnName: pawnName)) * pricePerUnit
+        switch PawnAssets.tier(for: pawnName) {
+        case .level0: return 0.99
+        case .level1: return 1.99
+        case .level2: return 2.99
+        }
     }
 
-    /// Formatted direct unlock price string, e.g. "$2.97".
+    /// Formatted direct unlock price string, e.g. "$0.99", "$1.99", "$2.99".
     static func formattedDirectUnlockPrice(pawnName: String) -> String {
         String(format: "$%.2f", directUnlockPrice(pawnName: pawnName))
     }
