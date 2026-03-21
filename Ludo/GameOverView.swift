@@ -269,7 +269,7 @@ struct GameOverView: View {
             HStack(spacing: 5) {
                 if isKillBonus   { bonusPill(label: "TOP KILLS",  bonus: "+5", tint: .red) }
                 if isFirstKill   { bonusPill(label: "FIRST KILL", bonus: "+3", tint: Color(white: 0.2)) }
-                if isUnlucky     { bonusPill(label: "UNLUCKIEST ROLLER", bonus: "+5", tint: .blue) }
+                if isUnlucky     { bonusPill(label: "UNLUCKIEST ROLLS", bonus: "+5", tint: .blue) }
             }
 
             // Score

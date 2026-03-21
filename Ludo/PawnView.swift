@@ -7,9 +7,22 @@ struct PawnView: View {
     
     @State private var isAnimating = false
     
+    /// Pulse when this pawn may be chosen for the current roll. With Mirchi backward arrow on, path pawns only pulse
+    /// if `isValidBackwardMove` is true. Pawns still in **starting home** can't move backward; if the roll allows
+    /// leaving home (e.g. 6), keep pulsing so turning Mirchi off still matches visible affordance.
     private var isEligible: Bool {
-        // A pawn is eligible only if it belongs to the current player AND its ID is in the set.
-        return pawn.color == game.currentPlayer && game.eligiblePawns.contains(pawn.id)
+        guard pawn.color == game.currentPlayer else { return false }
+        guard game.eligiblePawns.contains(pawn.id) else { return false }
+        if game.gameMode == .mirchi, game.mirchiArrowActivated[game.currentPlayer] == true {
+            if game.isValidBackwardMove(color: pawn.color, pawnId: pawn.id) {
+                return true
+            }
+            if pawn.positionIndex == nil, game.diceValue == GameConstants.sixDiceRoll {
+                return true
+            }
+            return false
+        }
+        return true
     }
 
     var body: some View {
