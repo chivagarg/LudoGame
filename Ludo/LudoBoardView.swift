@@ -56,11 +56,50 @@ struct LudoBoardView: View {
         }
     }
     
-    private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, boardOffsetX: CGFloat, boardOffsetY: CGFloat) {
-        let boardSize = min(geometry.size.width, geometry.size.height) * boardScaleFactor
+    /// Panel chrome that sits outside the board (panel shell + `PlayerPanelView` score row below/above after rotation).
+    /// App is portrait-only; this reserves vertical space so top/bottom scores are not clipped.
+    private func verticalMarginForPlayerPanels(boardSize: CGFloat, isPortrait: Bool) -> CGFloat {
         let cellSize = boardSize / CGFloat(gridSize)
-        let boardOffsetX = (geometry.size.width - boardSize) / 2
-        let boardOffsetY = (geometry.size.height - boardSize) / 2
+        let panelHeight = min(max(cellSize * 2.5, 88), 140)
+        let outsideScoreGap = max(8, panelHeight * 0.08)
+        // Icons + value text in `scoreContentOutsidePanel()` (room for larger Dynamic Type in portrait).
+        let scoreRowHeight = max(52, panelHeight * 0.42)
+        let baseFudge: CGFloat = 14
+        let portraitFudge: CGFloat = isPortrait ? 14 : 0
+        return panelHeight + outsideScoreGap + scoreRowHeight + baseFudge + portraitFudge
+    }
+    
+    private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, boardOffsetX: CGFloat, boardOffsetY: CGFloat) {
+        let insets = geometry.safeAreaInsets
+        let safeWidth = geometry.size.width - insets.leading - insets.trailing
+        let safeHeight = geometry.size.height - insets.top - insets.bottom
+        /// Matches supported orientations (portrait / upside-down).
+        let isPortrait = safeHeight >= safeWidth - 2
+        
+        guard safeWidth > 32, safeHeight > 32 else {
+            let boardSize = min(geometry.size.width, geometry.size.height) * boardScaleFactor
+            let cellSize = boardSize / CGFloat(gridSize)
+            let boardOffsetX = (geometry.size.width - boardSize) / 2
+            let boardOffsetY = (geometry.size.height - boardSize) / 2
+            return (boardSize, cellSize, boardOffsetX, boardOffsetY)
+        }
+        
+        // Board centered in the safe rect; shrink until top and bottom margins fit panel + external scores.
+        var boardSize = min(safeWidth, safeHeight) * boardScaleFactor
+        for _ in 0..<24 {
+            let margin = verticalMarginForPlayerPanels(boardSize: boardSize, isPortrait: isPortrait)
+            let maxByPanels = safeHeight - 2 * margin
+            let maxBoard = min(safeWidth, max(80, maxByPanels))
+            if abs(maxBoard - boardSize) < 0.5 {
+                boardSize = maxBoard
+                break
+            }
+            boardSize = maxBoard
+        }
+        
+        let cellSize = boardSize / CGFloat(gridSize)
+        let boardOffsetX = insets.leading + (safeWidth - boardSize) / 2
+        let boardOffsetY = insets.top + (safeHeight - boardSize) / 2
         
         return (boardSize, cellSize, boardOffsetX, boardOffsetY)
     }
@@ -211,6 +250,8 @@ struct LudoBoardView: View {
                             trailParticlesOverlay(cellSize: cellSize)
                         }
                     }
+                    // Explicit placement so safe-area-based offsets match panel `.position` math.
+                    .position(x: boardOffsetX + boardSize / 2, y: boardOffsetY + boardSize / 2)
 
                 // Player panels anchored to exact board-cell geometry.
                 playerPanelsView(boardOffsetX: boardOffsetX, boardOffsetY: boardOffsetY, boardSize: boardSize, cellSize: cellSize)
@@ -243,7 +284,7 @@ struct LudoBoardView: View {
                     .transition(.opacity)
                 }
             }
-            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            .frame(width: geometry.size.width, height: geometry.size.height)
             .onChange(of: game.totalPawnsAtFinishingHome) { newCount in
                 if newCount > previousPawnsAtHome {
                     SoundManager.shared.playPawnReachedHomeSound()
@@ -358,7 +399,9 @@ struct LudoBoardView: View {
                 }
             }
         }
-        .aspectRatio(1, contentMode: .fit)
+        // Do not force 1:1 on the whole view: in portrait that caps the GeometryReader to a square
+        // (min dimension) and clips top/bottom player panels + scores that sit outside the board.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     @ViewBuilder

@@ -10,6 +10,7 @@ struct GameBoardView: View {
         ZStack {
             if game.isAdminMode {
                 LudoBoardView(maximized: false)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     // Keep board content (top player panels) below admin toolbar.
                     .padding(.top, adminToolbarHeight + 20)
                     .overlay(alignment: .topLeading) {
@@ -40,6 +41,7 @@ struct GameBoardView: View {
                     }
             } else {
                 LudoBoardView(maximized: true)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
             // Pause button at top right

@@ -12,6 +12,14 @@ struct LudoGameView: View {
     @State private var aiPlayers: Set<PlayerColor> = []
     @State private var selectedMode: GameMode = .classic
     
+    /// Tighter insets while playing so the board uses more of the screen; start/over screens keep comfortable margins.
+    private var isPlayingGame: Bool {
+        game.gameStarted && !game.isGameOver
+    }
+    
+    private var horizontalPadding: CGFloat { isPlayingGame ? 10 : 16 }
+    private var verticalPadding: CGFloat { isPlayingGame ? 8 : 16 }
+    
     var body: some View {
         VStack {
             if !game.gameStarted {
@@ -30,9 +38,11 @@ struct LudoGameView: View {
                 })
             } else {
                 GameBoardView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .padding()
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
         .background(Color(.systemBackground)) // Ensure consistent background in both Light & Dark modes
         .environmentObject(game)
     }
