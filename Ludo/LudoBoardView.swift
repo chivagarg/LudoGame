@@ -68,6 +68,28 @@ struct LudoBoardView: View {
         let portraitFudge: CGFloat = isPortrait ? 14 : 0
         return panelHeight + outsideScoreGap + scoreRowHeight + baseFudge + portraitFudge
     }
+
+    /// H-A: `boardSize` is always `gridSize ×` whole points per cell so the HStack/VStack grid matches `.position()`-based overlays (avoids fractional row gaps / visible grid lines).
+    private func snapBoardSizeToIntegralCells(
+        _ rawBoard: CGFloat,
+        safeWidth: CGFloat,
+        safeHeight: CGFloat,
+        isPortrait: Bool
+    ) -> CGFloat {
+        let g = CGFloat(gridSize)
+        let widthCapCells = max(1, Int(floor(safeWidth / g)))
+        var cellPoints = min(widthCapCells, max(1, Int(floor(rawBoard / g))))
+        cellPoints = max(5, cellPoints)
+        if cellPoints > widthCapCells { cellPoints = widthCapCells }
+        var board = CGFloat(cellPoints) * g
+        while cellPoints > 1 {
+            let margin = verticalMarginForPlayerPanels(boardSize: board, isPortrait: isPortrait)
+            if board <= safeHeight - 2 * margin + 0.5 { break }
+            cellPoints -= 1
+            board = CGFloat(cellPoints) * g
+        }
+        return board
+    }
     
     private func calculateBoardDimensions(geometry: GeometryProxy) -> (boardSize: CGFloat, cellSize: CGFloat, boardOffsetX: CGFloat, boardOffsetY: CGFloat) {
         let insets = geometry.safeAreaInsets
@@ -77,7 +99,13 @@ struct LudoBoardView: View {
         let isPortrait = safeHeight >= safeWidth - 2
         
         guard safeWidth > 32, safeHeight > 32 else {
-            let boardSize = min(geometry.size.width, geometry.size.height) * boardScaleFactor
+            let raw = min(geometry.size.width, geometry.size.height) * boardScaleFactor
+            let boardSize = snapBoardSizeToIntegralCells(
+                raw,
+                safeWidth: max(safeWidth, 1),
+                safeHeight: max(safeHeight, 1),
+                isPortrait: isPortrait
+            )
             let cellSize = boardSize / CGFloat(gridSize)
             let boardOffsetX = (geometry.size.width - boardSize) / 2
             let boardOffsetY = (geometry.size.height - boardSize) / 2
@@ -96,6 +124,8 @@ struct LudoBoardView: View {
             }
             boardSize = maxBoard
         }
+
+        boardSize = snapBoardSizeToIntegralCells(boardSize, safeWidth: safeWidth, safeHeight: safeHeight, isPortrait: isPortrait)
         
         let cellSize = boardSize / CGFloat(gridSize)
         let boardOffsetX = insets.leading + (safeWidth - boardSize) / 2
@@ -582,11 +612,13 @@ struct LudoBoardView: View {
             // same id but different colors are considered different
             let lhsPawnKeys = lhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
             let rhsPawnKeys = rhs.pawnsInCell.map { "\($0.color.rawValue)-\($0.id)" }.sorted()
-            // Also compare eligible pawn IDs in the cell
-            return lhsPawnKeys == rhsPawnKeys && 
-                   lhs.eligiblePawnIdsInCell == rhs.eligiblePawnIdsInCell &&
-                   lhs.isCustomSafeZone == rhs.isCustomSafeZone &&
-                   lhs.isTrappedZone == rhs.isTrappedZone
+            // H-C: Include layout + turn so `.equatable()` does not skip `body` when cellSize or currentPlayer changes (stale frames vs updated overlays).
+            return lhsPawnKeys == rhsPawnKeys &&
+                lhs.eligiblePawnIdsInCell == rhs.eligiblePawnIdsInCell &&
+                lhs.isCustomSafeZone == rhs.isCustomSafeZone &&
+                lhs.isTrappedZone == rhs.isTrappedZone &&
+                lhs.cellSize == rhs.cellSize &&
+                lhs.currentPlayer == rhs.currentPlayer
         }
 
         var body: some View {
@@ -599,12 +631,7 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     func cellView(row: Int, col: Int, cellSize: CGFloat) -> some View {
-        struct RenderCounter {
-            static var count = 0
-        }
-        RenderCounter.count += 1
-        print("cellView rendered \(RenderCounter.count) times (row: \(row), col: \(col))")
-        return ZStack {
+        ZStack {
             cellBackground(row: row, col: col, cellSize: cellSize)
             
             // Add Trap Overlay (custom blue boost)
