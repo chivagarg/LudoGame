@@ -85,6 +85,36 @@ struct PackPawnCatalogRows: View {
     }
 }
 
+/// Scrollable pack roster with one rounded panel (fill + stroke) — purchase + pack-unlock modals.
+struct PackPawnCatalogListCard: View {
+    let pawnAssetNames: [String]
+    var maxHeight: CGFloat = 300
+
+    private let cornerRadius: CGFloat = 14
+    private let innerPadding: CGFloat = 14
+
+    private var cardFill: Color {
+        Color(red: 0x7C/255, green: 0x5C/255, blue: 0xD6/255).opacity(0.07)
+    }
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            PackPawnCatalogRows(pawnAssetNames: pawnAssetNames)
+                .padding(innerPadding)
+        }
+        .frame(maxHeight: maxHeight)
+        .background(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(cardFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
 // MARK: - Animated number (shared pattern with PawnUnlockModal)
 
 private struct PackAnimatableNumber: View, Animatable {
@@ -213,11 +243,8 @@ struct PackUnlockModal: View {
                 .frame(height: 268)
 
                 if revealPawns {
-                    ScrollView(showsIndicators: false) {
-                        PackPawnCatalogRows(pawnAssetNames: pack.pawnAssetNames)
-                    }
-                    .frame(maxHeight: 320)
-                    .transition(.opacity)
+                    PackPawnCatalogListCard(pawnAssetNames: pack.pawnAssetNames, maxHeight: 320)
+                        .transition(.opacity)
 
                     Text(GameCopy.PackUnlockModal.whereToFind)
                         .boostDescriptionTextStyle()

@@ -117,10 +117,7 @@ struct CoinPurchaseModal: View {
                 .frame(maxWidth: 420)
                 .fixedSize(horizontal: false, vertical: true)
 
-            ScrollView(showsIndicators: false) {
-                PackPawnCatalogRows(pawnAssetNames: pack.pawnAssetNames)
-            }
-            .frame(maxHeight: 300)
+            PackPawnCatalogListCard(pawnAssetNames: pack.pawnAssetNames, maxHeight: 300)
         }
     }
 
