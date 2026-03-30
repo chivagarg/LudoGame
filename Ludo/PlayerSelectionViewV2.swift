@@ -18,10 +18,11 @@ struct PlayerSelectionViewV2: View {
         }
     )
     @State private var selectedPlayerColor: PlayerColor = .red
-    @State private var purchaseTargetPawn: String? = nil
+    @State private var purchaseTargetPack: PawnPack? = nil
+    @State private var purchaseTappedAvatar: String? = nil
     @State private var showPawnPurchaseModal: Bool = false
     @State private var showPawnRevealModal: Bool = false
-    @State private var revealPawnName: String? = nil
+    @State private var revealPack: PawnPack? = nil
     @State private var revealPawnBalance: Int = 0
     
     var activeColors: [PlayerColor] {
@@ -89,16 +90,18 @@ struct PlayerSelectionViewV2: View {
                 backButtonOverlay
                 responsiveContent(in: geo)
 
-                if showPawnPurchaseModal, let pawnName = purchaseTargetPawn {
+                if showPawnPurchaseModal, let pack = purchaseTargetPack {
                     CoinPurchaseModal(
-                        pawnName: pawnName,
+                        pack: pack,
                         currentCoinBalance: game.coins,
                         onDismiss: {
                             withAnimation(.easeOut(duration: 0.2)) { showPawnPurchaseModal = false }
                         },
                         onPurchaseComplete: {
-                            selectedAvatars[selectedPlayerColor] = pawnName
-                            revealPawnName = pawnName
+                            if let tapped = purchaseTappedAvatar {
+                                selectedAvatars[selectedPlayerColor] = tapped
+                            }
+                            revealPack = pack
                             revealPawnBalance = game.coins
                             withAnimation(.easeOut(duration: 0.2)) { showPawnPurchaseModal = false }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
@@ -112,17 +115,16 @@ struct PlayerSelectionViewV2: View {
                     .transition(.opacity)
                 }
 
-                if showPawnRevealModal, let pawnName = revealPawnName {
-                    PawnUnlockModal(
-                        pawnName: pawnName,
-                        unlockCost: CoinPurchaseConfig.unlockCost(for: pawnName),
+                if showPawnRevealModal, let pack = revealPack {
+                    PackUnlockModal(
+                        pack: pack,
+                        unlockCost: 0,
                         coinBalance: revealPawnBalance,
                         skipCashout: true,
                         onDismiss: {
                             withAnimation(.easeOut(duration: 0.2)) { showPawnRevealModal = false }
                         },
                         onPlayNow: {
-                            // Pawn is already selected — just close the modal.
                             withAnimation(.easeOut(duration: 0.2)) { showPawnRevealModal = false }
                         }
                     )
@@ -351,9 +353,12 @@ struct PlayerSelectionViewV2: View {
 
                         Button {
                             if isLocked {
-                                purchaseTargetPawn = avatarName
-                                withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
-                                    showPawnPurchaseModal = true
+                                if let pack = PawnPack.pack(containing: avatarName) {
+                                    purchaseTappedAvatar = avatarName
+                                    purchaseTargetPack = pack
+                                    withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+                                        showPawnPurchaseModal = true
+                                    }
                                 }
                             } else {
                                 selectedAvatars[selectedPlayerColor] = avatarName
@@ -377,7 +382,7 @@ struct PlayerSelectionViewV2: View {
 
                                 // Lock badge — coin icon + cost
                                 if isLocked {
-                                    let cost = CoinPurchaseConfig.unlockCost(for: avatarName)
+                                    let cost = UnlockManager.packCoinCost(forLockedPawn: avatarName)
                                     HStack(spacing: 3) {
                                         Image("coin")
                                             .resizable()

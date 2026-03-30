@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Animated number (shared with PawnUnlockModal pattern)
+// MARK: - Animated number (shared with PackUnlockModal pattern)
 
 private struct PurchaseAnimatableNumber: View, Animatable {
     var value: Double
@@ -15,43 +15,38 @@ private struct PurchaseAnimatableNumber: View, Animatable {
     }
 }
 
-// MARK: - Coin purchase modal
+// MARK: - Coin purchase modal (mock IAP unlocks a whole pack)
 
-/// Shown when the user taps "Unlock Now!" on a locked pawn card.
-/// Displays the target pawn and direct purchase CTA.
-/// Temporary mock behavior: tapping buy instantly unlocks the pawn.
+/// Shown when the user taps "Unlock Now!" on a locked pack card or pawn tile.
+/// Temporary mock behavior: tapping buy instantly unlocks all four pawns in the pack (no coins spent).
 struct CoinPurchaseModal: View {
-    let pawnName: String
-    let currentCoinBalance: Int          // balance at the moment modal opens
+    let pack: PawnPack
+    let currentCoinBalance: Int
     let onDismiss: () -> Void
-    /// Called when direct mock unlock completes.
     let onPurchaseComplete: () -> Void
 
-    private let details: PawnDetails
     private let unlockCost: Int
 
-    // Animation state
     @State private var animatedBalance: Double
     @State private var phase: PurchasePhase = .preview
-    @State private var pawnFloat: CGFloat = 0
+    @State private var previewFloat: CGFloat = 0
 
     private enum PurchasePhase {
-        case preview      // showing purchase card, waiting for tap
+        case preview
         case unlocking
     }
 
     init(
-        pawnName: String,
+        pack: PawnPack,
         currentCoinBalance: Int,
         onDismiss: @escaping () -> Void,
         onPurchaseComplete: @escaping () -> Void
     ) {
-        self.pawnName = pawnName
+        self.pack = pack
         self.currentCoinBalance = currentCoinBalance
         self.onDismiss = onDismiss
         self.onPurchaseComplete = onPurchaseComplete
-        self.details = PawnCatalog.details(for: pawnName)
-        self.unlockCost = CoinPurchaseConfig.unlockCost(for: pawnName)
+        self.unlockCost = pack.coinCost
         self._animatedBalance = State(initialValue: Double(currentCoinBalance))
     }
 
@@ -63,19 +58,15 @@ struct CoinPurchaseModal: View {
             VStack(spacing: 16) {
                 dismissRow
 
-                // Pawn preview with floating animation
-                pawnPreview
+                packPreview
 
-                // Pawn name + ability
                 titleBlock
 
-                // Coin balance display (animates during purchase)
                 coinBalanceRow
                 neededCoinsLine
 
                 Divider().padding(.horizontal, 8)
 
-                // Purchase info / buy button
                 if phase == .preview {
                     purchaseInfoBlock
                         .transition(.opacity)
@@ -91,11 +82,9 @@ struct CoinPurchaseModal: View {
             .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
             .padding(.horizontal, 22)
         }
-        .onAppear { startPawnFloat() }
+        .onAppear { startPreviewFloat() }
         .onDisappear { SoundManager.shared.stopCoinJangle() }
     }
-
-    // MARK: - Sub-views
 
     private var dismissRow: some View {
         HStack {
@@ -108,27 +97,30 @@ struct CoinPurchaseModal: View {
         }
     }
 
-    private var pawnPreview: some View {
-        Image(pawnName)
-            .resizable()
-            .scaledToFit()
+    private var packPreview: some View {
+        RotatingPackPawnPreview(pack: pack)
             .frame(width: 160, height: 160)
-            .offset(y: pawnFloat)
+            .offset(y: previewFloat)
     }
 
     private var titleBlock: some View {
-        VStack(spacing: 6) {
-            Text(details.title)
+        VStack(spacing: 10) {
+            Text(pack.displayName)
                 .font(.system(size: 30, weight: .bold))
                 .foregroundColor(.black)
                 .multilineTextAlignment(.center)
 
-            Text(details.description)
+            Text(GameCopy.CoinPurchaseModal.packIncludesFourPawns)
                 .boostDescriptionTextStyle()
                 .foregroundColor(.black.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 420)
                 .fixedSize(horizontal: false, vertical: true)
+
+            ScrollView(showsIndicators: false) {
+                PackPawnCatalogRows(pawnAssetNames: pack.pawnAssetNames)
+            }
+            .frame(maxHeight: 300)
         }
     }
 
@@ -152,10 +144,8 @@ struct CoinPurchaseModal: View {
 
     private var purchaseInfoBlock: some View {
         VStack(spacing: 12) {
-            // Buy button
-            let buyLabel = buyButtonLabel
             Button(action: startMockPurchase) {
-                Text(buyLabel)
+                Text(GameCopy.CoinPurchaseModal.buyPackNow(price: pack.formattedMockIAPPrice))
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
@@ -171,7 +161,7 @@ struct CoinPurchaseModal: View {
 
     private var neededCoinsLine: some View {
         let needed = max(0, unlockCost - currentCoinBalance)
-        return Text(GameCopy.CoinPurchaseModal.neededCoins(formattedCoins(needed)))
+        return Text(GameCopy.CoinPurchaseModal.neededCoinsForPack(formattedCoins(needed)))
             .font(.system(size: 13, weight: .medium))
             .foregroundColor(.gray)
             .multilineTextAlignment(.center)
@@ -179,49 +169,39 @@ struct CoinPurchaseModal: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var buyButtonLabel: String {
-        let price = CoinPurchaseConfig.formattedDirectUnlockPrice(pawnName: pawnName)
-        return GameCopy.CoinPurchaseModal.buyAndUnlockNow(price: price)
-    }
-
     private var phaseLabel: some View {
-        Text(GameCopy.CoinPurchaseModal.unlocking(details.title))
+        Text(GameCopy.CoinPurchaseModal.unlockingPack(pack.displayName))
             .font(.system(size: 15, weight: .semibold, design: .rounded))
             .foregroundColor(.gray)
             .padding(.vertical, 8)
     }
 
-    // MARK: - Helpers
-
     private func formattedCoins(_ value: Int) -> String {
         NumberFormatter.localizedString(from: NSNumber(value: max(0, value)), number: .decimal)
     }
 
-    // MARK: - Animation
-
-    private func startPawnFloat() {
-        // Gentle idle float while the user is reading the preview card.
+    private func startPreviewFloat() {
         withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-            pawnFloat = -10
+            previewFloat = -10
         }
     }
 
     private func startExcitedHop() {
-        // Rapid, high hops — overrides the idle float when the purchase is in flight.
         withAnimation(.easeInOut(duration: 0.18).repeatForever(autoreverses: true)) {
-            pawnFloat = -22
+            previewFloat = -22
         }
     }
 
     private func startMockPurchase() {
-        // Switch pawn to excited hop as soon as the purchase starts.
+        guard !UnlockManager.isPackUnlocked(pack) else {
+            onDismiss()
+            return
+        }
         startExcitedHop()
         withAnimation(.easeInOut(duration: 0.15)) {
             phase = .unlocking
         }
-
-        // Temporary mock payment: unlock immediately, no coin top-up/cashout flow.
-        UnlockManager.unlockPawn(pawnName)
+        _ = UnlockManager.unlockPackViaIAPMock(pack)
         onPurchaseComplete()
     }
 }

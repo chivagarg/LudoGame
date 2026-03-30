@@ -26,9 +26,8 @@ enum GameCopy {
         static let heroKicker = "It's time to play"
         static let heroTitle = "Ludo Mirchi!"
         static let heroDescription = "Each player gets 5 mirchis to hop backwards. Catch your opponents before they catch you."
-        static let unlockProgressTitle = "You’re on your way to unlocking a new pawn!"
+        static let unlockProgressTitle = "You’re on your way to unlocking your next pack!"
         static let nextUp = "Next up"
-        static let allUnlocked = "All pawns unlocked!"
         static let mirchiModeIphTitle = "Mirchi Mode"
         static let mirchiModeIphMessage = "Each player gets 5 chances to hop backwards during the game. Activate mirchi mode by tapping this button before selecting a pawn on your turn."
 
@@ -52,17 +51,27 @@ enum GameCopy {
     }
 
     enum CoinPurchaseModal {
-        static func neededCoins(_ needed: String) -> String {
-            "You need \(needed) more coins to unlock this pawn. Keep playing, or you can buy now to unlock immediately."
+        static let packIncludesFourPawns = "Unlock all four pawns in this pack."
+
+        static func neededCoinsForPack(_ needed: String) -> String {
+            "You need \(needed) more coins to unlock this pack for free. Keep playing, or buy now to unlock all four pawns immediately."
         }
 
-        static func buyAndUnlockNow(price: String) -> String {
-            "Buy and unlock now for \(price)"
+        static func buyPackNow(price: String) -> String {
+            "Buy pack now for \(price)"
         }
 
-        static func unlocking(_ pawnTitle: String) -> String {
-            "Unlocking \(pawnTitle)…"
+        static func unlockingPack(_ packTitle: String) -> String {
+            "Unlocking \(packTitle)…"
         }
+    }
+
+    enum PackUnlockModal {
+        static func unlockedTitle(_ packTitle: String) -> String {
+            "You’ve unlocked \(packTitle)!"
+        }
+
+        static let whereToFind = "You’ll find all four in pawn selection the next time you start a game."
     }
 
     enum PawnUnlockModal {

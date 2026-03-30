@@ -8,25 +8,21 @@ struct StartGameView: View {
     @Binding var selectedMode: GameMode
     let onStartGame: () -> Void
 
-    // Decorative dice for the header - REMOVED
-
     @State private var step: Int = 0 // 0 = homepage, 1 = player selection (v2)
     @State private var showSettings: Bool = false
     @State private var showClaimSuccessModal: Bool = false
-    @State private var recentlyClaimedPawnName: String? = nil
-    @State private var unlockModalQueue: [String] = []
+    @State private var recentlyClaimedPack: PawnPack? = nil
+    @State private var unlockModalQueue: [PawnPack] = []
 
-    // Purchase flow
-    @State private var purchaseTargetPawn: String? = nil
+    @State private var purchaseTargetPack: PawnPack? = nil
     @State private var showPurchaseModal: Bool = false
     @State private var showPurchaseRevealModal: Bool = false
-    @State private var purchaseRevealPawn: String? = nil
+    @State private var purchaseRevealPack: PawnPack? = nil
     @State private var purchaseRevealBalance: Int = 0
 
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // Light purple background for the border
                 Color(red: 249/255, green: 247/255, blue: 252/255).ignoresSafeArea()
 
                 if step == 0 {
@@ -44,10 +40,10 @@ struct StartGameView: View {
                 }
             }
 
-            if showClaimSuccessModal, let pawnName = recentlyClaimedPawnName {
-                PawnUnlockModal(
-                    pawnName: pawnName,
-                    unlockCost: UnlockManager.unlockCost(for: pawnName),
+            if showClaimSuccessModal, let pack = recentlyClaimedPack {
+                PackUnlockModal(
+                    pack: pack,
+                    unlockCost: pack.coinCost,
                     coinBalance: game.coins,
                     onDismiss: { dismissAndAdvanceUnlockModal() },
                     onPlayNow: {
@@ -60,16 +56,16 @@ struct StartGameView: View {
                 .zIndex(200)
             }
 
-            if showPurchaseModal, let pawnName = purchaseTargetPawn {
+            if showPurchaseModal, let pack = purchaseTargetPack {
                 CoinPurchaseModal(
-                    pawnName: pawnName,
+                    pack: pack,
                     currentCoinBalance: game.coins,
                     onDismiss: {
                         withAnimation(.easeOut(duration: 0.2)) { showPurchaseModal = false }
                     },
                     onPurchaseComplete: {
                         withAnimation(.easeOut(duration: 0.2)) { showPurchaseModal = false }
-                        purchaseRevealPawn = pawnName
+                        purchaseRevealPack = pack
                         purchaseRevealBalance = game.coins
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
@@ -81,10 +77,10 @@ struct StartGameView: View {
                 .zIndex(210)
             }
 
-            if showPurchaseRevealModal, let pawnName = purchaseRevealPawn {
-                PawnUnlockModal(
-                    pawnName: pawnName,
-                    unlockCost: CoinPurchaseConfig.unlockCost(for: pawnName),
+            if showPurchaseRevealModal, let pack = purchaseRevealPack {
+                PackUnlockModal(
+                    pack: pack,
+                    unlockCost: 0,
                     coinBalance: purchaseRevealBalance,
                     skipCashout: true,
                     onDismiss: {
@@ -108,11 +104,11 @@ struct StartGameView: View {
             }
         }
         .onAppear {
-            autoClaimEligiblePawnsIfNeeded()
+            autoClaimEligiblePacksIfNeeded()
         }
         .onChange(of: step) { newStep in
             if newStep == 0 {
-                autoClaimEligiblePawnsIfNeeded()
+                autoClaimEligiblePacksIfNeeded()
             }
         }
     }
@@ -210,7 +206,7 @@ struct StartGameView: View {
 
     @ViewBuilder
     private var unlockProgressSection: some View {
-        let upcoming = UnlockManager.getUpcomingUnlockablePawns(limit: 3)
+        let upcoming = UnlockManager.getUpcomingIncompletePacks(limit: 3)
         if let immediate = upcoming.first {
             let progress = UnlockManager.progressTowardNextClaim(for: game.coins)
             let progressFraction = min(1.0, CGFloat(progress.current) / CGFloat(max(1, progress.target)))
@@ -220,7 +216,8 @@ struct StartGameView: View {
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.black)
 
-                unlockPawnCard(pawnName: immediate, showProgress: true, progressText: "\(formattedCoin(progress.current))/\(formattedCoin(progress.target)) coins to unlock for free!", progressFraction: progressFraction)
+                let progressLine = "\(formattedCoin(progress.current))/\(formattedCoin(progress.target)) coins to unlock this pack for free!"
+                unlockPackCard(pack: immediate, showProgress: true, progressText: progressLine, progressFraction: progressFraction)
 
                 let nextTwo = Array(upcoming.dropFirst().prefix(2))
                 if !nextTwo.isEmpty {
@@ -229,22 +226,17 @@ struct StartGameView: View {
                         .foregroundColor(.black.opacity(0.9))
                         .padding(.top, 4)
 
-                    ForEach(nextTwo, id: \.self) { pawn in
-                        unlockPawnCard(pawnName: pawn, showProgress: false, progressText: nil, progressFraction: 0)
+                    ForEach(nextTwo) { pack in
+                        unlockPackCard(pack: pack, showProgress: false, progressText: nil, progressFraction: 0)
                     }
                 }
             }
-        } else {
-            Text(GameCopy.StartGame.allUnlocked)
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.black)
         }
     }
 
     @ViewBuilder
-    private func unlockPawnCard(pawnName: String, showProgress: Bool, progressText: String?, progressFraction: CGFloat) -> some View {
-        let details = PawnCatalog.details(for: pawnName)
-        let unlockCost = UnlockManager.unlockCost(for: pawnName)
+    private func unlockPackCard(pack: PawnPack, showProgress: Bool, progressText: String?, progressFraction: CGFloat) -> some View {
+        let coinCost = pack.coinCost
 
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 12) {
@@ -252,15 +244,12 @@ struct StartGameView: View {
                     .fill(Color.white.opacity(0.9))
                     .frame(width: 62, height: 62)
                     .overlay(
-                        Image(pawnName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(6)
+                        RotatingPackPawnPreview(pack: pack)
                     )
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Text(details.title)
+                        Text(pack.displayName)
                             .font(.system(size: 32, weight: .bold))
                             .foregroundColor(.black)
                             .lineLimit(1)
@@ -271,12 +260,12 @@ struct StartGameView: View {
                             .scaledToFit()
                             .frame(width: 14, height: 14)
 
-                        Text(formattedCoin(unlockCost))
+                        Text(formattedCoin(coinCost))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.black.opacity(0.8))
                     }
 
-                    Text(details.description)
+                    Text(packMembersLine(pack))
                         .boostDescriptionTextStyle()
                         .foregroundColor(.black.opacity(0.75))
                         .lineLimit(2)
@@ -286,7 +275,7 @@ struct StartGameView: View {
                 Spacer(minLength: 10)
 
                 Button(GameCopy.Common.unlockNow) {
-                    purchaseTargetPawn = pawnName
+                    purchaseTargetPack = pack
                     withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
                         showPurchaseModal = true
                     }
@@ -332,12 +321,16 @@ struct StartGameView: View {
         )
     }
 
-    private func autoClaimEligiblePawnsIfNeeded() {
+    private func packMembersLine(_ pack: PawnPack) -> String {
+        pack.pawnAssetNames.map { PawnCatalog.details(for: $0).title }.joined(separator: " · ")
+    }
+
+    private func autoClaimEligiblePacksIfNeeded() {
         guard step == 0 else { return }
-        var claimedThisPass: [String] = []
-        while UnlockManager.canClaimNextPawn(for: game.coins) {
-            guard let claimedPawn = UnlockManager.claimNextUnlockablePawn() else { break }
-            claimedThisPass.append(claimedPawn)
+        var claimedThisPass: [PawnPack] = []
+        while UnlockManager.canClaimNextPack(for: game.coins) {
+            guard let claimedPack = UnlockManager.claimNextUnlockablePack() else { break }
+            claimedThisPass.append(claimedPack)
             game.coins = UnlockManager.getCoinBalance()
         }
 
@@ -350,10 +343,10 @@ struct StartGameView: View {
 
     private func showNextUnlockModalIfNeeded() {
         guard !unlockModalQueue.isEmpty else {
-            recentlyClaimedPawnName = nil
+            recentlyClaimedPack = nil
             return
         }
-        recentlyClaimedPawnName = unlockModalQueue.removeFirst()
+        recentlyClaimedPack = unlockModalQueue.removeFirst()
         withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
             showClaimSuccessModal = true
         }
@@ -389,5 +382,4 @@ struct StartGameView: View {
         .padding(.horizontal, max(10, padding * 0.95))
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
-} 
- 
+}
