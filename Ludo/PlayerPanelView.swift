@@ -120,15 +120,39 @@ struct PlayerPanelView: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
             if showHelp {
+                let chipSize = max(30, actionLabelFontSize * 2.55)
+                let iconSize = chipSize * 0.62
                 Button(action: onHelpTap) {
-                    Image("iph-exclamation")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: max(15, actionLabelFontSize * 1.7), height: max(15, actionLabelFontSize * 1.7))
-                        .opacity(helpEnabled ? 1.0 : 0.35)
+                    ZStack {
+                        Circle()
+                            .fill(
+                                helpEnabled
+                                    ? color.secondaryColor.opacity(0.98)
+                                    : Color.black.opacity(0.06)
+                            )
+                            .shadow(
+                                color: Color.black.opacity(helpEnabled ? 0.12 : 0.05),
+                                radius: helpEnabled ? 3 : 1,
+                                x: 0,
+                                y: 1
+                            )
+                        Image("iph-exclamation")
+                            .resizable()
+                            .renderingMode(.template)
+                            .scaledToFit()
+                            .frame(width: iconSize, height: iconSize)
+                            .foregroundColor(
+                                helpEnabled
+                                    ? color.primaryColor
+                                    : Color.gray.opacity(0.5)
+                            )
+                    }
+                    .frame(width: chipSize, height: chipSize)
+                    .contentShape(Circle())
                 }
                 .buttonStyle(PlainButtonStyle())
                 .disabled(!helpEnabled)
+                .accessibilityLabel("Help")
             }
         }
         .frame(height: actionLabelHeight)
