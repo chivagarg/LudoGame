@@ -54,9 +54,11 @@ struct BoostIconTileView: View {
     let badgeValue: Int
     let badgeSize: CGFloat
     var isUsed: Bool = false
-    var isActive: Bool = false
+    /// Current player's panel (eligible for the “your turn” styling ladder below).
+    var isHighlightedForTurn: Bool = false
+    /// When `true` together with `isHighlightedForTurn`, shows primary fill + white icon (armed). When `false` on your turn, secondary fill + primary icon (unarmed).
+    var isArmed: Bool = false
     var isEnabled: Bool = true
-    var highlightActiveBorder: Bool = false
     var showBadge: Bool = true
     var inactiveBadgeColor: Color = .gray
     var highlightColor: Color = .purple
@@ -64,12 +66,39 @@ struct BoostIconTileView: View {
 
     private var cornerRadius: CGFloat { tileSize / 2 }
 
+    /// Primary “active” look only when it’s this player’s turn *and* boost is armed (matches design: unarmed vs armed on your turn).
+    private var showArmedHighlight: Bool {
+        isHighlightedForTurn && !isUsed && isArmed
+    }
+
+    private var circleFill: Color {
+        if isUsed {
+            return backgroundColor.opacity(0.95)
+        }
+        return showArmedHighlight ? highlightColor : backgroundColor.opacity(0.95)
+    }
+
+    private var circleBorderColor: Color {
+        if isUsed {
+            return highlightColor.opacity(0.35)
+        }
+        return showArmedHighlight ? Color.white.opacity(0.45) : highlightColor
+    }
+
+    private var iconForeground: Color {
+        if isUsed {
+            return Color.gray.opacity(0.55)
+        }
+        return showArmedHighlight ? Color.white : highlightColor
+    }
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Circle()
-                .fill(backgroundColor.opacity(0.95))
+                .fill(circleFill)
                 .overlay(
-                    Circle().stroke(highlightColor.opacity(0.45), lineWidth: max(1, tileSize * 0.045))
+                    Circle()
+                        .stroke(circleBorderColor, lineWidth: 3)
                 )
                 .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
                 .frame(width: tileSize, height: tileSize)
@@ -77,12 +106,6 @@ struct BoostIconTileView: View {
             iconBody()
                 .frame(width: tileSize, height: tileSize)
                 .opacity(isUsed ? 0.5 : (isEnabled ? 1.0 : 0.65))
-                .scaleEffect(isActive ? 1.08 : 1.0)
-                .marchingLightsBorder(
-                    isActive: highlightActiveBorder && isActive,
-                    cornerRadius: cornerRadius,
-                    color: highlightColor
-                )
 
             if showBadge {
                 let active = badgeValue >= 1
@@ -90,8 +113,7 @@ struct BoostIconTileView: View {
                     .font(.system(size: badgeSize * 0.56, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(width: badgeSize, height: badgeSize)
-                    .background(Circle().fill(active ? Color.red : inactiveBadgeColor))
-                    // Keep badge fully inside tile bounds on compact layouts.
+                    .background(Circle().fill(active ? highlightColor : inactiveBadgeColor))
                     .padding(.top, max(1, tileSize * 0.03))
                     .padding(.trailing, max(1, tileSize * 0.03))
             }
@@ -105,14 +127,14 @@ struct BoostIconTileView: View {
             if let assetName = boostAssetName(for: ability.kind) {
                 Image(assetName)
                     .resizable()
+                    .renderingMode(.template)
                     .aspectRatio(contentMode: .fit)
                     .frame(width: iconSize, height: iconSize)
-                    .saturation(isUsed ? 0.0 : 1.0)
-                    .opacity(isUsed ? 0.6 : 1.0)
+                    .foregroundColor(iconForeground)
             } else {
                 Image(systemName: ability.iconSystemName)
                     .font(.system(size: iconSize * 0.95, weight: .heavy))
-                    .foregroundColor(isUsed ? .gray : (isActive ? Color.purple : Color.purple.opacity(0.7)))
+                    .foregroundColor(iconForeground)
             }
         } else {
             Image(systemName: "bolt.fill")

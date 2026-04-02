@@ -105,9 +105,7 @@ struct InProductHelpBubbleView: View {
                     badgeValue: iconBadgeValue ?? 0,
                     badgeSize: 24,
                     isUsed: false,
-                    isActive: false,
                     isEnabled: true,
-                    highlightActiveBorder: false,
                     showBadge: iconBadgeValue != nil,
                     highlightColor: highlightColor(for: name),
                     backgroundColor: .white

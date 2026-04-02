@@ -187,7 +187,8 @@ struct PlayerPanelView: View {
     private func boostSlot() -> some View {
         let state = game.getBoostState(for: color)
         let isUsed = state == .used || boostRemaining <= 0
-        let isActive = state == .armed
+        let isCurrentPlayerTurn = game.currentPlayer == color
+        let isArmed = state == .armed
         let isEnabled = !isUsed && canUseBoost(for: color) && game.boostAbility(for: color) != nil
         actionSlot(
             label: GameCopy.PlayerPanel.boostLabel,
@@ -208,9 +209,9 @@ struct PlayerPanelView: View {
                     badgeValue: max(0, boostRemaining),
                     badgeSize: badgeSize,
                     isUsed: isUsed,
-                    isActive: isActive,
+                    isHighlightedForTurn: isCurrentPlayerTurn,
+                    isArmed: isArmed,
                     isEnabled: isEnabled,
-                    highlightActiveBorder: true,
                     highlightColor: color.primaryColor,
                     backgroundColor: color.secondaryColor
                 )
