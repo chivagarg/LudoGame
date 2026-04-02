@@ -142,9 +142,8 @@ struct PlayerPanelView: View {
                             .scaledToFit()
                             .frame(width: iconSize, height: iconSize)
                             .foregroundColor(
-                                helpEnabled
-                                    ? color.primaryColor
-                                    : Color.gray.opacity(0.5)
+                                Color(red: 0x9F/255, green: 0x9F/255, blue: 0x9F/255)
+                                    .opacity(helpEnabled ? 1.0 : 0.7)
                             )
                     }
                     .frame(width: chipSize, height: chipSize)
