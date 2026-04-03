@@ -70,7 +70,9 @@ struct PlayerSelectionViewV2: View {
                 badgeValue: boostsRemaining,
                 badgeSize: badgeSize,
                 isUsed: false,
-                isEnabled: true
+                isEnabled: true,
+                highlightColor: selectedPlayerColor.primaryColor,
+                backgroundColor: selectedPlayerColor.secondaryColor
             )
         }
     }
