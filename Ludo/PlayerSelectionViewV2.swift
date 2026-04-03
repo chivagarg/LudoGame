@@ -14,7 +14,7 @@ struct PlayerSelectionViewV2: View {
     @State private var isRobot: [PlayerColor: Bool] = [:]
     @State private var selectedAvatars: [PlayerColor: String] = Dictionary(
         uniqueKeysWithValues: PlayerColor.allCases.map { color in
-            (color, PawnAssets.defaultMarble(for: color))
+            (color, UnlockManager.defaultUnlockedAvatar(for: color))
         }
     )
     @State private var selectedPlayerColor: PlayerColor = .red
@@ -53,7 +53,7 @@ struct PlayerSelectionViewV2: View {
     }
 
     private var selectedAvatarNameForSelectedPlayer: String {
-        selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)
+        selectedAvatars[selectedPlayerColor] ?? UnlockManager.defaultUnlockedAvatar(for: selectedPlayerColor)
     }
     
     @ViewBuilder
@@ -348,7 +348,7 @@ struct PlayerSelectionViewV2: View {
                 ]
                 LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 16) {
                     ForEach(options, id: \.self) { avatarName in
-                        let isSelected = (selectedAvatars[selectedPlayerColor] ?? PawnAssets.defaultMarble(for: selectedPlayerColor)) == avatarName
+                        let isSelected = (selectedAvatars[selectedPlayerColor] ?? UnlockManager.defaultUnlockedAvatar(for: selectedPlayerColor)) == avatarName
                         let isLocked = !isAdminMode && UnlockManager.isPawnLocked(avatarName)
 
                         Button {
@@ -427,7 +427,7 @@ struct PlayerSelectionViewV2: View {
     @ViewBuilder
     private func playerRow(color: PlayerColor, metrics m: LayoutMetrics) -> some View {
         HStack(spacing: m.rowCompact ? 8 : 10) {
-            let avatarName = selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
+            let avatarName = selectedAvatars[color] ?? UnlockManager.defaultUnlockedAvatar(for: color)
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.white.opacity(0.95))

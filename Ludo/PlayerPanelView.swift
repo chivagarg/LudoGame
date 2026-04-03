@@ -225,8 +225,9 @@ struct PlayerPanelView: View {
     private func mirchiSlot() -> some View {
         let isMirchiActive = game.mirchiArrowActivated[color] == true
         let hasMirchiMoves = mirchiRemaining > 0
+        let isCurrentPlayerTurn = game.currentPlayer == color
         let isEnabled = hasMirchiFeature && hasMirchiMoves
-            && game.currentPlayer == color
+            && isCurrentPlayerTurn
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy
         actionSlot(
@@ -247,8 +248,9 @@ struct PlayerPanelView: View {
                     badgeValue: max(0, mirchiRemaining),
                     badgeSize: badgeSize,
                     backArrowAssetName: PawnAssets.backArrow(for: color),
-                    isActive: isMirchiActive,
-                    isEnabled: isEnabled,
+                    isArmed: isMirchiActive,
+                    isHighlightedForTurn: isCurrentPlayerTurn,
+                    isExhausted: mirchiRemaining <= 0,
                     highlightColor: color.primaryColor,
                     backgroundColor: color.secondaryColor
                 )

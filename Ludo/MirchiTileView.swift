@@ -6,43 +6,48 @@ struct MirchiTileView: View {
     let badgeValue: Int
     let badgeSize: CGFloat
     let backArrowAssetName: String
-    var isActive: Bool = false
-    var isEnabled: Bool = true
+    /// Mirchi backward mode on (user tapped to arm) — same idea as boost `isArmed`.
+    var isArmed: Bool = false
+    /// Current player's panel — matches `BoostIconTileView.isHighlightedForTurn`.
+    var isHighlightedForTurn: Bool = false
+    /// No Mirchi moves left — mirrors boost “used up” styling.
+    var isExhausted: Bool = false
     var inactiveBadgeColor: Color = .gray
     var highlightColor: Color = .red
     var backgroundColor: Color = .white
 
-    private var cornerRadius: CGFloat { tileSize / 2 }
+    /// Primary circle fill when it’s your turn, Mirchi is armed, and moves remain.
+    private var showArmedHighlight: Bool {
+        isHighlightedForTurn && !isExhausted && isArmed
+    }
+
+    private var circleFill: Color {
+        if isExhausted {
+            return backgroundColor.opacity(0.95)
+        }
+        return showArmedHighlight ? highlightColor : backgroundColor.opacity(0.95)
+    }
+
+    private var circleBorderColor: Color {
+        if isExhausted {
+            return highlightColor.opacity(0.35)
+        }
+        return showArmedHighlight ? Color.white.opacity(0.45) : highlightColor
+    }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Circle()
-                .fill(backgroundColor.opacity(0.95))
+                .fill(circleFill)
                 .overlay(
-                    Circle().stroke(highlightColor.opacity(0.45), lineWidth: max(1, tileSize * 0.045))
+                    Circle()
+                        .stroke(circleBorderColor, lineWidth: 3)
                 )
                 .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
                 .frame(width: tileSize, height: tileSize)
 
-            ZStack {
-                Image(backArrowAssetName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: iconSize * 0.56, height: iconSize * 0.56)
-                    .offset(x: -iconSize * 0.22, y: -iconSize * 0.12)
-
-                Image(PawnAssets.mirchiIndicator)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: iconSize * 1.04, height: iconSize * 1.04)
-                    .offset(x: iconSize * 0.22, y: iconSize * 0.14)
-            }
+            mirchiIcons()
                 .frame(width: tileSize, height: tileSize)
-                .saturation(isActive ? 1.0 : 0.4)
-                .opacity(isEnabled ? (isActive ? 1.0 : 0.75) : 0.45)
-                .grayscale(isEnabled ? 0 : 1)
-                .scaleEffect(isActive ? 1.08 : 1.0)
-                .marchingLightsBorder(isActive: isActive, cornerRadius: cornerRadius, color: highlightColor)
 
             let active = badgeValue >= 1
             Text("\(badgeValue)")
@@ -54,5 +59,34 @@ struct MirchiTileView: View {
                 .padding(.trailing, max(1, tileSize * 0.03))
         }
         .frame(width: tileSize, height: tileSize)
+    }
+
+    /// Chili keeps full-color art; back arrow turns white when Mirchi is armed so it reads on the primary fill.
+    @ViewBuilder
+    private func mirchiIcons() -> some View {
+        ZStack {
+            Group {
+                if showArmedHighlight {
+                    Image(backArrowAssetName)
+                        .resizable()
+                        .renderingMode(.template)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize * 0.56, height: iconSize * 0.56)
+                        .foregroundColor(.white)
+                } else {
+                    Image(backArrowAssetName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize * 0.56, height: iconSize * 0.56)
+                }
+            }
+            .offset(x: -iconSize * 0.22, y: -iconSize * 0.12)
+
+            Image(PawnAssets.mirchiIndicator)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: iconSize * 1.04, height: iconSize * 1.04)
+                .offset(x: iconSize * 0.22, y: iconSize * 0.14)
+        }
     }
 }

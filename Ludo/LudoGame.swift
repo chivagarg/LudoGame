@@ -226,14 +226,14 @@ class LudoGame: ObservableObject {
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
     @Published var selectedAvatars: [PlayerColor: String] = [
-        .red: PawnAssets.redMarble,
-        .green: PawnAssets.greenMarble,
-        .blue: PawnAssets.blueMarble,
-        .yellow: PawnAssets.yellowMarble
+        .red: UnlockManager.defaultUnlockedAvatar(for: .red),
+        .green: UnlockManager.defaultUnlockedAvatar(for: .green),
+        .blue: UnlockManager.defaultUnlockedAvatar(for: .blue),
+        .yellow: UnlockManager.defaultUnlockedAvatar(for: .yellow)
     ]
 
     func selectedAvatar(for color: PlayerColor) -> String {
-        return selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
+        return selectedAvatars[color] ?? UnlockManager.defaultUnlockedAvatar(for: color)
     }
     
     private func getDiceRoll() -> Int {
@@ -537,7 +537,7 @@ class LudoGame: ObservableObject {
         // Assign a strategy based on the pawn type each AI player has chosen.
         self.aiStrategies = [:]
         for aiPlayer in aiPlayers {
-            let avatarName = selectedAvatars[aiPlayer] ?? PawnAssets.defaultMarble(for: aiPlayer)
+            let avatarName = selectedAvatars[aiPlayer] ?? UnlockManager.defaultUnlockedAvatar(for: aiPlayer)
             let strategy = aiStrategy(for: avatarName)
             aiStrategies[aiPlayer] = strategy
             let strategyName = String(describing: type(of: strategy))
@@ -1377,10 +1377,10 @@ class LudoGame: ObservableObject {
         lastCoinAward = 0
         UserDefaults.standard.set(0, forKey: Self.firstRunMirchiGamesStartedKey)
         selectedAvatars = [
-            .red: PawnAssets.redMarble,
-            .green: PawnAssets.greenMarble,
-            .yellow: PawnAssets.yellowMarble,
-            .blue: PawnAssets.blueMarble
+            .red: UnlockManager.defaultUnlockedAvatar(for: .red),
+            .green: UnlockManager.defaultUnlockedAvatar(for: .green),
+            .yellow: UnlockManager.defaultUnlockedAvatar(for: .yellow),
+            .blue: UnlockManager.defaultUnlockedAvatar(for: .blue)
         ]
         selectedPlayers.removeAll()
         aiControlledPlayers.removeAll()

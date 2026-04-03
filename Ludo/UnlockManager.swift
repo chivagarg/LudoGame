@@ -135,6 +135,16 @@ struct UnlockManager {
         return !isPackUnlocked(pack)
     }
 
+    /// Default pawn for a color: highest tier in `selectionCandidatesDescending` that is unlocked for this player.
+    static func defaultUnlockedAvatar(for color: PlayerColor) -> String {
+        for name in PawnAssets.selectionCandidatesDescending(for: color) {
+            if !isPawnLocked(name) {
+                return name
+            }
+        }
+        return PawnAssets.defaultMarble(for: color)
+    }
+
     /// Coin cost shown on a locked pawn tile (full pack price; same for any pawn in that pack).
     static func packCoinCost(forLockedPawn pawnName: String) -> Int {
         guard isPawnLocked(pawnName) else { return 0 }

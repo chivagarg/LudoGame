@@ -49,7 +49,7 @@ struct PlayerSelectionView: View {
         selectedPlayers = Set(PlayerColor.allCases)
         aiPlayers.removeAll()
         selectedAvatars = PlayerColor.allCases.reduce(into: [:]) { result, color in
-            result[color] = PawnAssets.defaultMarble(for: color)
+            result[color] = UnlockManager.defaultUnlockedAvatar(for: color)
         }
     }
 
@@ -114,7 +114,7 @@ fileprivate struct PlayerRowView: View {
             Spacer()
 
             // Pawn image with GeometryReader to find its position
-            let avatarName = selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
+            let avatarName = selectedAvatars[color] ?? UnlockManager.defaultUnlockedAvatar(for: color)
             ZStack(alignment: .bottomTrailing) {
                 AvatarIcon(avatarName: avatarName, playerColor: colorForPlayer(color))
                 
