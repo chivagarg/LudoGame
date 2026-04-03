@@ -59,9 +59,12 @@ class LudoGame: ObservableObject {
     // Custom safe zones created by players via boosts.
     // Stores positions that are now considered safe for all players.
     @Published var customSafeZones: Set<Position> = []
-    
+    /// Placing player, used for light secondary-color cell tint on the board (same idea as star spaces).
+    @Published var customSafeZonePlacedBy: [Position: PlayerColor] = [:]
+
     // Trapped zones created by the Blue Aubergine boost
     @Published var trappedZones: Set<Position> = []
+    @Published var trappedZonePlacedBy: [Position: PlayerColor] = [:]
     
     // MARK: - Boost (pawn abilities)
     // State machine per player: available ↔ armed, and used when no charges remain.
@@ -560,7 +563,9 @@ class LudoGame: ObservableObject {
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
         customSafeZones.removeAll() // Clear custom safe zones on new game
+        customSafeZonePlacedBy.removeAll()
         trappedZones.removeAll() // Clear trapped zones
+        trappedZonePlacedBy.removeAll()
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
         // Reset boost state
         self.boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
@@ -720,12 +725,14 @@ class LudoGame: ObservableObject {
         if ability.kind == .safeZone {
             // Mark as safe zone
             customSafeZones.insert(position)
+            customSafeZonePlacedBy[position] = currentPlayer
             consumeBoostUse(for: currentPlayer)
             SoundManager.shared.playPawnHopSound() 
             GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
         } else if ability.kind == .trap {
             // Mark as trap
             trappedZones.insert(position)
+            trappedZonePlacedBy[position] = currentPlayer
             consumeBoostUse(for: currentPlayer)
             SoundManager.shared.playPawnHopSound()
             GameLogger.shared.log("🔥 [BOOST] Trap deployed at \(row),\(col)", level: .info)
@@ -1183,7 +1190,9 @@ class LudoGame: ObservableObject {
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         boostUsesRemaining = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, 0) })
         customSafeZones.removeAll() // Reset custom safe zones
+        customSafeZonePlacedBy.removeAll()
         trappedZones.removeAll() // Clear trapped zones
+        trappedZonePlacedBy.removeAll()
     }
     
     // MARK: - Boost API (centralized)

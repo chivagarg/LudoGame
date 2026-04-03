@@ -631,11 +631,18 @@ struct LudoBoardView: View {
     
     @ViewBuilder
     func cellView(row: Int, col: Int, cellSize: CGFloat) -> some View {
+        let pos = Position(row: row, col: col)
         ZStack {
             cellBackground(row: row, col: col, cellSize: cellSize)
-            
+
+            // Light player-color tint for deployed boosts (same palette idea as star / safe-zone secondaries).
+            if let placer = game.trappedZonePlacedBy[pos] ?? game.customSafeZonePlacedBy[pos] {
+                Rectangle()
+                    .fill(placer.secondaryColor)
+            }
+
             // Add Trap Overlay (custom blue boost)
-            if game.trappedZones.contains(Position(row: row, col: col)) {
+            if game.trappedZones.contains(pos) {
                 Image(PawnAssets.boostTrap)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -643,7 +650,7 @@ struct LudoBoardView: View {
                     .allowsHitTesting(false)
             }
             // Add Shield Overlay for custom safe zones (green boost)
-            else if game.customSafeZones.contains(Position(row: row, col: col)) {
+            else if game.customSafeZones.contains(pos) {
                 Image(PawnAssets.boostShield)
                     .resizable()
                     .aspectRatio(contentMode: .fit)

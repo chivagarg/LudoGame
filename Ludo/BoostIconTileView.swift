@@ -113,7 +113,8 @@ struct BoostIconTileView: View {
                     .font(.system(size: badgeSize * 0.56, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(width: badgeSize, height: badgeSize)
-                    .background(Circle().fill(active ? highlightColor : inactiveBadgeColor))
+                    // Match Mirchi tile badge: `Color.red` (not player primary).
+                    .background(Circle().fill(active ? Color.red : inactiveBadgeColor))
                     .padding(.top, max(1, tileSize * 0.03))
                     .padding(.trailing, max(1, tileSize * 0.03))
             }
