@@ -59,9 +59,12 @@ class LudoGame: ObservableObject {
     // Custom safe zones created by players via boosts.
     // Stores positions that are now considered safe for all players.
     @Published var customSafeZones: Set<Position> = []
-    
+    /// Placing player, used for light secondary-color cell tint on the board (same idea as star spaces).
+    @Published var customSafeZonePlacedBy: [Position: PlayerColor] = [:]
+
     // Trapped zones created by the Blue Aubergine boost
     @Published var trappedZones: Set<Position> = []
+    @Published var trappedZonePlacedBy: [Position: PlayerColor] = [:]
     
     // MARK: - Boost (pawn abilities)
     // State machine per player: available ↔ armed, and used when no charges remain.
@@ -223,14 +226,14 @@ class LudoGame: ObservableObject {
     @Published var pawns: [PlayerColor: [PawnState]] = [:]
     
     @Published var selectedAvatars: [PlayerColor: String] = [
-        .red: PawnAssets.redMarble,
-        .green: PawnAssets.greenMarble,
-        .blue: PawnAssets.blueMarble,
-        .yellow: PawnAssets.yellowMarble
+        .red: UnlockManager.defaultUnlockedAvatar(for: .red),
+        .green: UnlockManager.defaultUnlockedAvatar(for: .green),
+        .blue: UnlockManager.defaultUnlockedAvatar(for: .blue),
+        .yellow: UnlockManager.defaultUnlockedAvatar(for: .yellow)
     ]
 
     func selectedAvatar(for color: PlayerColor) -> String {
-        return selectedAvatars[color] ?? PawnAssets.defaultMarble(for: color)
+        return selectedAvatars[color] ?? UnlockManager.defaultUnlockedAvatar(for: color)
     }
     
     private func getDiceRoll() -> Int {
@@ -534,7 +537,7 @@ class LudoGame: ObservableObject {
         // Assign a strategy based on the pawn type each AI player has chosen.
         self.aiStrategies = [:]
         for aiPlayer in aiPlayers {
-            let avatarName = selectedAvatars[aiPlayer] ?? PawnAssets.defaultMarble(for: aiPlayer)
+            let avatarName = selectedAvatars[aiPlayer] ?? UnlockManager.defaultUnlockedAvatar(for: aiPlayer)
             let strategy = aiStrategy(for: avatarName)
             aiStrategies[aiPlayer] = strategy
             let strategyName = String(describing: type(of: strategy))
@@ -560,7 +563,9 @@ class LudoGame: ObservableObject {
         homeCompletionOrder = []
         totalPawnsAtFinishingHome = 0
         customSafeZones.removeAll() // Clear custom safe zones on new game
+        customSafeZonePlacedBy.removeAll()
         trappedZones.removeAll() // Clear trapped zones
+        trappedZonePlacedBy.removeAll()
         self.mirchiArrowActivated = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, false) })
         // Reset boost state
         self.boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
@@ -720,12 +725,14 @@ class LudoGame: ObservableObject {
         if ability.kind == .safeZone {
             // Mark as safe zone
             customSafeZones.insert(position)
+            customSafeZonePlacedBy[position] = currentPlayer
             consumeBoostUse(for: currentPlayer)
             SoundManager.shared.playPawnHopSound() 
             GameLogger.shared.log("🛡️ [BOOST] Safe zone created at \(row),\(col)", level: .info)
         } else if ability.kind == .trap {
             // Mark as trap
             trappedZones.insert(position)
+            trappedZonePlacedBy[position] = currentPlayer
             consumeBoostUse(for: currentPlayer)
             SoundManager.shared.playPawnHopSound()
             GameLogger.shared.log("🔥 [BOOST] Trap deployed at \(row),\(col)", level: .info)
@@ -1183,7 +1190,9 @@ class LudoGame: ObservableObject {
         boostState = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, .available) })
         boostUsesRemaining = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, 0) })
         customSafeZones.removeAll() // Reset custom safe zones
+        customSafeZonePlacedBy.removeAll()
         trappedZones.removeAll() // Clear trapped zones
+        trappedZonePlacedBy.removeAll()
     }
     
     // MARK: - Boost API (centralized)
@@ -1368,10 +1377,10 @@ class LudoGame: ObservableObject {
         lastCoinAward = 0
         UserDefaults.standard.set(0, forKey: Self.firstRunMirchiGamesStartedKey)
         selectedAvatars = [
-            .red: PawnAssets.redMarble,
-            .green: PawnAssets.greenMarble,
-            .yellow: PawnAssets.yellowMarble,
-            .blue: PawnAssets.blueMarble
+            .red: UnlockManager.defaultUnlockedAvatar(for: .red),
+            .green: UnlockManager.defaultUnlockedAvatar(for: .green),
+            .yellow: UnlockManager.defaultUnlockedAvatar(for: .yellow),
+            .blue: UnlockManager.defaultUnlockedAvatar(for: .blue)
         ]
         selectedPlayers.removeAll()
         aiControlledPlayers.removeAll()

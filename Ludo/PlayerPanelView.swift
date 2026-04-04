@@ -142,9 +142,8 @@ struct PlayerPanelView: View {
                             .scaledToFit()
                             .frame(width: iconSize, height: iconSize)
                             .foregroundColor(
-                                helpEnabled
-                                    ? color.primaryColor
-                                    : Color.gray.opacity(0.5)
+                                Color(red: 0x9F/255, green: 0x9F/255, blue: 0x9F/255)
+                                    .opacity(helpEnabled ? 1.0 : 0.7)
                             )
                     }
                     .frame(width: chipSize, height: chipSize)
@@ -188,7 +187,8 @@ struct PlayerPanelView: View {
     private func boostSlot() -> some View {
         let state = game.getBoostState(for: color)
         let isUsed = state == .used || boostRemaining <= 0
-        let isActive = state == .armed
+        let isCurrentPlayerTurn = game.currentPlayer == color
+        let isArmed = state == .armed
         let isEnabled = !isUsed && canUseBoost(for: color) && game.boostAbility(for: color) != nil
         actionSlot(
             label: GameCopy.PlayerPanel.boostLabel,
@@ -209,9 +209,9 @@ struct PlayerPanelView: View {
                     badgeValue: max(0, boostRemaining),
                     badgeSize: badgeSize,
                     isUsed: isUsed,
-                    isActive: isActive,
+                    isHighlightedForTurn: isCurrentPlayerTurn,
+                    isArmed: isArmed,
                     isEnabled: isEnabled,
-                    highlightActiveBorder: true,
                     highlightColor: color.primaryColor,
                     backgroundColor: color.secondaryColor
                 )
@@ -225,8 +225,9 @@ struct PlayerPanelView: View {
     private func mirchiSlot() -> some View {
         let isMirchiActive = game.mirchiArrowActivated[color] == true
         let hasMirchiMoves = mirchiRemaining > 0
+        let isCurrentPlayerTurn = game.currentPlayer == color
         let isEnabled = hasMirchiFeature && hasMirchiMoves
-            && game.currentPlayer == color
+            && isCurrentPlayerTurn
             && !game.aiControlledPlayers.contains(color)
             && !game.isBusy
         actionSlot(
@@ -247,8 +248,9 @@ struct PlayerPanelView: View {
                     badgeValue: max(0, mirchiRemaining),
                     badgeSize: badgeSize,
                     backArrowAssetName: PawnAssets.backArrow(for: color),
-                    isActive: isMirchiActive,
-                    isEnabled: isEnabled,
+                    isArmed: isMirchiActive,
+                    isHighlightedForTurn: isCurrentPlayerTurn,
+                    isExhausted: mirchiRemaining <= 0,
                     highlightColor: color.primaryColor,
                     backgroundColor: color.secondaryColor
                 )

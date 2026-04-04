@@ -151,6 +151,21 @@ public enum PawnAssets {
         case .yellow: return yellowMarble
         case .blue: return blueMarble
         }
+
+    }
+
+    /// Highest tier first, for default selection — see `UnlockManager.defaultUnlockedAvatar(for:)`.
+    static func selectionCandidatesDescending(for color: PlayerColor) -> [String] {
+        switch color {
+        case .red:
+            return [redAnar, redTomato, redStrawberry, redMarble]
+        case .green:
+            return [greenWatermelon, greenCapsicum, greenKiwi, greenMarble]
+        case .yellow:
+            return [yellowPineapple, yellowMango, yellowBanana, yellowMarble]
+        case .blue:
+            return [blueJamun, blueAubergine, blueGrape, blueMarble]
+        }
     }
 
     static func tier(for avatarName: String) -> Tier {

@@ -16,10 +16,10 @@ struct PlayerSetupCard: View {
     @State private var attackingPawn: String = PawnAssets.redMarble
     @State private var kickedPawn: String = PawnAssets.blueMarble
     @State private var selectedAvatars: [PlayerColor: String] = [
-        .red: PawnAssets.redMarble,
-        .green: PawnAssets.greenMarble,
-        .blue: PawnAssets.blueMarble,
-        .yellow: PawnAssets.yellowMarble
+        .red: UnlockManager.defaultUnlockedAvatar(for: .red),
+        .green: UnlockManager.defaultUnlockedAvatar(for: .green),
+        .blue: UnlockManager.defaultUnlockedAvatar(for: .blue),
+        .yellow: UnlockManager.defaultUnlockedAvatar(for: .yellow)
     ]
 
     var body: some View {

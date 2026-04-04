@@ -10,9 +10,16 @@ struct PawnView: View {
     /// Pulse when this pawn may be chosen for the current roll. With Mirchi backward arrow on, path pawns only pulse
     /// if `isValidBackwardMove` is true. Pawns still in **starting home** can't move backward; if the roll allows
     /// leaving home (e.g. 6), keep pulsing so turning Mirchi off still matches visible affordance.
+    /// Extra backward-move boost armed: only pawns that can legally move backward with this roll (boost path).
     private var isEligible: Bool {
         guard pawn.color == game.currentPlayer else { return false }
         guard game.eligiblePawns.contains(pawn.id) else { return false }
+
+        if game.boostAbility(for: game.currentPlayer)?.kind == .extraBackwardMove,
+           game.getBoostState(for: game.currentPlayer) == .armed {
+            return game.isValidBackwardMove(color: pawn.color, pawnId: pawn.id, isBoost: true)
+        }
+
         if game.gameMode == .mirchi, game.mirchiArrowActivated[game.currentPlayer] == true {
             if game.isValidBackwardMove(color: pawn.color, pawnId: pawn.id) {
                 return true
