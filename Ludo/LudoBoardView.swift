@@ -11,6 +11,31 @@ struct TrailParticle: Identifiable {
     let createdAt: Date
 }
 
+/// Large path-aligned back arrow behind pawns when Mirchi is armed and a backward move is legal for that cell.
+private struct MirchiBackwardArrowPulseView: View {
+    let playerColor: PlayerColor
+    let angle: Angle
+    let cellSize: CGFloat
+
+    @State private var pulseScale: CGFloat = 1.0
+
+    var body: some View {
+        Image(PawnAssets.backArrow(for: playerColor))
+            .resizable()
+            .renderingMode(.template)
+            .aspectRatio(contentMode: .fit)
+            .foregroundColor(playerColor.primaryColor)
+            .rotationEffect(angle)
+            .frame(width: cellSize * 0.82, height: cellSize * 0.82)
+            .scaleEffect(pulseScale)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.75).repeatForever(autoreverses: true)) {
+                    pulseScale = 0.86
+                }
+            }
+    }
+}
+
 struct LudoBoardView: View {
     @EnvironmentObject var game: LudoGame
     
@@ -64,8 +89,9 @@ struct LudoBoardView: View {
         let scoreIcon = min(28, max(16, panelHeight * 0.22))
         let scoreValue = min(18, max(12, panelHeight * 0.15))
         let labelLine = scoreLabel * 1.3
-        let valueRow = max(scoreIcon, scoreValue * 1.28)
-        return spacing + labelLine + valueRow + 4
+        // Rounded bold value text can exceed naive font-size multiples; extra headroom avoids bottom clipping (e.g. iPad).
+        let valueRow = max(scoreIcon, scoreValue * 1.36)
+        return spacing + labelLine + valueRow + 8 + 2 // +2 matches `scoreRowSlot` bottom padding in PlayerPanelView
     }
 
     /// Panel + gap + scores (`PlayerPanelView` total height before `.position`).
@@ -92,7 +118,7 @@ struct LudoBoardView: View {
     }
 
     /// Extra room so score rows aren’t clipped on device (font metrics, panel shadow bleed); kept small to preserve board size.
-    private let layoutSlackPoints: CGFloat = 12
+    private let layoutSlackPoints: CGFloat = 18
 
     /// H-A: `boardSize` is always `gridSize ×` whole points per cell so the HStack/VStack grid matches `.position()`-based overlays (avoids fractional row gaps / visible grid lines).
     private func snapBoardSizeToIntegralCells(
@@ -567,7 +593,10 @@ struct LudoBoardView: View {
                                 currentPlayer: game.currentPlayer,
                                 eligiblePawns: game.eligiblePawns,
                                 isCustomSafeZone: game.customSafeZones.contains(Position(row: row, col: col)),
-                                isTrappedZone: game.trappedZones.contains(Position(row: row, col: col))
+                                isTrappedZone: game.trappedZones.contains(Position(row: row, col: col)),
+                                mirchiArmed: game.gameMode == .mirchi && (game.mirchiArrowActivated[game.currentPlayer] == true),
+                                mirchiBackwardArrowCueDismissed: game.mirchiBackwardArrowCueDismissed,
+                                rollID: game.rollID
                             )
                             .equatable()
                         }
@@ -610,6 +639,28 @@ struct LudoBoardView: View {
         return pawnsInCell
     }
 
+    /// Rotation for Mirchi “back” along the path. Arrow is drawn on the cell **behind** the pawn (`path[index - 1]`), not on the pawn’s cell, so the cue sits in the direction they will move. Asset baseline points left; align to path tangent.
+    private func mirchiBackwardArrowAngle(row: Int, col: Int) -> Angle? {
+        guard game.gameMode == .mirchi,
+              game.mirchiArrowActivated[game.currentPlayer] == true,
+              !game.mirchiBackwardArrowCueDismissed else { return nil }
+        let color = game.currentPlayer
+        guard let pawns = game.pawns[color] else { return nil }
+        let path = game.path(for: color)
+        for pawn in pawns {
+            guard let idx = pawn.positionIndex, idx >= 1, idx < path.count else { continue }
+            let pos = path[idx]
+            let behind = path[idx - 1]
+            guard behind.row == row && behind.col == col else { continue }
+            guard game.isValidBackwardMove(color: color, pawnId: pawn.id) else { continue }
+            let dy = Double(behind.row - pos.row)
+            let dx = Double(behind.col - pos.col)
+            let theta = atan2(dy, dx)
+            return Angle(radians: theta - Double.pi)
+        }
+        return nil
+    }
+
     // MARK: - BoardCellView
     struct BoardCellView: View, Equatable {
         let pawnsInCell: [PawnState]
@@ -621,6 +672,10 @@ struct LudoBoardView: View {
         let eligiblePawns: Set<Int>
         let isCustomSafeZone: Bool
         let isTrappedZone: Bool
+        /// Mirchi UI must invalidate `.equatable()` when toggled without changing pawn sets.
+        let mirchiArmed: Bool
+        let mirchiBackwardArrowCueDismissed: Bool
+        let rollID: Int
 
         // Compute the set of eligible pawn IDs in this cell
         var eligiblePawnIdsInCell: Set<Int> {
@@ -638,7 +693,10 @@ struct LudoBoardView: View {
                 lhs.isCustomSafeZone == rhs.isCustomSafeZone &&
                 lhs.isTrappedZone == rhs.isTrappedZone &&
                 lhs.cellSize == rhs.cellSize &&
-                lhs.currentPlayer == rhs.currentPlayer
+                lhs.currentPlayer == rhs.currentPlayer &&
+                lhs.mirchiArmed == rhs.mirchiArmed &&
+                lhs.mirchiBackwardArrowCueDismissed == rhs.mirchiBackwardArrowCueDismissed &&
+                lhs.rollID == rhs.rollID
         }
 
         var body: some View {
@@ -684,8 +742,19 @@ struct LudoBoardView: View {
                     .font(.system(size: cellSize * 0.4))
                     .allowsHitTesting(false) // Let taps pass through
             }
-            
+
+            if let angle = mirchiBackwardArrowAngle(row: row, col: col) {
+                MirchiBackwardArrowPulseView(
+                    playerColor: game.currentPlayer,
+                    angle: angle,
+                    cellSize: cellSize
+                )
+                .zIndex(0)
+                .allowsHitTesting(false)
+            }
+
             cellPawns(row: row, col: col, cellSize: cellSize)
+                .zIndex(1)
         }
         .frame(width: cellSize, height: cellSize)
     }
@@ -1268,7 +1337,9 @@ struct LudoBoardView: View {
             // Note: isValidBackwardMove handles the validation logic.
             // We pass isBoost: true if it's a boost move, so it bypasses the "mirchiMovesRemaining" check.
             if let currentPos = pawn.positionIndex, game.isValidBackwardMove(color: color, pawnId: pawn.id, isBoost: isMirchiBoostArmed) {
-                
+                if isMirchiModeArrow {
+                    game.dismissMirchiBackwardArrowCue()
+                }
                 // Consume boost if applicable (passing isBackward: true ensures Mirchi boost is consumed)
                 if game.currentPlayer == color {
                     game.consumeBoostOnPawnTapIfNeeded(color: color, isBackward: true)
@@ -1294,7 +1365,9 @@ struct LudoBoardView: View {
         } else {
             // Standard forward move logic
             if game.isValidMove(color: color, pawnId: pawn.id) {
-                
+                if game.gameMode == .mirchi, game.mirchiArrowActivated[color] == true {
+                    game.dismissMirchiBackwardArrowCue()
+                }
                 // Check if any generic boost should be consumed (e.g. hypothetical forward boost)
                 // Passing isBackward: false prevents Mirchi boost from being consumed here.
                 if game.currentPlayer == color {

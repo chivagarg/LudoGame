@@ -42,6 +42,8 @@ class LudoGame: ObservableObject {
     @Published var aiControlledPlayers: Set<PlayerColor> = []
     @Published var gameMode: GameMode = .classic
     @Published var mirchiArrowActivated: [PlayerColor: Bool] = [:]
+    /// Hides the board "backward direction" arrow after the player taps a pawn; resets on each new roll or when Mirchi is re-armed.
+    @Published var mirchiBackwardArrowCueDismissed: Bool = false
     /// When true, the current player's home band stops blinking (they rolled, toggled boost, or toggled mirchi).
     @Published var currentPlayerHasEngagedThisTurn: Bool = false
     
@@ -311,6 +313,7 @@ class LudoGame: ObservableObject {
         GameLogger.shared.log("🎲 ROLL HISTORY for \(currentPlayer.rawValue): \(rolls)", level: .debug)
 
         rollID += 1 // Increment the roll ID to ensure UI updates
+        mirchiBackwardArrowCueDismissed = false
         GameLogger.shared.log("🎲 [RESULT] \(self.currentPlayer.rawValue) rolled a \(self.diceValue) (Roll ID: \(self.rollID))")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
@@ -435,6 +438,7 @@ class LudoGame: ObservableObject {
         diceRollHistory[currentPlayer] = rolls
 
         rollID += 1 // Increment the roll ID to ensure UI updates
+        mirchiBackwardArrowCueDismissed = false
         GameLogger.shared.log("🎲 [RESULT] Admin set dice to \(self.diceValue) (Roll ID: \(self.rollID)). History: \(rolls)")
         currentRollPlayer = currentPlayer  // Set the current player as the roll owner
         
@@ -858,6 +862,24 @@ class LudoGame: ObservableObject {
         return true
     }
     
+    /// Path / dice / safe-zone checks for a Mirchi backward move (does not check `eligiblePawns` or mirchi remaining).
+    private func mirchiBackwardPathGeometryValid(color: PlayerColor, pawnId: Int) -> Bool {
+        guard let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
+              let positionIndex = pawn.positionIndex,
+              positionIndex >= GameConstants.startingPathIndex else {
+            return false
+        }
+        guard positionIndex - diceValue >= GameConstants.startingPathIndex else { return false }
+        let currentPath = path(for: color)
+        let currentPosition = currentPath[positionIndex]
+        let inSafeZone = Self.redSafeZone.contains(currentPosition) ||
+                         Self.greenSafeZone.contains(currentPosition) ||
+                         Self.yellowSafeZone.contains(currentPosition) ||
+                         Self.blueSafeZone.contains(currentPosition)
+        if inSafeZone { return false }
+        return true
+    }
+
     // Function to validate if a backward move is legal in Mirchi Mode
     func isValidBackwardMove(color: PlayerColor, pawnId: Int, isBoost: Bool = false) -> Bool {
         // Standard move validation
@@ -871,28 +893,8 @@ class LudoGame: ObservableObject {
         guard isBoost || mirchiMovesRemaining[color, default: 0] > 0 else {
             return false
         }
-        
-        // Backward-specific validation
-        guard let pawn = pawns[color]?.first(where: { $0.id == pawnId }),
-              let positionIndex = pawn.positionIndex,
-              positionIndex >= GameConstants.startingPathIndex else {
-            // Pawn must be on the path (not at home or finished)
-            return false
-        }
 
-        // Backward move is not allowed from any safe zone
-        let currentPath = path(for: color)
-        let currentPosition = currentPath[positionIndex]
-        let inSafeZone = Self.redSafeZone.contains(currentPosition) ||
-                         Self.greenSafeZone.contains(currentPosition) ||
-                         Self.yellowSafeZone.contains(currentPosition) ||
-                         Self.blueSafeZone.contains(currentPosition)
-        if inSafeZone {
-            return false
-        }
-        
-        // Ensure the move does not go past the start of the path
-        return positionIndex - diceValue >= GameConstants.startingPathIndex
+        return mirchiBackwardPathGeometryValid(color: color, pawnId: pawnId)
     }
 
     /// Returns an IPH-friendly error message when a backward move is invalid for a
@@ -1200,7 +1202,15 @@ class LudoGame: ObservableObject {
             if let positionIndex = pawn.positionIndex {
                 let currentPath = path(for: currentPlayer)
                 let newIndex = positionIndex + diceValue
-                return positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
+                let forwardOk = positionIndex >= GameConstants.startingPathIndex && newIndex <= currentPath.count - 1
+                if forwardOk { return true }
+                // Mirchi: include pawns that can only move backward (forward overshoots or is invalid) so UI + arrows work before tap.
+                if gameMode == .mirchi,
+                   mirchiMovesRemaining[currentPlayer, default: 0] > 0,
+                   mirchiBackwardPathGeometryValid(color: currentPlayer, pawnId: pawn.id) {
+                    return true
+                }
+                return false
             } else {
                 return diceValue == GameConstants.sixDiceRoll
             }
@@ -1288,7 +1298,15 @@ class LudoGame: ObservableObject {
         guard color == currentPlayer else { return }
         let current = mirchiArrowActivated[color] ?? false
         mirchiArrowActivated[color] = !current
+        if mirchiArrowActivated[color] == true {
+            mirchiBackwardArrowCueDismissed = false
+        }
         currentPlayerHasEngagedThisTurn = true
+    }
+
+    /// Call when the player commits to moving a pawn so the pre-move backward arrow cue hides (panel Mirchi state unchanged).
+    func dismissMirchiBackwardArrowCue() {
+        mirchiBackwardArrowCueDismissed = true
     }
     
     func consumeBoostOnPawnTapIfNeeded(color: PlayerColor, isBackward: Bool = false) {
@@ -1321,6 +1339,7 @@ class LudoGame: ObservableObject {
         diceRollHistory[currentPlayer] = rolls
 
         rollID += 1 // triggers dice animation in the UI
+        mirchiBackwardArrowCueDismissed = false
         currentRollPlayer = currentPlayer
         if let currentPawns = pawns[currentPlayer] {
             handlePostRoll(currentPawns: currentPawns, player: currentPlayer)

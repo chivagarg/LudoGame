@@ -276,6 +276,7 @@ struct PlayerPanelView: View {
                     .foregroundColor(.white)
             }
         }
+        .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
     }
 
