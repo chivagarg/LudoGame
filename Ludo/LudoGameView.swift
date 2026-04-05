@@ -17,33 +17,38 @@ struct LudoGameView: View {
         game.gameStarted && !game.isGameOver
     }
     
-    private var horizontalPadding: CGFloat { isPlayingGame ? 10 : 16 }
-    private var verticalPadding: CGFloat { isPlayingGame ? 8 : 16 }
+    /// No extra insets while playing so `LudoBoardView` can use the full container; board sizing already reserves space for score rows.
+    private var horizontalPadding: CGFloat { isPlayingGame ? 0 : 16 }
+    private var verticalPadding: CGFloat { isPlayingGame ? 0 : 16 }
     
     var body: some View {
-        VStack {
-            if !game.gameStarted {
-                StartGameView(
-                    isAdminMode: $game.isAdminMode,
-                    selectedPlayers: $selectedPlayers,
-                    aiPlayers: $aiPlayers,
-                    selectedMode: $selectedMode,
-                    onStartGame: {
-                        game.startGame(selectedPlayers: selectedPlayers, aiPlayers: aiPlayers, mode: selectedMode)
-                    }
-                )
-            } else if game.isGameOver {
-                GameOverView(selectedPlayers: $selectedPlayers, onExitGame: {
-                    game.resetGame()
-                })
-            } else {
-                GameBoardView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack {
+            (isPlayingGame ? Color.black : Color(.systemBackground))
+                .ignoresSafeArea()
+
+            VStack {
+                if !game.gameStarted {
+                    StartGameView(
+                        isAdminMode: $game.isAdminMode,
+                        selectedPlayers: $selectedPlayers,
+                        aiPlayers: $aiPlayers,
+                        selectedMode: $selectedMode,
+                        onStartGame: {
+                            game.startGame(selectedPlayers: selectedPlayers, aiPlayers: aiPlayers, mode: selectedMode)
+                        }
+                    )
+                } else if game.isGameOver {
+                    GameOverView(selectedPlayers: $selectedPlayers, onExitGame: {
+                        game.resetGame()
+                    })
+                } else {
+                    GameBoardView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
         }
-        .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, verticalPadding)
-        .background(Color(.systemBackground)) // Ensure consistent background in both Light & Dark modes
         .environmentObject(game)
     }
 }

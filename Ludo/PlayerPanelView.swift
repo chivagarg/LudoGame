@@ -265,7 +265,7 @@ struct PlayerPanelView: View {
         VStack(spacing: max(2, panelHeight * 0.016)) {
             Text(label)
                 .font(.system(size: scoreLabelFontSize, weight: .semibold, design: .rounded))
-                .foregroundColor(.black.opacity(0.85))
+                .foregroundColor(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             HStack(spacing: 6) {
@@ -273,7 +273,7 @@ struct PlayerPanelView: View {
                     .frame(width: scoreIconSize, height: scoreIconSize)
                 Text("\(value)")
                     .font(.system(size: scoreValueFontSize, weight: .bold, design: .rounded))
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
             }
         }
         .frame(maxWidth: .infinity)
@@ -296,6 +296,7 @@ struct PlayerPanelView: View {
             value: game.killCounts[color] ?? 0,
             icon: Image("skull_cute")
                 .resizable()
+                .renderingMode(.original)
                 .aspectRatio(contentMode: .fit)
         )
     }

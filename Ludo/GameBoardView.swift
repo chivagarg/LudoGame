@@ -43,25 +43,6 @@ struct GameBoardView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            // Pause button at top right
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        game.pauseGame()
-                        showPauseMenu = true
-                    }) {
-                        Image(systemName: "pause.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.primary)
-                            .shadow(radius: 3)
-                    }
-                    .offset(y: -12)
-                    .padding()
-                }
-                Spacer()
-            }
-
             // Dimmed background and dialog
             if showPauseMenu {
                 Color.black.opacity(0.4)
@@ -121,6 +102,25 @@ struct GameBoardView: View {
                     }
                 )
                 .zIndex(10)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if !showPauseMenu {
+                Button {
+                    game.pauseGame()
+                    showPauseMenu = true
+                } label: {
+                    Image(systemName: "pause.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+                .padding(.top, 6)
+                .padding(.trailing, 8)
+                .accessibilityLabel("Pause")
             }
         }
     }

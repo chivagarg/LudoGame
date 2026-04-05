@@ -37,7 +37,8 @@ struct LudoBoardView: View {
     private let homeBandFlashTimer = Timer.publish(every: 0.8, on: .main, in: .common).autoconnect()
     
     private let pawnResizeFactor: CGFloat = 1.0
-    private var boardScaleFactor: CGFloat { maximized ? 0.95 : 0.90 }
+    /// Initial guess for layout iteration; converges to max square that fits. Higher = more play area when maximized.
+    private var boardScaleFactor: CGFloat { maximized ? 1.0 : 0.90 }
     
     private func getDicePosition() -> (row: Int, col: Int)? {
         if game.hasCompletedGame(color: game.currentPlayer) {
@@ -56,25 +57,47 @@ struct LudoBoardView: View {
         }
     }
     
-    /// Panel chrome that sits outside the board (panel shell + `PlayerPanelView` score row below/above after rotation).
-    /// App is portrait-only; this reserves vertical space so top/bottom scores are not clipped.
-    private func verticalMarginForPlayerPanels(boardSize: CGFloat, isPortrait: Bool) -> CGFloat {
+    /// Mirrors `PlayerPanelView.scoreRowSlot` vertical footprint (label + icon/value row).
+    private static func scoreBlockHeight(panelHeight: CGFloat) -> CGFloat {
+        let spacing = max(2, panelHeight * 0.016)
+        let scoreLabel = min(14, max(10, panelHeight * 0.11))
+        let scoreIcon = min(28, max(16, panelHeight * 0.22))
+        let scoreValue = min(18, max(12, panelHeight * 0.15))
+        let labelLine = scoreLabel * 1.3
+        let valueRow = max(scoreIcon, scoreValue * 1.28)
+        return spacing + labelLine + valueRow + 4
+    }
+
+    /// Panel + gap + scores (`PlayerPanelView` total height before `.position`).
+    private func playerPanelStackHeight(boardSize: CGFloat) -> CGFloat {
         let cellSize = boardSize / CGFloat(gridSize)
         let panelHeight = min(max(cellSize * 2.5, 88), 140)
         let outsideScoreGap = max(8, panelHeight * 0.08)
-        // Icons + value text in `scoreContentOutsidePanel()` (room for larger Dynamic Type in portrait).
-        let scoreRowHeight = max(52, panelHeight * 0.42)
-        let baseFudge: CGFloat = 14
-        let portraitFudge: CGFloat = isPortrait ? 14 : 0
-        return panelHeight + outsideScoreGap + scoreRowHeight + baseFudge + portraitFudge
+        return panelHeight + outsideScoreGap + Self.scoreBlockHeight(panelHeight: panelHeight)
     }
+
+    /// Minimum `(safeHeight - boardSize)` so top/bottom scores are not clipped with current `playerPanelsView` anchors.
+    ///
+    /// With board centered in the safe area, top panel center is `boardOffsetY - panelHeight/2 + edgeOverlap` and the
+    /// axis-aligned height of `PlayerPanelView` is `T` = `playerPanelStackHeight`. Clipping-free top requires
+    /// `(safeHeight - boardSize)/2 >= panelHeight/2 - edgeOverlap + T/2` (bottom is symmetric) ⇒
+    /// `safeHeight - boardSize >= panelHeight - 2*edgeOverlap + T`.
+    /// Previous code used `2 × (panel + gap + scores + fudge)`, which **double-counted** the stack and shrank the board.
+    private func minimumSafeHeightMinusBoard(boardSize: CGFloat) -> CGFloat {
+        let cellSize = boardSize / CGFloat(gridSize)
+        let panelHeight = min(max(cellSize * 2.5, 88), 140)
+        let edgeOverlap = max(2, cellSize * 0.12)
+        let t = playerPanelStackHeight(boardSize: boardSize)
+        return panelHeight - 2 * edgeOverlap + t + layoutSlackPoints
+    }
+
+    private let layoutSlackPoints: CGFloat = 6
 
     /// H-A: `boardSize` is always `gridSize ×` whole points per cell so the HStack/VStack grid matches `.position()`-based overlays (avoids fractional row gaps / visible grid lines).
     private func snapBoardSizeToIntegralCells(
         _ rawBoard: CGFloat,
         safeWidth: CGFloat,
-        safeHeight: CGFloat,
-        isPortrait: Bool
+        safeHeight: CGFloat
     ) -> CGFloat {
         let g = CGFloat(gridSize)
         let widthCapCells = max(1, Int(floor(safeWidth / g)))
@@ -83,8 +106,8 @@ struct LudoBoardView: View {
         if cellPoints > widthCapCells { cellPoints = widthCapCells }
         var board = CGFloat(cellPoints) * g
         while cellPoints > 1 {
-            let margin = verticalMarginForPlayerPanels(boardSize: board, isPortrait: isPortrait)
-            if board <= safeHeight - 2 * margin + 0.5 { break }
+            let need = minimumSafeHeightMinusBoard(boardSize: board)
+            if board <= safeHeight - need + 0.5 { break }
             cellPoints -= 1
             board = CGFloat(cellPoints) * g
         }
@@ -95,16 +118,13 @@ struct LudoBoardView: View {
         let insets = geometry.safeAreaInsets
         let safeWidth = geometry.size.width - insets.leading - insets.trailing
         let safeHeight = geometry.size.height - insets.top - insets.bottom
-        /// Matches supported orientations (portrait / upside-down).
-        let isPortrait = safeHeight >= safeWidth - 2
-        
+
         guard safeWidth > 32, safeHeight > 32 else {
             let raw = min(geometry.size.width, geometry.size.height) * boardScaleFactor
             let boardSize = snapBoardSizeToIntegralCells(
                 raw,
                 safeWidth: max(safeWidth, 1),
-                safeHeight: max(safeHeight, 1),
-                isPortrait: isPortrait
+                safeHeight: max(safeHeight, 1)
             )
             let cellSize = boardSize / CGFloat(gridSize)
             let boardOffsetX = (geometry.size.width - boardSize) / 2
@@ -112,12 +132,11 @@ struct LudoBoardView: View {
             return (boardSize, cellSize, boardOffsetX, boardOffsetY)
         }
         
-        // Board centered in the safe rect; shrink until top and bottom margins fit panel + external scores.
+        // Largest square: `safeHeight - board >= minimumSafeHeightMinusBoard(board)` (exact slack, not doubled old margin).
         var boardSize = min(safeWidth, safeHeight) * boardScaleFactor
-        for _ in 0..<24 {
-            let margin = verticalMarginForPlayerPanels(boardSize: boardSize, isPortrait: isPortrait)
-            let maxByPanels = safeHeight - 2 * margin
-            let maxBoard = min(safeWidth, max(80, maxByPanels))
+        for _ in 0..<40 {
+            let need = minimumSafeHeightMinusBoard(boardSize: boardSize)
+            let maxBoard = min(safeWidth, max(80, safeHeight - need))
             if abs(maxBoard - boardSize) < 0.5 {
                 boardSize = maxBoard
                 break
@@ -125,7 +144,7 @@ struct LudoBoardView: View {
             boardSize = maxBoard
         }
 
-        boardSize = snapBoardSizeToIntegralCells(boardSize, safeWidth: safeWidth, safeHeight: safeHeight, isPortrait: isPortrait)
+        boardSize = snapBoardSizeToIntegralCells(boardSize, safeWidth: safeWidth, safeHeight: safeHeight)
         
         let cellSize = boardSize / CGFloat(gridSize)
         let boardOffsetX = insets.leading + (safeWidth - boardSize) / 2
