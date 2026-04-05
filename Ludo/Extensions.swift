@@ -71,6 +71,8 @@ public enum GameConstants {
     // Dice rolling
     static let weightedSixProbability = 1.0 / 3.0
     static let standardDiceSides = 6
+    /// After this many consecutive rolls with no legal pawn move, the next roll is forced to 6 if the player still has a pawn in starting home.
+    static let forcedSixAfterNoMoveStreak = 5
     
     // Timing
     static let turnAdvanceDelay: TimeInterval = 1.2

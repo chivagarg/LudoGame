@@ -3,8 +3,8 @@ import SwiftUI
 struct GameBoardView: View {
     @EnvironmentObject var game: LudoGame
     @State private var showPauseMenu: Bool = false
-    private let adminToolbarHeight: CGFloat = 56
-    private let adminToolbarVerticalOffset: CGFloat = -36
+    /// Space reserved under the safe area for the admin strip (two rows: dice + scores).
+    private let adminToolbarReservedHeight: CGFloat = 124
     
     var body: some View {
         ZStack {
@@ -12,7 +12,7 @@ struct GameBoardView: View {
                 LudoBoardView(maximized: false)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     // Keep board content (top player panels) below admin toolbar.
-                    .padding(.top, adminToolbarHeight + 20)
+                    .padding(.top, adminToolbarReservedHeight + 12)
                     .overlay(alignment: .topLeading) {
                         AdminControlsView(
                             eligiblePawns: game.eligiblePawns,
@@ -34,10 +34,9 @@ struct GameBoardView: View {
                                 game.adminResetToFirstRun()
                             }
                         )
-                        .frame(height: adminToolbarHeight)
-                        .padding(.top, 4)
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(.leading, 8)
-                        .offset(y: adminToolbarVerticalOffset)
+                        .padding(.top, 10)
                     }
             } else {
                 LudoBoardView(maximized: true)

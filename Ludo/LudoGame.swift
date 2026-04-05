@@ -84,6 +84,9 @@ class LudoGame: ObservableObject {
     // History of dice rolls per player (in order). Can be used for stats like killing spree/unluckiest player.
     @Published var diceRollHistory: [PlayerColor: [Int]] = [.red: [], .green: [], .yellow: [], .blue: []]
 
+    /// Counts consecutive rolls for a player where `getEligiblePawns()` was empty (no legal forward move for that die). Reset when they successfully move a pawn.
+    private var consecutiveRollsWithoutMove: [PlayerColor: Int] = [:]
+
     // AI Player Configuration
     private var aiStrategies: [PlayerColor: AILogicStrategy] = [:]
 
@@ -237,6 +240,13 @@ class LudoGame: ObservableObject {
     }
     
     private func getDiceRoll() -> Int {
+        let streak = consecutiveRollsWithoutMove[currentPlayer, default: 0]
+        if streak >= GameConstants.forcedSixAfterNoMoveStreak,
+           hasPawnInStartingHome(for: currentPlayer) {
+            GameLogger.shared.log("🎲 [INFO] Forced roll of 6 — \(consecutiveRollsWithoutMove[currentPlayer, default: 0]) consecutive rolls with no legal move and at least one pawn still in starting home.")
+            return GameConstants.sixDiceRoll
+        }
+
         // Only consider pawns that are not finished
         let unfinishedPawns = pawns[currentPlayer]?.filter { $0.positionIndex != GameConstants.finishedPawnIndex } ?? []
         let allUnfinishedAtHome = unfinishedPawns.allSatisfy { $0.positionIndex == nil }
@@ -253,6 +263,21 @@ class LudoGame: ObservableObject {
             // Standard roll
             return Int.random(in: 1...GameConstants.standardDiceSides)
         }
+    }
+
+    private func hasPawnInStartingHome(for color: PlayerColor) -> Bool {
+        guard let list = pawns[color] else { return false }
+        return list.contains { $0.positionIndex == GameConstants.homePawnIndex }
+    }
+
+    private func resetNoMoveStreak(for color: PlayerColor) {
+        consecutiveRollsWithoutMove[color] = 0
+    }
+
+    private func recordRollHadNoLegalMoves(for player: PlayerColor) {
+        let next = consecutiveRollsWithoutMove[player, default: 0] + 1
+        consecutiveRollsWithoutMove[player] = next
+        GameLogger.shared.log("🎲 [INFO] \(player.rawValue) had no legal moves after roll (streak: \(next)).", level: .debug)
     }
     
     func rollDice() {
@@ -383,6 +408,7 @@ class LudoGame: ObservableObject {
         
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
+            recordRollHadNoLegalMoves(for: player)
             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
             }
@@ -448,6 +474,7 @@ class LudoGame: ObservableObject {
         }
         // If no pawns can move, advance to next turn after a delay
         if eligiblePawns.isEmpty {
+            recordRollHadNoLegalMoves(for: currentPlayer)
             // Keep the current player's roll visible for a short duration before moving to next turn
             DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                 self.nextTurn(clearRoll: true)
@@ -579,6 +606,7 @@ class LudoGame: ObservableObject {
         firstKillDone = false
         firstKillPlayer = nil
         diceRollHistory = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, []) })
+        consecutiveRollsWithoutMove = Dictionary(uniqueKeysWithValues: PlayerColor.allCases.map { ($0, 0) })
 
         // Initialize pawns for all players, but only selected ones will be visible/used
         var allPawns: [PlayerColor: [PawnState]] = [:]
@@ -616,6 +644,8 @@ class LudoGame: ObservableObject {
         }
         
         guard let pawnIndex = getValidatedPawnIndex(color: color, pawnId: pawnId, backward: backward) else { return }
+
+        resetNoMoveStreak(for: color)
         
         var shouldGetAnotherRoll = false
         
@@ -1297,6 +1327,7 @@ class LudoGame: ObservableObject {
         } else {
             eligiblePawns = getEligiblePawns()
             if eligiblePawns.isEmpty {
+                recordRollHadNoLegalMoves(for: currentPlayer)
                 DispatchQueue.main.asyncAfter(deadline: .now() + GameConstants.turnAdvanceDelay) {
                     self.nextTurn(clearRoll: true)
                 }

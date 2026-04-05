@@ -41,12 +41,17 @@ struct AdminControlsView: View {
                     // Line 1: Dice number overrides (kept on a separate line for compact screens)
                     HStack(spacing: 8) {
                         ForEach([1, 2, 3, 4, 5, 6, 48, 56], id: \.self) { value in
-                            Button("\(value)") {
+                            Button {
                                 onTestRoll(value)
+                            } label: {
+                                Text("\(value)")
+                                    .font(.footnote.bold())
+                                    .frame(minWidth: 36, minHeight: 44)
+                                    .contentShape(Rectangle())
                             }
-                            .font(.footnote.bold())
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 8)
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
                             .background(eligiblePawns.isEmpty ? (value == 48 || value == 56 ? Color.purple : PlayerColor.green.primaryColor) : Color.gray)
                             .foregroundColor(.white)
                             .cornerRadius(8)
