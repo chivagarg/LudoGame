@@ -91,7 +91,8 @@ struct LudoBoardView: View {
         return panelHeight - 2 * edgeOverlap + t + layoutSlackPoints
     }
 
-    private let layoutSlackPoints: CGFloat = 6
+    /// Extra room so score rows aren’t clipped on device (font metrics, panel shadow bleed); kept small to preserve board size.
+    private let layoutSlackPoints: CGFloat = 12
 
     /// H-A: `boardSize` is always `gridSize ×` whole points per cell so the HStack/VStack grid matches `.position()`-based overlays (avoids fractional row gaps / visible grid lines).
     private func snapBoardSizeToIntegralCells(
